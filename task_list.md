@@ -23,10 +23,10 @@ Bảng công việc chi tiết được tổ chức theo 8 giai đoạn tuần t
 | ID | Giai đoạn | Tên công việc (Task) | Trạng thái | Ưu tiên | Ghi chú kỹ thuật / Chi tiết bảo mật |
 | :--- | :--- | :--- | :---: | :---: | :--- |
 | **P1** | **Khởi tạo Môi trường & Nền tảng** | | | | |
-| T1.1 | Môi trường & Nền tảng | Khởi tạo Git repository & cấu hình `.gitignore`. | [ ] Todo | High | Thiết lập nhánh `main` và `develop`, Husky pre-commit hooks. |
-| T1.2 | Môi trường & Nền tảng | Khởi tạo dự án Backend NodeJS với TypeScript. | [ ] Todo | High | Cấu trúc Modular Layered (Controller -> Service -> Repository), ESLint, Prettier. |
-| T1.3 | Môi trường & Nền tảng | Khởi tạo dự án Frontend React (TypeScript, Vite, TailwindCSS, shadcn/ui). | [ ] Todo | High | Tích hợp Lucide icons, Inter/Plus Jakarta Sans, cấu hình Dark Mode. |
-| T1.4 | Môi trường & Nền tảng | Cấu hình Docker Compose cho PostgreSQL 16 & Redis 7. | [ ] Todo | High | Thiết lập biến môi trường an toàn, health checks cho database. |
+| T1.1 | Môi trường & Nền tảng | Khởi tạo Git repository & cấu hình `.gitignore`. | [x] Done | High | Thiết lập nhánh `main`, commit khởi tạo hoàn chỉnh. |
+| T1.2 | Môi trường & Nền tảng | Khởi tạo dự án Backend NodeJS với TypeScript. | [x] Done | High | Cấu trúc Modular Layered, Helmet, CORS, Rate Limiter, Error Masking. |
+| T1.3 | Môi trường & Nền tảng | Khởi tạo dự án Frontend React (TypeScript, Vite, TailwindCSS, shadcn/ui). | [x] Done | High | Tích hợp Lucide icons, Dark/Light mode, Semantic Palette, Dashboard layout. |
+| T1.4 | Môi trường & Nền tảng | Cấu hình Docker Compose cho PostgreSQL 16 & Redis 7. | [x] Done | High | Đã tạo docker-compose.yml có health checks và persistent volumes. |
 | T1.5 | Môi trường & Nền tảng | Cấu hình Lưu trữ Tệp tin (S3 / Cloudflare R2 / MinIO). | [ ] Todo | High | Chuẩn bị bucket bảo mật, cấu hình CORS chỉ phục vụ Pre-signed URLs. |
 | **P2** | **Cơ sở Dữ liệu & Data Models** | | | | |
 | T2.1 | Database Schema | Thiết kế bảng `users` & quản lý định danh. | [ ] Todo | High | UUIDv4, băm mật khẩu, 2FA secret, backup codes băm, login lock timestamp. |
