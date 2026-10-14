@@ -1,0 +1,149 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model User {
+  id                  String        @id @default(uuid())
+  email               String        @unique
+  passwordHash        String
+  fullName            String
+  avatarUrl           String?
+  isEmailVerified     Boolean       @default(false)
+  twoFactorEnabled    Boolean       @default(false)
+  twoFactorSecret     String?
+  backupCodes         Json          @default("[]")
+  failedLoginAttempts Int           @default(0)
+  lockedUntil         DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  wallets             Wallet[]
+  transactions        Transaction[]
+  tasks               Task[]
+  notes               Note[]
+
+  @@map("users")
+}
+
+model Wallet {
+  id             String        @id @default(uuid())
+  userId         String
+  name           String
+  currency       String        @default("VND")
+  initialBalance Decimal       @default(0.00) @db.Decimal(15, 2)
+  currentBalance Decimal       @default(0.00) @db.Decimal(15, 2)
+  icon           String        @default("wallet")
+  color          String        @default("#6366F1")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions   Transaction[] @relation("SourceWallet")
+  transfersIn    Transaction[] @relation("DestinationWallet")
+
+  @@index([userId])
+  @@map("wallets")
+}
+
+model Transaction {
+  id                  String          @id @default(uuid())
+  userId              String
+  walletId            String
+  destinationWalletId String?
+  type                TransactionType
+  amount              Decimal         @db.Decimal(15, 2)
+  category            String
+  transactionDate     DateTime
+  note                String?
+  receiptUrl          String?
+  createdAt           DateTime        @default(now())
+
+  user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet              Wallet          @relation("SourceWallet", fields: [walletId], references: [id], onDelete: Restrict)
+  destinationWallet   Wallet?         @relation("DestinationWallet", fields: [destinationWalletId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([transactionDate])
+  @@map("transactions")
+}
+
+model Task {
+  id             String       @id @default(uuid())
+  userId         String
+  title          String
+  description    String?
+  status         TaskStatus   @default(TODO)
+  priority       TaskPriority @default(MEDIUM)
+  dueDate        DateTime?
+  isRecurring    Boolean      @default(false)
+  recurrenceRule String?
+  completedAt    DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([dueDate])
+  @@index([status])
+  @@map("tasks")
+}
+
+model Note {
+  id          String       @id @default(uuid())
+  userId      String
+  title       String
+  content     String
+  color       String       @default("#FFFFFF")
+  tags        Json         @default("[]")
+  isPinned    Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attachments Attachment[]
+
+  @@index([userId])
+  @@index([isPinned])
+  @@map("notes")
+}
+
+model Attachment {
+  id        String   @id @default(uuid())
+  noteId    String
+  fileName  String
+  fileKey   String
+  fileType  String
+  fileSize  Int
+  createdAt DateTime @default(now())
+
+  note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@index([noteId])
+  @@map("attachments")
+}

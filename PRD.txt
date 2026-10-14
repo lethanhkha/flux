@@ -1,0 +1,73 @@
+Tài liệu PRD (Product Requirements Document) - Dự án Flux
+Phiên bản: 1.0 (Bản Đặc Tả Chính Thức)
+Sản phẩm: Flux - Personal Productivity & Financial Workspace
+Chi tiết Markdown: Xem file PRD.md
+
+1. TỔNG QUAN DỰ ÁN
+- Tên sản phẩm: Flux
+- Mục tiêu: Cung cấp một All-in-one Personal Workspace tinh gọn, hiện đại và bảo mật cao, giúp một cá nhân kiểm soát toàn bộ Tài chính, Năng suất công việc (To-Do) và Lưu trữ tri thức (Notes) trên cùng một nền tảng.
+- Đối tượng: Học sinh, sinh viên, nhân viên văn phòng, người làm nghề tự do (Freelancers) cần công cụ quản lý cá nhân độc lập, không rườm rà.
+
+2. KIẾN TRÚC HỆ THỐNG & CÔNG NGHỆ
+- Backend: NodeJS (v20+ LTS, TypeScript) với kiến trúc phân tầng Modular Layered.
+- Frontend: ReactJS (TypeScript) + Vite + TailwindCSS + shadcn/ui (Radix UI) + Recharts.
+- Cơ sở dữ liệu: PostgreSQL 16+ (Mô hình quan hệ, ACID Transactions, JSONB cho metadata) + Redis (Rate limit, Token Blacklist, Cache).
+- Lưu trữ tệp tin: S3 / Cloudflare R2 / MinIO qua Pre-signed URLs an toàn.
+
+3. HỆ THỐNG BẢO MẬT WEB TOÀN DIỆN (SECURITY ARCHITECTURE)
+- Xác thực & Quản lý Phiên:
+  + Dual JWT Token: Access Token 15 phút (In-Memory) + Refresh Token 7 ngày (HttpOnly, Secure, SameSite=Strict Cookie có cơ chế xoay vòng RTR).
+  + Thu hồi token tức thì qua Redis Blacklist khi người dùng Đăng xuất hoặc Đổi mật khẩu.
+  + Tùy chọn kích hoạt Xác thực 2 yếu tố (2FA / TOTP RFC 6238) bảo vệ tài khoản tài chính.
+  + Băm mật khẩu bằng Argon2id hoặc BCrypt (Work Factor = 12).
+  + Khóa tài khoản tạm thời 15 phút sau 5 lần nhập sai mật khẩu liên tiếp.
+- Bảo vệ Tầng mạng & API:
+  + Cấu hình HTTP Security Headers qua Helmet (HSTS, CSP, X-Frame-Options: DENY, X-Content-Type-Options: nosniff).
+  + CORS nghiêm ngặt chỉ whitelist domain Frontend của dự án.
+  + Rate Limiting bằng Redis Token Bucket phân tầng (Auth: 5 req/phút; Upload: 10 req/phút; CRUD: 120 req/phút).
+- An toàn Dữ liệu & Xử lý Đầu vào:
+  + Zero-Trust Input Validation với Zod trên 100% endpoints.
+  + Chống Stored XSS: Làm sạch toàn bộ nội dung Markdown của Ghi chú bằng DOMPurify ở cả Client và Server.
+  + Chống SQL Injection: 100% Parameterized Queries qua ORM (Prisma/Drizzle).
+  + Chống IDOR: Dùng UUIDv4 cho mọi tài nguyên, luôn kiểm tra quyền sở hữu `WHERE id = :id AND user_id = :authenticated_user_id`.
+  + Độ chính xác tài chính: Sử dụng kiểu NUMERIC(15, 2), thư viện decimal.js và khóa dòng DB (SELECT FOR UPDATE) khi chuyển tiền giữa các ví.
+- Bảo mật Tải tệp đính kèm:
+  + Xác thực định dạng bằng Magic Bytes nhị phân thực tế, whitelist chỉ cho ảnh và pdf/text an toàn.
+  + Đổi tên file ngẫu nhiên UUIDv4, upload trực tiếp lên S3 qua Pre-signed URLs hạn dùng 15 phút, giới hạn 5MB/file và 20MB/ghi chú.
+
+4. YÊU CẦU CHỨC NĂNG CỐT LÕI (FUNCTIONAL REQUIREMENTS)
+4.1. Auth & Tài khoản Cá nhân:
+- Đăng ký xác thực email qua link HMAC, Đăng nhập an toàn, 2FA TOTP, Đổi mật khẩu, Quản lý phiên.
+
+4.2. Dashboard Tổng hợp Cá nhân:
+- Widget Tài chính: Tổng số dư hiện tại của tất cả các ví, so sánh dòng tiền thu/chi tháng này với tháng trước.
+- Widget To-Do Thông minh: Hiển thị 5 công việc khẩn cấp nhất (ưu tiên Quá hạn -> Đến hạn hôm nay -> Độ ưu tiên High), hoàn thành nhanh ngay trên widget.
+- Widget Ghi chú Ghim: 3 ghi chú được ghim mới nhất, click mở modal xem/sửa tức thì.
+- Thanh thao tác nhanh (+): Mở modal thêm Thu/Chi, Task hoặc Ghi chú mà không phải chuyển trang.
+
+4.3. Module Tài chính Cá nhân (Finance):
+- CRUD Ví tiền cá nhân: Tên ví (Tiền mặt, Ngân hàng, Tiết kiệm,...), Tiền tệ, Số dư khởi tạo, Icon và Màu sắc.
+- CRUD Giao dịch: Thu (Income), Chi (Expense), Chuyển khoản (Transfer). Danh mục, Ngày giờ, Ghi chú, Ảnh hóa đơn.
+- Logic Chuyển khoản: Trừ tiền ví nguồn và cộng tiền ví đích trong một Database Transaction duy nhất.
+- Báo cáo phân tích: Biểu đồ tròn cơ cấu chi tiêu theo danh mục, Biểu đồ cột dòng tiền thu/chi theo tháng, Xuất dữ liệu CSV/Excel.
+
+4.4. Module Quản lý Công việc Cá nhân (To-Do List):
+- CRUD Task: Tiêu đề, Mô tả (hỗ trợ subtasks), Hạn chót (Deadline), Mức độ ưu tiên (Low, Medium, High, Urgent).
+- Trạng thái Task: To-Do, In Progress, Done kèm hiệu ứng gạch ngang khi hoàn thành.
+- Task lặp lại định kỳ: Tự động lặp lại theo Hàng ngày, Hàng tuần, Hàng tháng.
+- Chế độ hiển thị: List View tinh gọn và Kanban Board kéo thả.
+- Bộ lọc nhanh: Hôm nay, 7 ngày tới, Quá hạn, Đã hoàn thành.
+
+4.5. Module Ghi chú & Kho Tri thức (Notes):
+- CRUD Ghi chú: Soạn thảo Markdown đầy đủ, chọn màu nền thẻ, gắn Tags JSONB linh hoạt, Ghim lên đầu.
+- Tải tệp đính kèm: Kéo thả ảnh và tài liệu PDF an toàn qua S3 Pre-signed URLs.
+- Tìm kiếm Full-Text: Tìm kiếm tức thì theo từ khóa trong tiêu đề, nội dung và tags (PostgreSQL tsvector).
+- Chế độ xem: Grid Cards (phong cách Google Keep) hoặc List View.
+
+5. THIẾT KẾ TRẢI NGHIỆM NGƯỜI DÙNG (UI/UX)
+- Triết lý: Flat Design kết hợp Micro-interactions & Soft Modernism, tinh giản tối đa thao tác.
+- Zero-Redirect Modal: Toàn bộ form thêm nhanh hiển thị qua Dialog/Sheet, không làm gián đoạn luồng công việc.
+- Mobile-First Thumb Zone: Bố trí các nút bấm quan trọng ở nửa dưới màn hình để dễ thao tác 1 tay trên điện thoại.
+- Hỗ trợ Dark Mode / Light Mode chuẩn màu công nghệ cao.
+- Phản hồi tức thì với Optimistic UI, Skeleton Loading (Zero Layout Shift - CLS < 0.1), Toast Notifications.
+- Đáp ứng chuẩn tiếp cận trợ năng WCAG 2.1 AA.
