@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, ShieldCheck, Mail, Lock, User, Check, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getErrorMessage } from '../api/client';
+import { GoogleAuthButton } from '../components/auth/GoogleAuthButton';
 import { toast } from 'sonner';
 
 export const RegisterPage: React.FC = () => {
@@ -238,6 +239,21 @@ export const RegisterPage: React.FC = () => {
                 )}
               </button>
             </form>
+
+            {/* Divider */}
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200 dark:border-slate-800" />
+              </div>
+              <div className="relative flex justify-center text-[11px] uppercase">
+                <span className="bg-white dark:bg-slate-900 px-3 text-slate-400 font-medium tracking-wider">
+                  Hoặc đăng ký nhanh với
+                </span>
+              </div>
+            </div>
+
+            {/* Google Sign-Up Button */}
+            <GoogleAuthButton mode="register" />
           </div>
         </div>
       </main>

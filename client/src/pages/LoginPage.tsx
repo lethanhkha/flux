@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, ShieldCheck, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getErrorMessage } from '../api/client';
+import { GoogleAuthButton } from '../components/auth/GoogleAuthButton';
 import { toast } from 'sonner';
 
 export const LoginPage: React.FC = () => {
@@ -173,6 +174,21 @@ export const LoginPage: React.FC = () => {
                 )}
               </button>
             </form>
+
+            {/* Divider */}
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200 dark:border-slate-800" />
+              </div>
+              <div className="relative flex justify-center text-[11px] uppercase">
+                <span className="bg-white dark:bg-slate-900 px-3 text-slate-400 font-medium tracking-wider">
+                  Hoặc tiếp tục với
+                </span>
+              </div>
+            </div>
+
+            {/* Google Sign-In Button */}
+            <GoogleAuthButton mode="login" />
 
             <div className="pt-2 text-center text-xs text-slate-400">
               Chưa có tài khoản Flux?{' '}

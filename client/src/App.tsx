@@ -9,6 +9,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import { TwoFactorPage } from './pages/TwoFactorPage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { FinancePage } from './pages/FinancePage';
 import { TasksPage } from './pages/TasksPage';
@@ -25,6 +26,7 @@ export function App() {
           <Route path="/get-started" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/two-factor-auth" element={<TwoFactorPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
