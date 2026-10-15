@@ -8,8 +8,8 @@ export const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState('demo.user@flux.workspace');
-  const [password, setPassword] = useState('SuperSecret#2026');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -168,9 +168,9 @@ export const LoginPage: React.FC = () => {
             </form>
 
             <div className="pt-2 text-center text-xs text-slate-400">
-              Chưa muốn đăng nhập?{' '}
-              <Link to="/dashboard" className="text-brand font-semibold hover:underline">
-                Xem bản demo giao diện
+              Chưa có tài khoản Flux?{' '}
+              <Link to="/register" className="text-brand font-semibold hover:underline">
+                Đăng ký tài khoản mới
               </Link>
             </div>
           </div>

@@ -9,7 +9,7 @@ export const VerifyEmailPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const initialEmail = searchParams.get('email') || location.state?.email || 'demo.user@flux.workspace';
+  const initialEmail = searchParams.get('email') || location.state?.email || '';
   const initialToken = searchParams.get('token') || location.state?.verificationToken || '';
 
   const [email, setEmail] = useState(initialEmail);
