@@ -27,6 +27,11 @@ export const LoginPage: React.FC = () => {
       return;
     }
 
+    if (!turnstileToken) {
+      toast.info('Hệ thống đang xác minh bảo mật chống bot. Vui lòng chờ 1-2 giây rồi thử lại.');
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMsg(null);
 

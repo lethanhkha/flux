@@ -109,7 +109,7 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
                 : 'light'
               : theme;
 
-          // Clear previous instance if re-rendering
+          // Clear previous instance and clean DOM if re-rendering
           if (widgetIdRef.current) {
             try {
               window.turnstile.remove(widgetIdRef.current);
@@ -117,6 +117,9 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
               // ignore
             }
             widgetIdRef.current = null;
+          }
+          if (containerRef.current) {
+            containerRef.current.innerHTML = '';
           }
 
           const id = window.turnstile.render(containerRef.current, {

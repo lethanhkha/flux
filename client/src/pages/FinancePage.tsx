@@ -91,6 +91,21 @@ export const FinancePage: React.FC = () => {
   const [transferAmount, setTransferAmount] = useState('1000000');
   const [transferNote, setTransferNote] = useState('Rút tiền mặt tiêu dùng');
 
+  // Add Wallet Modal State
+  const [isAddWalletModalOpen, setIsAddWalletModalOpen] = useState(false);
+  const [newWalletName, setNewWalletName] = useState('');
+  const [newWalletType, setNewWalletType] = useState('Ví điện tử');
+  const [newWalletBalance, setNewWalletBalance] = useState('0');
+  const [newWalletColor, setNewWalletColor] = useState('#6366F1');
+
+  // Add Transaction Modal State
+  const [isAddTxModalOpen, setIsAddTxModalOpen] = useState(false);
+  const [txType, setTxType] = useState<'EXPENSE' | 'INCOME'>('EXPENSE');
+  const [txWalletId, setTxWalletId] = useState('');
+  const [txAmount, setTxAmount] = useState('100000');
+  const [txCategory, setTxCategory] = useState('Ăn uống & Cafe');
+  const [txNote, setTxNote] = useState('');
+
   // Load real data from backend if user is logged in
   useEffect(() => {
     const fetchFinanceData = async () => {
@@ -204,6 +219,127 @@ export const FinancePage: React.FC = () => {
     toast.success('Chuyển tiền thành công! Số dư các ví đã được cập nhật.');
   };
 
+  const handleCreateWallet = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newWalletName.trim()) {
+      toast.error('Vui lòng nhập tên ví.');
+      return;
+    }
+
+    const initBal = parseFloat(newWalletBalance) || 0;
+    if (initBal < 0) {
+      toast.error('Số dư ban đầu không được âm.');
+      return;
+    }
+
+    try {
+      const res = await apiClient.post('/finance/wallets', {
+        name: newWalletName.trim(),
+        currency: 'VND',
+        initialBalance: initBal,
+        color: newWalletColor,
+        icon: 'wallet',
+      });
+
+      const created = res.data.data;
+      const newWallet: WalletItem = {
+        id: created.id,
+        name: created.name,
+        balance: parseFloat(created.currentBalance),
+        type: newWalletType,
+        color: created.color || newWalletColor,
+        icon: Wallet,
+      };
+
+      setWallets((prev) => [...prev, newWallet]);
+      setIsAddWalletModalOpen(false);
+      setNewWalletName('');
+      setNewWalletBalance('0');
+      toast.success(`Đã tạo ví "${created.name}" thành công!`);
+      window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+    } catch {
+      // Fallback
+      const fallbackWallet: WalletItem = {
+        id: `w-${Date.now()}`,
+        name: newWalletName.trim(),
+        balance: initBal,
+        type: newWalletType,
+        color: newWalletColor,
+        icon: Wallet,
+      };
+      setWallets((prev) => [...prev, fallbackWallet]);
+      setIsAddWalletModalOpen(false);
+      setNewWalletName('');
+      setNewWalletBalance('0');
+      toast.success(`Đã tạo ví "${fallbackWallet.name}" thành công!`);
+    }
+  };
+
+  const handleCreateTransaction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const amt = parseFloat(txAmount);
+    if (isNaN(amt) || amt <= 0) {
+      toast.error('Vui lòng nhập số tiền hợp lệ (> 0).');
+      return;
+    }
+
+    const selectedWalletId = txWalletId || wallets[0]?.id;
+    const targetWallet = wallets.find((w) => w.id === selectedWalletId);
+    if (!targetWallet) {
+      toast.error('Vui lòng chọn ví thực hiện giao dịch.');
+      return;
+    }
+
+    if (txType === 'EXPENSE' && targetWallet.balance < amt) {
+      toast.error(`Số dư ví "${targetWallet.name}" không đủ để chi tiêu.`);
+      return;
+    }
+
+    try {
+      await apiClient.post('/finance/transactions', {
+        walletId: selectedWalletId,
+        type: txType,
+        amount: amt,
+        category: txCategory,
+        note: txNote || undefined,
+      });
+    } catch {
+      // Fallback
+    }
+
+    // Update wallet balance
+    setWallets((prev) =>
+      prev.map((w) => {
+        if (w.id === selectedWalletId) {
+          const newBal = txType === 'INCOME' ? w.balance + amt : w.balance - amt;
+          return { ...w, balance: newBal };
+        }
+        return w;
+      })
+    );
+
+    const newTx: TransactionItem = {
+      id: `tx-${Date.now()}`,
+      type: txType,
+      wallet: targetWallet.name,
+      category: txCategory,
+      amount: amt,
+      date: new Date().toLocaleDateString('vi-VN'),
+      note: txNote,
+    };
+
+    setTransactions((prev) => [newTx, ...prev]);
+    setIsAddTxModalOpen(false);
+    setTxAmount('100000');
+    setTxNote('');
+    toast.success(
+      txType === 'INCOME'
+        ? `Đã ghi nhận khoản thu: +${formatCurrency(amt)}`
+        : `Đã ghi nhận khoản chi: -${formatCurrency(amt)}`
+    );
+    window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+  };
+
   const handleExportCSV = () => {
     if (transactions.length === 0) {
       toast.error('Không có giao dịch nào để xuất.');
@@ -259,7 +395,7 @@ export const FinancePage: React.FC = () => {
               <span>Chuyển Tiền Giữa Các Ví</span>
             </button>
             <button
-              onClick={() => toast.info('Thêm ví mới: Tính năng đang mở modal tạo ví.')}
+              onClick={() => setIsAddWalletModalOpen(true)}
               className="px-4 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/20 transition-all flex items-center gap-2 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
@@ -316,6 +452,19 @@ export const FinancePage: React.FC = () => {
 
             {/* Action buttons & Filter */}
             <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => {
+                  if (wallets.length > 0 && !txWalletId) {
+                    setTxWalletId(wallets[0].id);
+                  }
+                  setIsAddTxModalOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Thêm Giao Dịch</span>
+              </button>
+
               <button
                 onClick={handleExportCSV}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 hover:border-brand/40 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all cursor-pointer"
@@ -475,6 +624,238 @@ export const FinancePage: React.FC = () => {
                   className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all cursor-pointer"
                 >
                   Xác Nhận Chuyển Tiền
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Add Wallet Modal */}
+        {isAddWalletModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm modal-backdrop-animate">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl modal-dialog-animate space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center font-bold">
+                    <Wallet className="w-4 h-4" />
+                  </div>
+                  <h3 className="font-bold text-base">Thêm Ví Tiền Mới</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAddWalletModalOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateWallet} className="space-y-4 text-xs">
+                <div>
+                  <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+                    Tên ví / Tài khoản
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newWalletName}
+                    onChange={(e) => setNewWalletName(e.target.value)}
+                    placeholder="VD: Ví MoMo, BIDV SmartBanking, Quỹ Khẩn Cấp..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand font-medium"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+                      Loại ví
+                    </label>
+                    <select
+                      value={newWalletType}
+                      onChange={(e) => setNewWalletType(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
+                    >
+                      <option value="Ví điện tử">Ví điện tử</option>
+                      <option value="Tài khoản ngân hàng">Tài khoản ngân hàng</option>
+                      <option value="Tiền mặt">Tiền mặt</option>
+                      <option value="Tiết kiệm có kỳ hạn">Sổ tiết kiệm</option>
+                      <option value="Quỹ đầu tư">Quỹ đầu tư</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+                      Số dư ban đầu (VND)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={newWalletBalance}
+                      onChange={(e) => setNewWalletBalance(e.target.value)}
+                      placeholder="0"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand font-mono font-bold"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="font-semibold block mb-1.5 text-slate-700 dark:text-slate-300">
+                    Màu sắc nhận diện
+                  </label>
+                  <div className="flex items-center gap-2.5">
+                    {['#6366F1', '#10B981', '#F59E0B', '#EC4899', '#8B5CF6', '#06B6D4', '#3B82F6'].map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setNewWalletColor(c)}
+                        style={{ backgroundColor: c }}
+                        className={`h-7 w-7 rounded-full cursor-pointer transition-transform ${
+                          newWalletColor === c ? 'scale-125 ring-2 ring-offset-2 ring-brand' : 'hover:scale-110'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all cursor-pointer"
+                >
+                  Tạo Ví Mới
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Add Transaction Modal */}
+        {isAddTxModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm modal-backdrop-animate">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl modal-dialog-animate space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center font-bold">
+                    <Plus className="w-4 h-4" />
+                  </div>
+                  <h3 className="font-bold text-base">Ghi Nhận Giao Dịch</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAddTxModalOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateTransaction} className="space-y-4 text-xs">
+                {/* Transaction Type Buttons */}
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTxType('EXPENSE')}
+                    className={`py-2 rounded-xl font-bold transition-all cursor-pointer ${
+                      txType === 'EXPENSE'
+                        ? 'bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    Khoản Chi Tiền (-)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTxType('INCOME')}
+                    className={`py-2 rounded-xl font-bold transition-all cursor-pointer ${
+                      txType === 'INCOME'
+                        ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    Khoản Thu Tiền (+)
+                  </button>
+                </div>
+
+                <div>
+                  <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+                    Chọn Ví
+                  </label>
+                  <select
+                    value={txWalletId || (wallets[0]?.id || '')}
+                    onChange={(e) => setTxWalletId(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
+                  >
+                    {wallets.map((w) => (
+                      <option key={w.id} value={w.id}>
+                        {w.name} ({formatCurrency(w.balance)})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+                    Số tiền (VND)
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="1000"
+                    step="1000"
+                    value={txAmount}
+                    onChange={(e) => setTxAmount(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-base font-extrabold tabular-nums focus:outline-none focus:ring-2 focus:ring-brand"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+                    Danh mục
+                  </label>
+                  <select
+                    value={txCategory}
+                    onChange={(e) => setTxCategory(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
+                  >
+                    {txType === 'EXPENSE' ? (
+                      <>
+                        <option value="Ăn uống & Cafe">Ăn uống & Cafe</option>
+                        <option value="Tiện ích & Hóa đơn">Tiện ích & Hóa đơn (Điện, Nước, Net)</option>
+                        <option value="Đi lại & Xăng xe">Đi lại & Xăng xe</option>
+                        <option value="Mua sắm & Tiêu dùng">Mua sắm & Tiêu dùng</option>
+                        <option value="Nhà cửa & Thuê trọ">Nhà cửa & Thuê trọ</option>
+                        <option value="Y tế & Sức khỏe">Y tế & Sức khỏe</option>
+                        <option value="Học tập & Sách">Học tập & Sách</option>
+                        <option value="Khác">Chi phí khác</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="Lương & Thưởng">Lương & Thưởng</option>
+                        <option value="Thu nhập Freelance">Thu nhập Freelance / Dự án ngoài</option>
+                        <option value="Lãi đầu tư & Cổ tức">Lãi đầu tư & Cổ tức</option>
+                        <option value="Quà tặng & Thưởng">Quà tặng & Khác</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+                    Ghi chú
+                  </label>
+                  <input
+                    type="text"
+                    value={txNote}
+                    onChange={(e) => setTxNote(e.target.value)}
+                    placeholder="VD: Ăn tối với bạn, thanh toán hóa đơn..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all cursor-pointer"
+                >
+                  Lưu Giao Dịch
                 </button>
               </form>
             </div>

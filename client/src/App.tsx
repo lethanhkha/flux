@@ -15,11 +15,12 @@ import { FinancePage } from './pages/FinancePage';
 import { TasksPage } from './pages/TasksPage';
 import { NotesPage } from './pages/NotesPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 export function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           {/* Public & Auth Routes */}
           <Route path="/" element={<LandingPage />} />
@@ -31,12 +32,47 @@ export function App() {
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-          {/* Core Productivity & Workspace Routes */}
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/finance" element={<FinancePage />} />
-          <Route path="/tasks" element={<TasksPage />} />
-          <Route path="/notes" element={<NotesPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
+          {/* Core Productivity & Workspace Routes (Guarded) */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/finance"
+            element={
+              <ProtectedRoute>
+                <FinancePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tasks"
+            element={
+              <ProtectedRoute>
+                <TasksPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notes"
+            element={
+              <ProtectedRoute>
+                <NotesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Catch-all redirect */}
           <Route path="*" element={<Navigate to="/" replace />} />

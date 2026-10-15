@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { apiClient, setAccessToken, registerLogoutCallback } from '../api/client';
 
 export interface User {
@@ -69,11 +69,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  const hasInitializedAuth = useRef(false);
+
   // Try silent refresh on initial app load
   useEffect(() => {
     registerLogoutCallback(() => {
       setUser(null);
     });
+
+    if (hasInitializedAuth.current) return;
+    hasInitializedAuth.current = true;
 
     const initAuth = async () => {
       try {
