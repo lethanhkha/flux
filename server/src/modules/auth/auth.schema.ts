@@ -2,12 +2,20 @@ import { z } from 'zod';
 
 const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
 
+/**
+ * Enforce only Gmail (@gmail.com) addresses across authentication
+ */
+export const gmailSchema = z
+  .string({ required_error: 'Email là bắt buộc' })
+  .email('Địa chỉ email không hợp lệ')
+  .toLowerCase()
+  .trim()
+  .refine((val) => val.endsWith('@gmail.com'), {
+    message: 'Hệ thống hiện tại chỉ hỗ trợ địa chỉ Gmail (@gmail.com).',
+  });
+
 export const registerSchema = z.object({
-  email: z
-    .string({ required_error: 'Email là bắt buộc' })
-    .email('Địa chỉ email không hợp lệ')
-    .toLowerCase()
-    .trim(),
+  email: gmailSchema,
   password: z
     .string({ required_error: 'Mật khẩu là bắt buộc' })
     .regex(
@@ -22,11 +30,7 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  email: z
-    .string({ required_error: 'Email là bắt buộc' })
-    .email('Địa chỉ email không hợp lệ')
-    .toLowerCase()
-    .trim(),
+  email: gmailSchema,
   password: z.string({ required_error: 'Mật khẩu là bắt buộc' }),
   totpCode: z
     .string()
@@ -41,11 +45,7 @@ export const loginSchema = z.object({
 
 export const verifyEmailSchema = z
   .object({
-    email: z
-      .string({ required_error: 'Email là bắt buộc' })
-      .email('Địa chỉ email không hợp lệ')
-      .toLowerCase()
-      .trim(),
+    email: gmailSchema,
     code: z.string().min(1, 'Mã xác thực là bắt buộc').optional(),
     token: z.string().optional(),
   })
@@ -55,11 +55,11 @@ export const verifyEmailSchema = z
   });
 
 export const resendVerificationSchema = z.object({
-  email: z.string().email().toLowerCase().trim(),
+  email: gmailSchema,
 });
 
 export const forgotPasswordSchema = z.object({
-  email: z.string().email().toLowerCase().trim(),
+  email: gmailSchema,
 });
 
 export const resetPasswordSchema = z.object({

@@ -6,6 +6,7 @@ import QRCode from 'qrcode';
 import { prisma } from '../../config/prisma';
 import { env } from '../../config';
 import { AppError } from '../../middlewares/error.middleware';
+import { mailService } from '../../services/mail.service';
 import { sessionStore } from './sessionStore';
 import {
   RegisterInput,
@@ -150,14 +151,12 @@ export class AuthService {
     const otpCode = crypto.randomInt(100000, 1000000).toString();
     await sessionStore.saveEmailOtp(newUser.email, otpCode, 10 * 60);
 
-    // Also generate legacy verificationToken for backward compatibility
-    const verificationToken = this.generateHmacToken(newUser.email, 15 * 60 * 1000);
+    // Send 6-digit OTP directly to user's Gmail inbox
+    await mailService.sendOtpEmail(newUser.email, otpCode, newUser.fullName);
 
     return {
       user: this.formatUser(newUser),
-      otpCode,
-      verificationToken,
-      message: 'Đăng ký thành công! Vui lòng nhập mã OTP 6 chữ số để kích hoạt tài khoản.',
+      message: 'Đăng ký thành công! Mã xác thực 6 số đã được gửi đến hộp thư Gmail của bạn. Vui lòng kiểm tra email.',
     };
   }
 
@@ -254,12 +253,11 @@ export class AuthService {
     const otpCode = crypto.randomInt(100000, 1000000).toString();
     await sessionStore.saveEmailOtp(user.email, otpCode, 10 * 60);
 
-    const verificationToken = this.generateHmacToken(user.email, 15 * 60 * 1000);
+    // Send 6-digit OTP directly to user's Gmail inbox
+    await mailService.sendOtpEmail(user.email, otpCode, user.fullName);
 
     return {
-      otpCode,
-      verificationToken,
-      message: 'Mã xác thực 6 số mới đã được tạo thành công.',
+      message: 'Mã xác thực 6 số mới đã được gửi đến hộp thư Gmail của bạn.',
     };
   }
 

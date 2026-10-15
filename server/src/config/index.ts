@@ -17,6 +17,16 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(32).default('flux_super_secret_jwt_refresh_key_2026_min_32_chars'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
   COOKIE_SECRET: z.string().default('flux_cookie_secret_signing_key_2026'),
+
+  // Email & SMTP Configuration (Gmail SMTP supported)
+  SMTP_HOST: z.string().default('smtp.gmail.com'),
+  SMTP_PORT: z.string().transform(Number).default('465'),
+  SMTP_SECURE: z.string().transform((v) => v === 'true' || v === '1').default('true'),
+  SMTP_USER: z.string().default(''),
+  SMTP_PASS: z.string().default(''),
+  SMTP_FROM: z.string().default('Flux Workspace <no-reply@flux.workspace>'),
+  GMAIL_USER: z.string().default(''),
+  GMAIL_APP_PASSWORD: z.string().default(''),
 });
 
 const parsed = envSchema.safeParse(process.env);
