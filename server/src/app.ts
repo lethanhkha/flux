@@ -8,6 +8,7 @@ import { createRateLimiter } from './middlewares/rateLimiter.middleware';
 import authRoutes from './modules/auth/auth.routes';
 import financeRoutes from './modules/finance/finance.routes';
 import tasksRoutes from './modules/tasks/tasks.routes';
+import notesRoutes from './modules/notes/notes.routes';
 
 const app = express();
 
@@ -74,6 +75,7 @@ app.get(`${env.API_PREFIX}`, (_req: Request, res: Response) => {
 app.use(`${env.API_PREFIX}/auth`, authRoutes);
 app.use(`${env.API_PREFIX}/finance`, financeRoutes);
 app.use(`${env.API_PREFIX}/tasks`, tasksRoutes);
+app.use(`${env.API_PREFIX}/notes`, notesRoutes);
 
 // 7. Catch-all Unhandled Routes (404)
 app.all('*', (req: Request, _res: Response, next) => {

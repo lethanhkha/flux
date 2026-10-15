@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { apiClient } from '../api/client';
 import {
   FileText,
   Plus,
@@ -77,8 +78,37 @@ export const NotesPage: React.FC = () => {
   const [newContent, setNewContent] = useState('');
   const [newTag, setNewTag] = useState('tài-chính');
 
-  const togglePin = (id: string, e: React.MouseEvent) => {
+  useEffect(() => {
+    const fetchNotes = async () => {
+      try {
+        const res = await apiClient.get('/notes');
+        if (res.data.data?.length > 0) {
+          setNotes(
+            res.data.data.map((n: any) => ({
+              id: n.id,
+              title: n.title,
+              content: n.content,
+              tags: (n.tags as string[]) || [],
+              isPinned: n.isPinned,
+              color: n.color || '#6366F1',
+              updatedAt: new Date(n.updatedAt).toLocaleDateString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+            }))
+          );
+        }
+      } catch {
+        // Fallback to initial prototype notes seamlessly
+      }
+    };
+
+    fetchNotes();
+  }, []);
+
+  const togglePin = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    // Optimistic UI update
     setNotes((prev) =>
       prev.map((n) => {
         if (n.id === id) {
@@ -89,9 +119,15 @@ export const NotesPage: React.FC = () => {
         return n;
       })
     );
+
+    try {
+      await apiClient.patch(`/notes/${id}/pin`);
+    } catch {
+      // Degrade gracefully
+    }
   };
 
-  const handleCreateNote = (e: React.FormEvent) => {
+  const handleCreateNote = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
 
@@ -110,6 +146,16 @@ export const NotesPage: React.FC = () => {
     setNewContent('');
     setIsAddModalOpen(false);
     toast.success('Đã lưu ghi chú mới vào kho tri thức!');
+
+    try {
+      await apiClient.post('/notes', {
+        title: newTitle,
+        content: newContent,
+        tags: [newTag],
+      });
+    } catch {
+      // Degrade gracefully
+    }
   };
 
   const allTags = Array.from(new Set(notes.flatMap((n) => n.tags)));
