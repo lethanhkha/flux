@@ -22,7 +22,7 @@ class GoogleAuthService {
   getAuthorizationUrl(): string {
     if (!this.isConfigured()) {
       // In dev mode without credentials, point to a local mock handler
-      return `${env.API_PREFIX}/auth/google/mock`;
+      return `http://localhost:${env.PORT}${env.API_PREFIX}/auth/google/mock`;
     }
 
     const params = new URLSearchParams({
