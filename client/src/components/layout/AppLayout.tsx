@@ -11,7 +11,6 @@ import {
   Settings,
   LogOut,
   Plus,
-  Compass,
   X,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -106,73 +105,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 font-sans flex flex-col selection:bg-brand selection:text-white transition-colors duration-200">
-      {/* 1. Quick Prototype Navigation Bar */}
-      <div className="bg-indigo-950 text-indigo-200 text-xs py-1.5 px-4 border-b border-indigo-900/60 sticky top-0 z-50 overflow-x-auto whitespace-nowrap">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-white flex items-center gap-1">
-              <Compass className="w-3.5 h-3.5 text-brand" /> Prototype Nav:
-            </span>
-            <Link to="/" className="hover:text-white">Landing</Link> •
-            <Link to="/login" className="hover:text-white">Login</Link> •
-            <Link to="/two-factor-auth" className="hover:text-white">2FA</Link> •
-            <Link to="/register" className="hover:text-white">Register</Link> •
-            <Link to="/verify-email" className="hover:text-white">Verify Email</Link> •
-            <Link to="/forgot-password" className="hover:text-white">Forgot Pass</Link> •
-            <Link
-              to="/dashboard"
-              className={`px-1.5 py-0.5 rounded font-semibold ${
-                location.pathname === '/dashboard' ? 'text-white bg-brand' : 'hover:text-white text-emerald-300'
-              }`}
-            >
-              Dashboard
-            </Link> •
-            <Link
-              to="/finance"
-              className={`px-1.5 py-0.5 rounded ${
-                location.pathname === '/finance' ? 'text-white bg-brand font-semibold' : 'hover:text-white'
-              }`}
-            >
-              Finance
-            </Link> •
-            <Link
-              to="/tasks"
-              className={`px-1.5 py-0.5 rounded ${
-                location.pathname === '/tasks' ? 'text-white bg-brand font-semibold' : 'hover:text-white'
-              }`}
-            >
-              Tasks
-            </Link> •
-            <Link
-              to="/notes"
-              className={`px-1.5 py-0.5 rounded ${
-                location.pathname === '/notes' ? 'text-white bg-brand font-semibold' : 'hover:text-white'
-              }`}
-            >
-              Notes
-            </Link> •
-            <Link
-              to="/settings"
-              className={`px-1.5 py-0.5 rounded ${
-                location.pathname === '/settings' ? 'text-white bg-brand font-semibold' : 'hover:text-white'
-              }`}
-            >
-              Settings
-            </Link>
-          </div>
-          <button
-            onClick={toggleTheme}
-            className="text-white/80 hover:text-white flex items-center gap-1 cursor-pointer"
-            title="Chuyển chế độ Giao diện"
-          >
-            {darkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-indigo-300" />}
-            <span className="hidden sm:inline">{darkMode ? 'Giao diện Tối' : 'Giao diện Sáng'}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 2. Main Top Application Header */}
-      <header className="sticky top-7 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#0B0F19]/80 backdrop-blur-md">
+      {/* Main Top Application Header */}
+      <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#0B0F19]/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link to="/dashboard" className="flex items-center gap-2.5">
@@ -231,11 +165,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             {/* User Profile & Logout */}
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-brand/20 text-brand flex items-center justify-center font-bold text-xs">
-                {user?.fullName?.charAt(0) || 'JD'}
+                {user?.fullName?.charAt(0) || 'F'}
               </div>
               <div className="hidden lg:block text-left">
-                <div className="text-xs font-bold leading-tight line-clamp-1">{user?.fullName || 'John Doe'}</div>
-                <div className="text-[10px] text-slate-500 line-clamp-1">{user?.email || 'demo@flux.workspace'}</div>
+                <div className="text-xs font-bold leading-tight line-clamp-1">{user?.fullName || 'Tài khoản'}</div>
+                <div className="text-[10px] text-slate-500 line-clamp-1">{user?.email || ''}</div>
               </div>
               <button
                 onClick={handleLogout}
@@ -294,7 +228,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 <div className="h-8 w-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center font-bold">
                   <Plus className="w-4 h-4" />
                 </div>
-                <h3 className="font-bold text-base">Thao Tác Nhanh (Zero-Redirect)</h3>
+                <h3 className="font-bold text-base">Thao Tác Nhanh</h3>
               </div>
               <button
                 onClick={() => setIsQuickActionOpen(false)}
@@ -625,14 +559,18 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
       {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-xs text-slate-500 dark:text-slate-400 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>Flux Workspace © 2026 — Clean Architecture & Enterprise Web Security</span>
-          <div className="flex items-center gap-4 text-[11px]">
-            <span>PostgreSQL 17 + Supabase</span>
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <span>Flux Workspace © 2026 — Không gian làm việc cá nhân an toàn & tinh gọn.</span>
+          <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+            <Link to="/dashboard" className="hover:text-brand transition-colors">Dashboard</Link>
             <span>•</span>
-            <span>Dual JWT + RTR</span>
+            <Link to="/finance" className="hover:text-brand transition-colors">Tài chính</Link>
             <span>•</span>
-            <span>Argon2id + 2FA TOTP</span>
+            <Link to="/tasks" className="hover:text-brand transition-colors">Công việc</Link>
+            <span>•</span>
+            <Link to="/notes" className="hover:text-brand transition-colors">Ghi chú</Link>
+            <span>•</span>
+            <Link to="/settings" className="hover:text-brand transition-colors">Cài đặt</Link>
           </div>
         </div>
       </footer>
