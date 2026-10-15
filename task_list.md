@@ -57,7 +57,7 @@ Bảng công việc chi tiết được cập nhật chính xác theo tiến đ�
 | T3.2 | Bảo mật & Auth | Xây dựng Middleware Distributed Rate Limiter qua Redis. | [x] Done | High | `createRateLimiter` Token Bucket trong `rateLimiter.middleware.ts` & Fallback an toàn. |
 | T3.3 | Bảo mật & Auth | Xây dựng Middleware Auth & Error Handler tập trung. | [x] Done | High | `auth.middleware.ts` tra cứu Session/Blacklist, `error.middleware.ts` masking lỗi production. |
 | T3.4 | Bảo mật & Auth | Xây dựng API Đăng ký (Register) & Băm Argon2id. | [x] Done | High | Validation Zod schema, từ chối mật khẩu yếu, băm Argon2id, tạo ví mặc định tự động. |
-| T3.5 | Bảo mật & Auth | Xây dựng Luồng Xác thực Email qua Signed HMAC Token. | [x] Done | High | Token chữ ký HMAC 15 phút, chống enumeration email, API verify & resend. |
+| T3.5 | Bảo mật & Auth | Chuẩn hóa Xác thực Email bằng mã OTP 6 số tự nhiên. | [x] Done | High | OTP 6 chữ số (Node crypto.randomInt), TTL 10 phút, giới hạn 5 lần sai, cooldown 60s, tự động đăng nhập khi kích hoạt thành công. |
 | T3.6 | Bảo mật & Auth | Xây dựng API Đăng nhập (Login) cấp Dual JWT Token. | [x] Done | High | Access Token (15m in-memory) + Refresh Token (7d HttpOnly Secure SameSite Cookie), lockout 5 lần sai. |
 | T3.7 | Bảo mật & Auth | Xây dựng API Refresh Token (Xoay vòng RTR). | [x] Done | High | Thu hồi token cũ, cấp mới cặp token, phát hiện và hủy session nếu token bị tái sử dụng. |
 | T3.8 | Bảo mật & Auth | Xây dựng API Đăng xuất (Logout) & Token Blacklist. | [x] Done | High | Thu hồi Refresh token trong sessionStore, đưa Access token vào blacklist. |
