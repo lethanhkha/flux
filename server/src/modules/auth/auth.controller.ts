@@ -37,6 +37,11 @@ export class AuthController {
     try {
       const validated = verifyEmailSchema.parse(req.body);
       const result = await authService.verifyEmail(validated);
+
+      if (result.refreshToken) {
+        res.cookie('refreshToken', result.refreshToken, COOKIE_OPTIONS);
+      }
+
       res.status(200).json({ status: 'success', data: result });
     } catch (error) {
       next(error);

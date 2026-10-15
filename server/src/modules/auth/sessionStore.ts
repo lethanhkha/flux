@@ -8,6 +8,12 @@ interface MemorySession {
   expiresAt: number;
 }
 
+interface MemoryEmailOtp {
+  code: string;
+  attempts: number;
+  expiresAt: number;
+}
+
 /**
  * High-performance, resilient Token & Session Store
  * Primary: Redis (Distributed)
@@ -16,6 +22,8 @@ interface MemorySession {
 class SessionStore {
   private memorySessions: Map<string, MemorySession> = new Map();
   private memoryBlacklist: Map<string, number> = new Map();
+  private memoryEmailOtps: Map<string, MemoryEmailOtp> = new Map();
+  private memoryOtpCooldowns: Map<string, number> = new Map();
 
   constructor() {
     // Run memory cleanup every 5 minutes
@@ -29,6 +37,16 @@ class SessionStore {
       for (const [token, expiresAt] of this.memoryBlacklist.entries()) {
         if (expiresAt <= now) {
           this.memoryBlacklist.delete(token);
+        }
+      }
+      for (const [email, otp] of this.memoryEmailOtps.entries()) {
+        if (otp.expiresAt <= now) {
+          this.memoryEmailOtps.delete(email);
+        }
+      }
+      for (const [email, expiresAt] of this.memoryOtpCooldowns.entries()) {
+        if (expiresAt <= now) {
+          this.memoryOtpCooldowns.delete(email);
         }
       }
     }, 5 * 60 * 1000).unref();
@@ -173,6 +191,155 @@ class SessionStore {
     }
 
     return false;
+  }
+
+  /**
+   * Save a 6-digit numeric OTP for email verification
+   * @param email User email (normalized lowercase)
+   * @param otpCode 6-digit OTP string
+   * @param ttlSeconds TTL in seconds (default 10 minutes = 600)
+   */
+  async saveEmailOtp(email: string, otpCode: string, ttlSeconds = 600): Promise<void> {
+    const normalizedEmail = email.toLowerCase().trim();
+    const otpKey = `email_otp:${normalizedEmail}`;
+    const cooldownKey = `email_otp_cooldown:${normalizedEmail}`;
+    const data = JSON.stringify({ code: otpCode, attempts: 0 });
+
+    try {
+      if (redis.status === 'ready' || redis.status === 'connect') {
+        await redis.set(otpKey, data, 'EX', ttlSeconds);
+        await redis.set(cooldownKey, '1', 'EX', 60); // 60s cooldown
+        return;
+      }
+    } catch {
+      // Degrade to in-memory
+    }
+
+    const now = Date.now();
+    this.memoryEmailOtps.set(normalizedEmail, {
+      code: otpCode,
+      attempts: 0,
+      expiresAt: now + ttlSeconds * 1000,
+    });
+    this.memoryOtpCooldowns.set(normalizedEmail, now + 60 * 1000);
+  }
+
+  /**
+   * Check if user is allowed to request a new email OTP (rate limit / cooldown)
+   */
+  async canResendEmailOtp(email: string): Promise<{ allowed: boolean; remainingSeconds: number }> {
+    const normalizedEmail = email.toLowerCase().trim();
+    const cooldownKey = `email_otp_cooldown:${normalizedEmail}`;
+
+    try {
+      if (redis.status === 'ready' || redis.status === 'connect') {
+        const ttl = await redis.ttl(cooldownKey);
+        if (ttl > 0) {
+          return { allowed: false, remainingSeconds: ttl };
+        }
+        return { allowed: true, remainingSeconds: 0 };
+      }
+    } catch {
+      // Degrade to in-memory
+    }
+
+    const memCooldown = this.memoryOtpCooldowns.get(normalizedEmail);
+    if (memCooldown && memCooldown > Date.now()) {
+      const remainingSeconds = Math.ceil((memCooldown - Date.now()) / 1000);
+      return { allowed: false, remainingSeconds };
+    }
+
+    return { allowed: true, remainingSeconds: 0 };
+  }
+
+  /**
+   * Verify 6-digit numeric OTP with brute-force attempt limiter (max 5 tries)
+   */
+  async verifyEmailOtp(
+    email: string,
+    inputCode: string
+  ): Promise<{
+    valid: boolean;
+    reason?: 'EXPIRED' | 'MAX_ATTEMPTS' | 'INCORRECT';
+    remainingAttempts?: number;
+  }> {
+    const normalizedEmail = email.toLowerCase().trim();
+    const otpKey = `email_otp:${normalizedEmail}`;
+    const trimmedInput = inputCode.trim();
+
+    try {
+      if (redis.status === 'ready' || redis.status === 'connect') {
+        const raw = await redis.get(otpKey);
+        if (!raw) {
+          return { valid: false, reason: 'EXPIRED' };
+        }
+
+        const otpData: { code: string; attempts: number } = JSON.parse(raw);
+        if (otpData.attempts >= 5) {
+          await redis.del(otpKey);
+          return { valid: false, reason: 'MAX_ATTEMPTS', remainingAttempts: 0 };
+        }
+
+        if (otpData.code === trimmedInput) {
+          await redis.del(otpKey);
+          return { valid: true };
+        }
+
+        // Increment attempt count
+        const newAttempts = otpData.attempts + 1;
+        if (newAttempts >= 5) {
+          await redis.del(otpKey);
+          return { valid: false, reason: 'MAX_ATTEMPTS', remainingAttempts: 0 };
+        }
+
+        // Update attempts with remaining TTL
+        const remainingTtl = await redis.ttl(otpKey);
+        if (remainingTtl > 0) {
+          await redis.set(
+            otpKey,
+            JSON.stringify({ code: otpData.code, attempts: newAttempts }),
+            'EX',
+            remainingTtl
+          );
+        }
+
+        return {
+          valid: false,
+          reason: 'INCORRECT',
+          remainingAttempts: 5 - newAttempts,
+        };
+      }
+    } catch {
+      // Degrade to memory
+    }
+
+    const mem = this.memoryEmailOtps.get(normalizedEmail);
+    if (!mem || mem.expiresAt <= Date.now()) {
+      this.memoryEmailOtps.delete(normalizedEmail);
+      return { valid: false, reason: 'EXPIRED' };
+    }
+
+    if (mem.attempts >= 5) {
+      this.memoryEmailOtps.delete(normalizedEmail);
+      return { valid: false, reason: 'MAX_ATTEMPTS', remainingAttempts: 0 };
+    }
+
+    if (mem.code === trimmedInput) {
+      this.memoryEmailOtps.delete(normalizedEmail);
+      return { valid: true };
+    }
+
+    mem.attempts += 1;
+    if (mem.attempts >= 5) {
+      this.memoryEmailOtps.delete(normalizedEmail);
+      return { valid: false, reason: 'MAX_ATTEMPTS', remainingAttempts: 0 };
+    }
+
+    return {
+      valid: false,
+      reason: 'INCORRECT',
+      remainingAttempts: 5 - mem.attempts,
+    };
   }
 }
 

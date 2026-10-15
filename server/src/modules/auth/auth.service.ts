@@ -146,23 +146,60 @@ export class AuthService {
       return user;
     });
 
-    // Generate signed HMAC verification token (15 mins)
+    // Generate secure 6-digit numeric OTP (10 mins TTL) and save to sessionStore
+    const otpCode = crypto.randomInt(100000, 1000000).toString();
+    await sessionStore.saveEmailOtp(newUser.email, otpCode, 10 * 60);
+
+    // Also generate legacy verificationToken for backward compatibility
     const verificationToken = this.generateHmacToken(newUser.email, 15 * 60 * 1000);
 
     return {
       user: this.formatUser(newUser),
+      otpCode,
       verificationToken,
-      message: 'Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.',
+      message: 'Đăng ký thành công! Vui lòng nhập mã OTP 6 chữ số để kích hoạt tài khoản.',
     };
   }
 
   /**
-   * 2. Verify email address via signed token
+   * 2. Verify email address via 6-digit OTP code (or fallback signed token)
    */
   async verifyEmail(input: VerifyEmailInput) {
-    const isValid = this.verifyHmacToken(input.email, input.token);
-    if (!isValid) {
-      throw new AppError('Mã xác thực không hợp lệ hoặc đã hết hạn (15 phút).', 400);
+    const rawCode = input.code || input.token;
+    if (!rawCode) {
+      throw new AppError('Mã xác thực kích hoạt là bắt buộc.', 400);
+    }
+
+    const trimmedCode = rawCode.trim();
+    const is6DigitOtp = /^\d{6}$/.test(trimmedCode);
+
+    if (is6DigitOtp) {
+      const otpCheck = await sessionStore.verifyEmailOtp(input.email, trimmedCode);
+      if (!otpCheck.valid) {
+        if (otpCheck.reason === 'MAX_ATTEMPTS') {
+          throw new AppError(
+            'Bạn đã nhập sai mã kích hoạt quá 5 lần. Vui lòng bấm gửi lại mã mới.',
+            400
+          );
+        }
+        if (otpCheck.reason === 'EXPIRED') {
+          throw new AppError(
+            'Mã xác thực đã hết hạn hoặc không tồn tại. Vui lòng gửi lại mã mới.',
+            400
+          );
+        }
+        const remainingText =
+          otpCheck.remainingAttempts !== undefined
+            ? ` (Còn lại ${otpCheck.remainingAttempts} lần thử)`
+            : '';
+        throw new AppError(`Mã xác thực không chính xác${remainingText}. Vui lòng kiểm tra lại.`, 400);
+      }
+    } else {
+      // Legacy HMAC token check
+      const isValid = this.verifyHmacToken(input.email, trimmedCode);
+      if (!isValid) {
+        throw new AppError('Mã xác thực không hợp lệ hoặc đã hết hạn (15 phút).', 400);
+      }
     }
 
     const user = await prisma.user.findUnique({
@@ -173,26 +210,24 @@ export class AuthService {
       throw new AppError('Không tìm thấy tài khoản người dùng.', 404);
     }
 
-    if (user.isEmailVerified) {
-      return {
-        user: this.formatUser(user),
-        message: 'Tài khoản của bạn đã được xác thực trước đó.',
-      };
-    }
-
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: { isEmailVerified: true },
     });
 
+    // Auto-login: Issue Dual JWT tokens (Access + Refresh with RTR)
+    const tokens = await this.issueTokens(updatedUser);
+
     return {
       user: this.formatUser(updatedUser),
-      message: 'Xác thực email thành công! Bạn có thể sử dụng đầy đủ các tính năng.',
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      message: 'Kích hoạt tài khoản thành công! Chào mừng bạn đến với Flux.',
     };
   }
 
   /**
-   * 3. Resend email verification token
+   * 3. Resend email verification 6-digit OTP
    */
   async resendVerification(email: string) {
     const user = await prisma.user.findUnique({
@@ -202,15 +237,29 @@ export class AuthService {
     // Anti-enumeration: return friendly message even if user not found
     if (!user || user.isEmailVerified) {
       return {
-        message: 'Nếu tài khoản tồn tại và chưa xác thực, email kích hoạt đã được gửi.',
+        message: 'Nếu tài khoản tồn tại và chưa xác thực, mã kích hoạt mới đã được gửi.',
       };
     }
+
+    // Rate-limit check (60-second cooldown)
+    const cooldown = await sessionStore.canResendEmailOtp(user.email);
+    if (!cooldown.allowed) {
+      throw new AppError(
+        `Vui lòng chờ ${cooldown.remainingSeconds} giây trước khi yêu cầu gửi lại mã mới.`,
+        429
+      );
+    }
+
+    // Generate new 6-digit numeric OTP (10 mins TTL)
+    const otpCode = crypto.randomInt(100000, 1000000).toString();
+    await sessionStore.saveEmailOtp(user.email, otpCode, 10 * 60);
 
     const verificationToken = this.generateHmacToken(user.email, 15 * 60 * 1000);
 
     return {
+      otpCode,
       verificationToken,
-      message: 'Mã xác thực mới đã được tạo thành công.',
+      message: 'Mã xác thực 6 số mới đã được tạo thành công.',
     };
   }
 

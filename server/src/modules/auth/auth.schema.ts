@@ -39,10 +39,20 @@ export const loginSchema = z.object({
     .optional(),
 });
 
-export const verifyEmailSchema = z.object({
-  email: z.string().email().toLowerCase().trim(),
-  token: z.string().min(10, 'Mã xác thực không hợp lệ'),
-});
+export const verifyEmailSchema = z
+  .object({
+    email: z
+      .string({ required_error: 'Email là bắt buộc' })
+      .email('Địa chỉ email không hợp lệ')
+      .toLowerCase()
+      .trim(),
+    code: z.string().min(1, 'Mã xác thực là bắt buộc').optional(),
+    token: z.string().optional(),
+  })
+  .refine((data) => !!(data.code || data.token), {
+    message: 'Vui lòng cung cấp mã xác thực kích hoạt',
+    path: ['code'],
+  });
 
 export const resendVerificationSchema = z.object({
   email: z.string().email().toLowerCase().trim(),
