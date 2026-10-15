@@ -49,7 +49,23 @@ export const transferMoneySchema = z.object({
   note: z.string().max(500).optional().default('Chuyển tiền nội bộ giữa các ví'),
 });
 
+export const createCategorySchema = z.object({
+  name: z.string({ required_error: 'Tên danh mục là bắt buộc' }).min(1, 'Tên không được để trống').max(100).trim(),
+  type: z.enum(['INCOME', 'EXPENSE', 'TRANSFER']).default('EXPENSE'),
+  icon: z.string().optional().default('Tag'),
+  color: z.string().optional().default('#6366F1'),
+});
+
+export const updateCategorySchema = z.object({
+  name: z.string().min(1, 'Tên không được để trống').max(100).trim().optional(),
+  type: z.enum(['INCOME', 'EXPENSE', 'TRANSFER']).optional(),
+  icon: z.string().optional(),
+  color: z.string().optional(),
+});
+
 export type CreateWalletInput = z.infer<typeof createWalletSchema>;
 export type UpdateWalletInput = z.infer<typeof updateWalletSchema>;
 export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
 export type TransferMoneyInput = z.infer<typeof transferMoneySchema>;
+export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
+export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;

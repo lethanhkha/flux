@@ -6,6 +6,8 @@ import {
   UpdateWalletInput,
   CreateTransactionInput,
   TransferMoneyInput,
+  CreateCategoryInput,
+  UpdateCategoryInput,
 } from './finance.schema';
 
 export class FinanceService {
@@ -84,6 +86,7 @@ export class FinanceService {
     userId: string,
     filter?: {
       walletId?: string;
+      category?: string;
       type?: 'INCOME' | 'EXPENSE' | 'TRANSFER';
       limit?: number;
       offset?: number;
@@ -100,6 +103,10 @@ export class FinanceService {
 
     if (filter?.type) {
       where.type = filter.type;
+    }
+
+    if (filter?.category) {
+      where.category = filter.category;
     }
 
     const [total, items] = await Promise.all([
@@ -266,6 +273,113 @@ export class FinanceService {
       netCashflow: monthlyIncome.minus(monthlyExpense).toNumber(),
       categoryBreakdown,
     };
+  }
+
+  /**
+   * 9. Default categories list
+   */
+  getDefaultCategories() {
+    return [
+      { name: 'Ăn uống & Cafe', type: 'EXPENSE', icon: 'Utensils', color: '#F97316' },
+      { name: 'Mua sắm & Tiêu dùng', type: 'EXPENSE', icon: 'ShoppingBag', color: '#EC4899' },
+      { name: 'Di chuyển & Xăng xe', type: 'EXPENSE', icon: 'Car', color: '#3B82F6' },
+      { name: 'Tiền nhà & Hóa đơn', type: 'EXPENSE', icon: 'Home', color: '#EF4444' },
+      { name: 'Giải trí & Du lịch', type: 'EXPENSE', icon: 'Compass', color: '#8B5CF6' },
+      { name: 'Lương & Thưởng', type: 'INCOME', icon: 'Briefcase', color: '#10B981' },
+      { name: 'Lợi nhuận đầu tư', type: 'INCOME', icon: 'TrendingUp', color: '#06B6D4' },
+      { name: 'Kinh doanh & Dự án', type: 'INCOME', icon: 'DollarSign', color: '#6366F1' },
+      { name: 'Khác', type: 'EXPENSE', icon: 'MoreHorizontal', color: '#64748B' },
+    ];
+  }
+
+  /**
+   * 10. Get all categories for user (seeds defaults if user has none)
+   */
+  async getCategories(userId: string) {
+    let categories = await prisma.category.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    if (categories.length === 0) {
+      const defaults = this.getDefaultCategories();
+      await prisma.category.createMany({
+        data: defaults.map((d) => ({
+          userId,
+          name: d.name,
+          type: d.type,
+          icon: d.icon,
+          color: d.color,
+        })),
+      });
+      categories = await prisma.category.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'asc' },
+      });
+    }
+
+    return categories;
+  }
+
+  /**
+   * 11. Create a custom category
+   */
+  async createCategory(userId: string, input: CreateCategoryInput) {
+    return prisma.category.create({
+      data: {
+        userId,
+        name: input.name,
+        type: input.type,
+        icon: input.icon,
+        color: input.color,
+      },
+    });
+  }
+
+  /**
+   * 12. Update category & cascade update transactions historical records
+   */
+  async updateCategory(userId: string, categoryId: string, input: UpdateCategoryInput) {
+    const existing = await prisma.category.findFirst({
+      where: { id: categoryId, userId },
+    });
+
+    if (!existing) {
+      throw new AppError('Không tìm thấy danh mục.', 404);
+    }
+
+    const updated = await prisma.category.update({
+      where: { id: categoryId },
+      data: input,
+    });
+
+    if (input.name && input.name !== existing.name) {
+      await prisma.transaction.updateMany({
+        where: { userId, category: existing.name },
+        data: { category: input.name },
+      });
+    }
+
+    return updated;
+  }
+
+  /**
+   * 13. Delete category
+   */
+  async deleteCategory(userId: string, categoryId: string) {
+    const existing = await prisma.category.findFirst({
+      where: { id: categoryId, userId },
+    });
+
+    if (!existing) {
+      throw new AppError('Không tìm thấy danh mục.', 404);
+    }
+
+    await prisma.category.delete({
+      where: { id: categoryId },
+    });
+
+    return { message: 'Đã xóa danh mục thành công.' };
   }
 }
 

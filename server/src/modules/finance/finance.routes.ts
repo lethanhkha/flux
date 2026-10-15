@@ -18,6 +18,12 @@ router.get('/transactions', financeController.getTransactions);
 router.post('/transactions', financeController.createTransaction);
 router.post('/transfer', financeController.transferMoney);
 
+// Category endpoints
+router.get('/categories', financeController.getCategories);
+router.post('/categories', financeController.createCategory);
+router.patch('/categories/:id', financeController.updateCategory);
+router.delete('/categories/:id', financeController.deleteCategory);
+
 // Financial summary endpoint
 router.get('/summary', financeController.getSummary);
 

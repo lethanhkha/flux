@@ -5,6 +5,8 @@ import {
   updateWalletSchema,
   createTransactionSchema,
   transferMoneySchema,
+  createCategorySchema,
+  updateCategorySchema,
 } from './finance.schema';
 
 export class FinanceController {
@@ -52,10 +54,11 @@ export class FinanceController {
 
   async getTransactions(req: Request, res: Response, next: NextFunction) {
     try {
-      const { walletId, type, limit, offset } = req.query;
+      const { walletId, type, category, limit, offset } = req.query;
       const result = await financeService.getTransactions(req.user!.userId, {
         walletId: walletId as string,
         type: type as any,
+        category: category as string,
         limit: limit ? parseInt(limit as string, 10) : undefined,
         offset: offset ? parseInt(offset as string, 10) : undefined,
       });
@@ -89,6 +92,48 @@ export class FinanceController {
     try {
       const summary = await financeService.getFinanceSummary(req.user!.userId);
       res.status(200).json({ status: 'success', data: summary });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getCategories(req: Request, res: Response, next: NextFunction) {
+    try {
+      const categories = await financeService.getCategories(req.user!.userId);
+      res.status(200).json({ status: 'success', data: categories });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async createCategory(req: Request, res: Response, next: NextFunction) {
+    try {
+      const validated = createCategorySchema.parse(req.body);
+      const category = await financeService.createCategory(req.user!.userId, validated);
+      res.status(201).json({ status: 'success', data: category });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateCategory(req: Request, res: Response, next: NextFunction) {
+    try {
+      const validated = updateCategorySchema.parse(req.body);
+      const category = await financeService.updateCategory(
+        req.user!.userId,
+        req.params.id,
+        validated
+      );
+      res.status(200).json({ status: 'success', data: category });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteCategory(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await financeService.deleteCategory(req.user!.userId, req.params.id);
+      res.status(200).json({ status: 'success', data: result });
     } catch (error) {
       next(error);
     }
