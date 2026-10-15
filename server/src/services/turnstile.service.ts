@@ -38,7 +38,12 @@ class TurnstileService {
       const formData = new URLSearchParams();
       formData.append('secret', env.CLOUDFLARE_TURNSTILE_SECRET_KEY);
       formData.append('response', token.trim());
-      if (remoteIp) {
+      if (
+        remoteIp &&
+        remoteIp !== '::1' &&
+        remoteIp !== '127.0.0.1' &&
+        !remoteIp.startsWith('::ffff:127.0.0.1')
+      ) {
         formData.append('remoteip', remoteIp);
       }
 
