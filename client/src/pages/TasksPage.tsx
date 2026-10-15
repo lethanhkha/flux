@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { apiClient } from '../api/client';
 import {
   CheckSquare,
   Plus,
@@ -79,7 +80,39 @@ export const TasksPage: React.FC = () => {
   const [newTaskPriority, setNewTaskPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'>('MEDIUM');
   const [newTaskDue, setNewTaskDue] = useState('Hôm nay, 18:00');
 
-  const toggleTaskStatus = (id: string) => {
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const res = await apiClient.get('/tasks');
+        if (res.data.data?.length > 0) {
+          setTasks(
+            res.data.data.map((t: any) => ({
+              id: t.id,
+              title: t.title,
+              description: t.description || undefined,
+              status: t.status,
+              priority: t.priority,
+              dueDate: t.dueDate
+                ? new Date(t.dueDate).toLocaleDateString('vi-VN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+                : 'Không có hạn',
+              isRecurring: t.isRecurring,
+              recurrenceRule: t.recurrenceRule || undefined,
+            }))
+          );
+        }
+      } catch {
+        // Fallback to initial prototype data seamlessly
+      }
+    };
+
+    fetchTasks();
+  }, []);
+
+  const toggleTaskStatus = async (id: string) => {
+    // Optimistic UI update
     setTasks((prev) =>
       prev.map((t) => {
         if (t.id === id) {
@@ -92,9 +125,18 @@ export const TasksPage: React.FC = () => {
         return t;
       })
     );
+
+    try {
+      const res = await apiClient.patch(`/tasks/${id}/toggle`);
+      if (res.data.data?.nextRecurringTask) {
+        toast.info('Recurring Engine: Đã tự động tạo chu kỳ việc mới!');
+      }
+    } catch {
+      // Degrade gracefully in prototype view
+    }
   };
 
-  const handleAddTask = (e: React.FormEvent) => {
+  const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
 
@@ -111,6 +153,16 @@ export const TasksPage: React.FC = () => {
     setNewTaskTitle('');
     setIsAddModalOpen(false);
     toast.success('Đã thêm công việc mới vào danh sách!');
+
+    try {
+      await apiClient.post('/tasks', {
+        title: newTaskTitle,
+        priority: newTaskPriority,
+        status: 'TODO',
+      });
+    } catch {
+      // Degrade gracefully
+    }
   };
 
   const filteredTasks = tasks.filter((t) => {
