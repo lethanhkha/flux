@@ -64,6 +64,7 @@ Bảng công việc chi tiết được cập nhật chính xác theo tiến đ�
 | T3.9 | Bảo mật & Auth | Triển khai Xác thực 2 yếu tố (2FA / TOTP RFC 6238). | [x] Done | High | API tạo Secret TOTP, xuất QR Code, xác thực OTP và cấp 8 mã dự phòng băm SHA-256. |
 | T3.10| Bảo mật & Auth | Xây dựng API Quên mật khẩu & Đổi mật khẩu. | [x] Done | Med | Yêu cầu mật khẩu hiện tại khi đổi, gửi link reset có chữ ký HMAC bảo mật. |
 | T3.11| Bảo mật & Auth | Xây dựng Giao diện Frontend cho Auth (Login, Register, 2FA).| [x] Done | High | Kết nối API client với in-memory token, tự động RTR trên 401, Toaster Sonner. |
+| T3.12| Bảo mật & Auth | Tích hợp Đăng nhập Google OAuth2 (Login, Register & Callback). | [x] Done | High | Chuẩn hóa OAuth2 Authorization Code flow, tự động liên kết tài khoản Gmail, tạo ví mặc định và cấp Dual JWT session. |
 | **P4** | **Bảng điều khiển Tổng hợp (Personal Dashboard)** | | | | |
 | T4.1 | Dashboard Tổng hợp | Widget Tài chính Tổng hợp (Tổng số dư, biến động thu/chi tháng). | [x] Done | High | Định dạng tiền tệ tabular-nums, tổng hợp động từ transactions & wallets live. |
 | T4.2 | Dashboard Tổng hợp | Widget Smart To-Do (5 công việc khẩn cấp nhất). | [x] Done | High | Lọc tự động Quá hạn -> Hôm nay -> High Priority; tương tác tick hoàn thành trực tiếp. |
