@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Shield,
   KeyRound,
@@ -21,10 +21,19 @@ export const SettingsPage: React.FC = () => {
 
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(user?.twoFactorEnabled || false);
   const [is2FAModalOpen, setIs2FAModalOpen] = useState(false);
+  const [isDisable2FAModalOpen, setIsDisable2FAModalOpen] = useState(false);
+  const [disablePassword, setDisablePassword] = useState('');
+  const [isDisabling2FA, setIsDisabling2FA] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [secret, setSecret] = useState<string>('');
   const [otpInput, setOtpInput] = useState('');
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      setTwoFactorEnabled(user.twoFactorEnabled);
+    }
+  }, [user]);
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -59,6 +68,25 @@ export const SettingsPage: React.FC = () => {
       toast.success('Kích hoạt xác thực 2 bước (2FA) thành công!');
     } catch (err: any) {
       toast.error(getErrorMessage(err, 'Mã OTP không chính xác.'));
+    }
+  };
+
+  const handleDisable2FA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsDisabling2FA(true);
+    try {
+      await apiClient.post('/auth/2fa/disable', {
+        password: disablePassword,
+      });
+      setTwoFactorEnabled(false);
+      setIsDisable2FAModalOpen(false);
+      setDisablePassword('');
+      await refreshUser();
+      toast.success('Đã hủy kích hoạt xác thực 2 bước (2FA).');
+    } catch (err: any) {
+      toast.error(getErrorMessage(err, 'Mật khẩu xác nhận không đúng hoặc không thể hủy 2FA.'));
+    } finally {
+      setIsDisabling2FA(false);
     }
   };
 
@@ -155,16 +183,27 @@ export const SettingsPage: React.FC = () => {
               </p>
             </div>
 
-            <button
-              onClick={handleOpen2FASetup}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                twoFactorEnabled
-                  ? 'border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
-                  : 'bg-brand hover:bg-brand-hover text-white shadow-md shadow-brand/20'
-              }`}
-            >
-              {twoFactorEnabled ? 'Cấu hình lại 2FA' : 'Kích Hoạt 2FA Ngay'}
-            </button>
+            <div className="flex items-center gap-2">
+              {twoFactorEnabled && (
+                <button
+                  type="button"
+                  onClick={() => setIsDisable2FAModalOpen(true)}
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 transition-all cursor-pointer"
+                >
+                  Tắt 2FA
+                </button>
+              )}
+              <button
+                onClick={handleOpen2FASetup}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  twoFactorEnabled
+                    ? 'border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    : 'bg-brand hover:bg-brand-hover text-white shadow-md shadow-brand/20'
+                }`}
+              >
+                {twoFactorEnabled ? 'Cấu hình lại' : 'Kích Hoạt 2FA Ngay'}
+              </button>
+            </div>
           </div>
 
           {/* Change Password */}
@@ -373,6 +412,63 @@ export const SettingsPage: React.FC = () => {
                   </button>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Disable 2FA Modal */}
+        {isDisable2FAModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm modal-backdrop-animate">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl modal-dialog-animate space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
+                    <Shield className="w-4 h-4" />
+                  </div>
+                  <h3 className="font-bold text-base">Tắt Xác Thực 2FA</h3>
+                </div>
+                <button
+                  onClick={() => setIsDisable2FAModalOpen(false)}
+                  className="p-1 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleDisable2FA} className="space-y-4 text-xs">
+                <p className="text-slate-500 leading-relaxed">
+                  Để đảm bảo an toàn, vui lòng nhập mật khẩu hiện tại của bạn để tắt xác thực 2 bước:
+                </p>
+
+                <div>
+                  <label className="font-semibold block mb-1">Mật khẩu của bạn</label>
+                  <input
+                    type="password"
+                    required
+                    value={disablePassword}
+                    onChange={(e) => setDisablePassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-mono text-sm"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setIsDisable2FAModalOpen(false)}
+                    className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    Hủy Bỏ
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isDisabling2FA}
+                    className="flex-1 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold transition-colors disabled:opacity-50 cursor-pointer shadow-md shadow-rose-500/20"
+                  >
+                    {isDisabling2FA ? 'Đang tắt...' : 'Xác Nhận Tắt'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

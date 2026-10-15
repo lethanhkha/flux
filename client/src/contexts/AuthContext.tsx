@@ -55,6 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       // Ignore network errors on logout
     } finally {
+      localStorage.removeItem('flux_has_session');
       setAccessToken(null);
       setUser(null);
     }
@@ -71,14 +72,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const hasInitializedAuth = useRef(false);
 
-  // Try silent refresh on initial app load
+  // Try silent refresh on initial app load only if previously logged in
   useEffect(() => {
     registerLogoutCallback(() => {
+      localStorage.removeItem('flux_has_session');
       setUser(null);
     });
 
     if (hasInitializedAuth.current) return;
     hasInitializedAuth.current = true;
+
+    const hasSessionHint = localStorage.getItem('flux_has_session') === 'true';
+    if (!hasSessionHint) {
+      setIsLoading(false);
+      return;
+    }
 
     const initAuth = async () => {
       try {
@@ -86,8 +94,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const token = res.data.data.accessToken;
         setAccessToken(token);
         setUser(res.data.data.user);
+        localStorage.setItem('flux_has_session', 'true');
       } catch {
-        // No active session cookie
+        // Active session cookie expired or revoked
+        localStorage.removeItem('flux_has_session');
         setAccessToken(null);
         setUser(null);
       } finally {
@@ -118,6 +128,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return data;
     }
 
+    localStorage.setItem('flux_has_session', 'true');
     setAccessToken(data.accessToken);
     setUser(data.user);
     return data;
@@ -131,6 +142,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     const data = res.data.data;
+    localStorage.setItem('flux_has_session', 'true');
     setAccessToken(data.accessToken);
     setUser(data.user);
     return data;
@@ -158,6 +170,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     const data = res.data.data;
     if (data.accessToken) {
+      localStorage.setItem('flux_has_session', 'true');
       setAccessToken(data.accessToken);
       setUser(data.user);
     }

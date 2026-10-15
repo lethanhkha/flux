@@ -22,31 +22,14 @@ export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
 
   const [financeSummary, setFinanceSummary] = useState({
-    totalBalance: 48500000,
-    monthlyIncome: 25000000,
-    monthlyExpense: 8300000,
-    activeWalletsCount: 3,
+    totalBalance: 0,
+    monthlyIncome: 0,
+    monthlyExpense: 0,
+    activeWalletsCount: 1,
   });
 
-  const [tasks, setTasks] = useState([
-    { id: '1', title: 'Thanh toán tiền điện & Internet tháng 10', completed: true, urgent: false, due: 'Đã xong' },
-    { id: '2', title: 'Hoàn thành báo cáo tài chính cá nhân Q3', completed: false, urgent: true, due: 'Hôm nay, 17:00' },
-    { id: '3', title: 'Đọc 20 trang sách "Tâm lý học về tiền"', completed: false, urgent: false, due: '21:00' },
-    { id: '4', title: 'Kiểm tra sao kê thẻ tín dụng Techcombank', completed: false, urgent: false, due: 'Ngày mai' },
-  ]);
-
-  const [pinnedNotes, setPinnedNotes] = useState([
-    {
-      id: 'n1',
-      title: 'Kế hoạch tích lũy tài chính 2027',
-      snippet: 'Mục tiêu tích lũy 5 triệu/tháng vào quỹ đầu tư chỉ số VN30, phân bổ 3 ví dự phòng khẩn cấp...',
-    },
-    {
-      id: 'n2',
-      title: 'Checklist du lịch Đà Lạt cuối tuần',
-      snippet: 'CCCD gắn chip, sạc dự phòng 20000mAh, thuốc chống say xe, áo ấm chống sương mù...',
-    },
-  ]);
+  const [tasks, setTasks] = useState<Array<{ id: string; title: string; completed: boolean; urgent: boolean; due: string }>>([]);
+  const [pinnedNotes, setPinnedNotes] = useState<Array<{ id: string; title: string; snippet: string }>>([]);
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -56,14 +39,14 @@ export const DashboardPage: React.FC = () => {
 
         if (data.finance) {
           setFinanceSummary({
-            totalBalance: data.finance.totalBalance || 0,
-            monthlyIncome: data.finance.monthlyIncome || 0,
-            monthlyExpense: data.finance.monthlyExpense || 0,
-            activeWalletsCount: data.finance.activeWalletsCount || 1,
+            totalBalance: Number(data.finance.totalBalance) || 0,
+            monthlyIncome: Number(data.finance.monthlyIncome) || 0,
+            monthlyExpense: Number(data.finance.monthlyExpense) || 0,
+            activeWalletsCount: Number(data.finance.activeWalletsCount) || 1,
           });
         }
 
-        if (data.priorityTasks?.length > 0) {
+        if (Array.isArray(data.priorityTasks)) {
           setTasks(
             data.priorityTasks.map((t: any) => ({
               id: t.id,
@@ -77,12 +60,12 @@ export const DashboardPage: React.FC = () => {
           );
         }
 
-        if (data.pinnedNotes?.length > 0) {
+        if (Array.isArray(data.pinnedNotes)) {
           setPinnedNotes(
             data.pinnedNotes.map((n: any) => ({
               id: n.id,
               title: n.title,
-              snippet: n.content.replace(/#/g, '').slice(0, 100),
+              snippet: (n.content || '').replace(/#/g, '').slice(0, 100),
             }))
           );
         }
@@ -137,7 +120,13 @@ export const DashboardPage: React.FC = () => {
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Hôm nay bạn có <span className="font-semibold text-slate-900 dark:text-slate-100">{tasks.length - completedCount} việc cần làm</span> và số dư các ví đang tăng trưởng ổn định.
+              {tasks.length > 0 ? (
+                <>
+                  Hôm nay bạn có <span className="font-semibold text-slate-900 dark:text-slate-100">{tasks.length - completedCount} việc cần làm</span> và số dư các ví đang tăng trưởng ổn định.
+                </>
+              ) : (
+                'Không có công việc khẩn cấp nào cần giải quyết. Chúc bạn một ngày làm việc hiệu quả!'
+              )}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -205,41 +194,52 @@ export const DashboardPage: React.FC = () => {
                   {completedCount} / {tasks.length} xong
                 </span>
               </div>
-              <div className="mt-4 space-y-2.5">
-                {tasks.map((task) => (
-                  <div
-                    key={task.id}
-                    onClick={() => toggleTask(task.id)}
-                    className="flex items-center gap-2.5 text-xs p-1.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={task.completed}
-                      onChange={() => {}}
-                      className="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand checkbox-pop cursor-pointer"
-                    />
-                    <span
-                      className={`flex-1 line-clamp-1 transition-all ${
-                        task.completed
-                          ? 'line-through text-slate-400 dark:text-slate-500'
-                          : 'font-medium text-slate-800 dark:text-slate-200'
-                      }`}
+
+              {tasks.length === 0 ? (
+                <div className="mt-4 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-800 text-center space-y-1.5">
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Không có việc khẩn cấp nào! 🎉</p>
+                  <p className="text-[11px] text-slate-400">Bạn đã hoàn tất mọi mục tiêu hoặc chưa có việc gấp hôm nay.</p>
+                  <Link to="/tasks" className="inline-block pt-1 text-xs font-bold text-brand hover:underline">
+                    + Thêm việc mới
+                  </Link>
+                </div>
+              ) : (
+                <div className="mt-4 space-y-2.5">
+                  {tasks.map((task) => (
+                    <div
+                      key={task.id}
+                      onClick={() => toggleTask(task.id)}
+                      className="flex items-center gap-2.5 text-xs p-1.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
                     >
-                      {task.title}
-                    </span>
-                    {task.urgent && !task.completed && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-500 font-bold">
-                        Gấp
+                      <input
+                        type="checkbox"
+                        checked={task.completed}
+                        onChange={() => {}}
+                        className="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand checkbox-pop cursor-pointer"
+                      />
+                      <span
+                        className={`flex-1 line-clamp-1 transition-all ${
+                          task.completed
+                            ? 'line-through text-slate-400 dark:text-slate-500'
+                            : 'font-medium text-slate-800 dark:text-slate-200'
+                        }`}
+                      >
+                        {task.title}
                       </span>
-                    )}
-                  </div>
-                ))}
-              </div>
+                      {task.urgent && !task.completed && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-500 font-bold">
+                          Gấp
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
               <span className="flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5" /> Deadline gần nhất: 17:00
+                <Clock className="h-3.5 w-3.5" /> {tasks.length > 0 ? 'Deadline: Trong ngày' : 'Chưa có deadline'}
               </span>
               <Link to="/tasks" className="text-brand font-semibold hover:underline">
                 Xem tất cả
@@ -257,26 +257,37 @@ export const DashboardPage: React.FC = () => {
                 </div>
                 <span className="text-xs text-slate-500 font-medium">Markdown</span>
               </div>
-              <div className="mt-4 space-y-2.5">
-                {pinnedNotes.map((note) => (
-                  <Link
-                    key={note.id}
-                    to="/notes"
-                    className="block p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 hover:border-brand/40 transition-colors"
-                  >
-                    <div className="font-bold text-xs line-clamp-1 text-slate-800 dark:text-slate-200">
-                      {note.title}
-                    </div>
-                    <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">
-                      {note.snippet}
-                    </p>
+
+              {pinnedNotes.length === 0 ? (
+                <div className="mt-4 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-800 text-center space-y-1.5">
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Chưa có ghi chú nào được ghim 📌</p>
+                  <p className="text-[11px] text-slate-400">Ghim các ghi chú quan trọng để xem nhanh tại đây.</p>
+                  <Link to="/notes" className="inline-block pt-1 text-xs font-bold text-brand hover:underline">
+                    + Mở kho tri thức
                   </Link>
-                ))}
-              </div>
+                </div>
+              ) : (
+                <div className="mt-4 space-y-2.5">
+                  {pinnedNotes.map((note) => (
+                    <Link
+                      key={note.id}
+                      to="/notes"
+                      className="block p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 hover:border-brand/40 transition-colors"
+                    >
+                      <div className="font-bold text-xs line-clamp-1 text-slate-800 dark:text-slate-200">
+                        {note.title}
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">
+                        {note.snippet}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
-              <span>2 ghi chú ghim</span>
+              <span>{pinnedNotes.length} ghi chú ghim</span>
               <Link to="/notes" className="text-brand font-semibold hover:underline">
                 + Mở kho tri thức
               </Link>

@@ -32,6 +32,7 @@ export const AuthCallbackPage: React.FC = () => {
       const finishLogin = async () => {
         try {
           setAccessToken(token);
+          localStorage.setItem('flux_has_session', 'true');
           await refreshUser();
           toast.success('Đăng nhập thành công với tài khoản Google!');
           navigate('/dashboard', { replace: true });

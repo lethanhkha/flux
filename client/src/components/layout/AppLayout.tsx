@@ -43,9 +43,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   // Quick Action form fields
   const [txType, setTxType] = useState<'EXPENSE' | 'INCOME'>('EXPENSE');
-  const [txAmount, setTxAmount] = useState('120000');
+  const [txAmount, setTxAmount] = useState('');
   const [txCategory, setTxCategory] = useState('Ăn uống & Cafe');
-  const [txNote, setTxNote] = useState('Ăn trưa với đồng nghiệp');
+  const [txNote, setTxNote] = useState('');
   const [txWalletId, setTxWalletId] = useState('');
 
   const [taskTitle, setTaskTitle] = useState('');
@@ -303,7 +303,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     });
                     toast.success('Đã lưu giao dịch tài chính mới thành công!');
                     setIsQuickActionOpen(false);
-                    setTxAmount('120000');
+                    setTxAmount('');
                     setTxNote('');
                     window.dispatchEvent(new CustomEvent('flux:refresh-data'));
                   } catch (err: any) {

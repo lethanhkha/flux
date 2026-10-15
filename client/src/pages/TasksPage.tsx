@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { apiClient } from '../api/client';
+import { apiClient, getErrorMessage } from '../api/client';
 import {
   CheckSquare,
   Plus,
@@ -8,6 +8,7 @@ import {
   Layers,
   List,
   X,
+  Trash2,
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { toast } from 'sonner';
@@ -77,14 +78,18 @@ export const TasksPage: React.FC = () => {
   ]);
 
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'>('MEDIUM');
-  const [newTaskDue, setNewTaskDue] = useState('Hôm nay, 18:00');
+  const [newTaskDue, setNewTaskDue] = useState(() => new Date(Date.now() + 86400000).toISOString().slice(0, 16));
+  const [newTaskIsRecurring, setNewTaskIsRecurring] = useState(false);
+  const [newTaskRecurrenceRule, setNewTaskRecurrenceRule] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('WEEKLY');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchTasks = async () => {
       try {
         const res = await apiClient.get('/tasks');
-        if (res.data.data?.length > 0) {
+        if (Array.isArray(res.data.data)) {
           setTasks(
             res.data.data.map((t: any) => ({
               id: t.id,
@@ -99,7 +104,7 @@ export const TasksPage: React.FC = () => {
                   })
                 : 'Không có hạn',
               isRecurring: t.isRecurring,
-              recurrenceRule: t.recurrenceRule || undefined,
+              recurrenceRule: t.recurrenceRule === 'DAILY' ? 'Hàng ngày' : t.recurrenceRule === 'WEEKLY' ? 'Hàng tuần' : t.recurrenceRule === 'MONTHLY' ? 'Hàng tháng' : undefined,
             }))
           );
         }
@@ -136,8 +141,24 @@ export const TasksPage: React.FC = () => {
       if (res.data.data?.nextRecurringTask) {
         toast.info('Recurring Engine: Đã tự động tạo chu kỳ việc mới!');
       }
+      window.dispatchEvent(new CustomEvent('flux:refresh-data'));
     } catch {
       // Degrade gracefully in prototype view
+    }
+  };
+
+  const handleDeleteTask = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const taskToDelete = tasks.find((t) => t.id === id);
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+    toast.success('Đã xóa công việc khỏi danh sách.');
+
+    try {
+      await apiClient.delete(`/tasks/${id}`);
+      window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+    } catch {
+      if (taskToDelete) setTasks((prev) => [taskToDelete, ...prev]);
+      toast.error('Không thể xóa công việc.');
     }
   };
 
@@ -145,28 +166,54 @@ export const TasksPage: React.FC = () => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
 
+    setIsSubmitting(true);
+    const tempId = `task-${Date.now()}`;
     const newTask: TaskItem = {
-      id: `task-${Date.now()}`,
-      title: newTaskTitle,
+      id: tempId,
+      title: newTaskTitle.trim(),
+      description: newTaskDescription.trim() || undefined,
       status: 'TODO',
       priority: newTaskPriority,
-      dueDate: newTaskDue,
-      isRecurring: false,
+      dueDate: newTaskDue
+        ? new Date(newTaskDue).toLocaleDateString('vi-VN', {
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : 'Không có hạn',
+      isRecurring: newTaskIsRecurring,
+      recurrenceRule: newTaskIsRecurring
+        ? (newTaskRecurrenceRule === 'DAILY' ? 'Hàng ngày' : newTaskRecurrenceRule === 'WEEKLY' ? 'Hàng tuần' : 'Hàng tháng')
+        : undefined,
     };
 
     setTasks([newTask, ...tasks]);
-    setNewTaskTitle('');
     setIsAddModalOpen(false);
     toast.success('Đã thêm công việc mới vào danh sách!');
 
     try {
-      await apiClient.post('/tasks', {
-        title: newTaskTitle,
+      const res = await apiClient.post('/tasks', {
+        title: newTaskTitle.trim(),
+        description: newTaskDescription.trim() || undefined,
         priority: newTaskPriority,
+        dueDate: newTaskDue ? new Date(newTaskDue).toISOString() : undefined,
+        isRecurring: newTaskIsRecurring,
+        recurrenceRule: newTaskIsRecurring ? newTaskRecurrenceRule : undefined,
         status: 'TODO',
       });
-    } catch {
-      // Degrade gracefully
+      if (res.data.data?.id) {
+        const created = res.data.data;
+        setTasks((prev) =>
+          prev.map((t) => (t.id === tempId ? { ...t, id: created.id } : t))
+        );
+      }
+      setNewTaskTitle('');
+      setNewTaskDescription('');
+      setNewTaskIsRecurring(false);
+      window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+    } catch (err: any) {
+      toast.error(getErrorMessage(err, 'Không thể tạo công việc trên máy chủ.'));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -257,58 +304,74 @@ export const TasksPage: React.FC = () => {
 
         {/* List View */}
         {viewMode === 'list' && (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-3">
-            {filteredTasks.map((t) => (
-              <div
-                key={t.id}
-                onClick={() => toggleTaskStatus(t.id)}
-                className={`p-4 rounded-2xl border transition-all flex items-start sm:items-center justify-between gap-4 cursor-pointer hover:border-brand/50 ${
-                  t.status === 'DONE'
-                    ? 'bg-slate-50/50 dark:bg-slate-950/30 border-slate-100 dark:border-slate-800/80 opacity-70'
-                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover-lift'
-                }`}
-              >
-                <div className="flex items-start sm:items-center gap-3.5 flex-1 min-w-0">
-                  <input
-                    type="checkbox"
-                    checked={t.status === 'DONE'}
-                    onChange={() => {}}
-                    className="w-5 h-5 rounded-md border-slate-300 text-brand focus:ring-brand checkbox-pop cursor-pointer mt-0.5 sm:mt-0 flex-shrink-0"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div
-                      className={`font-semibold text-sm line-clamp-1 transition-all ${
-                        t.status === 'DONE'
-                          ? 'line-through text-slate-400 dark:text-slate-500'
-                          : 'text-slate-900 dark:text-slate-100'
-                      }`}
-                    >
-                      {t.title}
+          filteredTasks.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center space-y-2">
+              <CheckSquare className="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto" />
+              <h3 className="font-bold text-sm text-slate-700 dark:text-slate-300">Không tìm thấy công việc nào</h3>
+              <p className="text-xs text-slate-400">Danh sách trống hoặc chưa có việc nào khớp với bộ lọc.</p>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-3">
+              {filteredTasks.map((t) => (
+                <div
+                  key={t.id}
+                  onClick={() => toggleTaskStatus(t.id)}
+                  className={`p-4 rounded-2xl border transition-all flex items-start sm:items-center justify-between gap-4 cursor-pointer hover:border-brand/50 ${
+                    t.status === 'DONE'
+                      ? 'bg-slate-50/50 dark:bg-slate-950/30 border-slate-100 dark:border-slate-800/80 opacity-70'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover-lift'
+                  }`}
+                >
+                  <div className="flex items-start sm:items-center gap-3.5 flex-1 min-w-0">
+                    <input
+                      type="checkbox"
+                      checked={t.status === 'DONE'}
+                      onChange={() => {}}
+                      className="w-5 h-5 rounded-md border-slate-300 text-brand focus:ring-brand checkbox-pop cursor-pointer mt-0.5 sm:mt-0 flex-shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div
+                        className={`font-semibold text-sm line-clamp-1 transition-all ${
+                          t.status === 'DONE'
+                            ? 'line-through text-slate-400 dark:text-slate-500'
+                            : 'text-slate-900 dark:text-slate-100'
+                        }`}
+                      >
+                        {t.title}
+                      </div>
+                      {t.description && (
+                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{t.description}</p>
+                      )}
                     </div>
-                    {t.description && (
-                      <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{t.description}</p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-4 flex-shrink-0">
+                    {priorityBadge(t.priority)}
+
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>{t.dueDate}</span>
+                    </div>
+
+                    {t.isRecurring && (
+                      <div className="hidden md:flex items-center gap-1 text-[11px] text-brand bg-brand/10 px-2 py-0.5 rounded">
+                        <Repeat className="w-3 h-3" />
+                        <span>{t.recurrenceRule}</span>
+                      </div>
                     )}
+
+                    <button
+                      onClick={(e) => handleDeleteTask(t.id, e)}
+                      className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                      title="Xóa công việc"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
-
-                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-4 flex-shrink-0">
-                  {priorityBadge(t.priority)}
-
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>{t.dueDate}</span>
-                  </div>
-
-                  {t.isRecurring && (
-                    <div className="hidden md:flex items-center gap-1 text-[11px] text-brand bg-brand/10 px-2 py-0.5 rounded">
-                      <Repeat className="w-3 h-3" />
-                      <span>{t.recurrenceRule}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )
         )}
 
         {/* Kanban Board View */}
@@ -338,9 +401,18 @@ export const TasksPage: React.FC = () => {
                       >
                         <div className="flex items-center justify-between">
                           {priorityBadge(t.priority)}
-                          <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                            <Clock className="w-3 h-3" /> {t.dueDate}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                              <Clock className="w-3 h-3" /> {t.dueDate}
+                            </span>
+                            <button
+                              onClick={(e) => handleDeleteTask(t.id, e)}
+                              className="text-slate-300 hover:text-rose-500 p-0.5"
+                              title="Xóa"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
                         </div>
                         <div className={`font-semibold text-xs ${t.status === 'DONE' ? 'line-through text-slate-400' : ''}`}>
                           {t.title}
@@ -379,7 +451,18 @@ export const TasksPage: React.FC = () => {
                     value={newTaskTitle}
                     onChange={(e) => setNewTaskTitle(e.target.value)}
                     placeholder="VD: Kiểm tra và nộp báo cáo thuế..."
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-semibold block mb-1">Mô tả chi tiết (Tùy chọn)</label>
+                  <textarea
+                    rows={2}
+                    value={newTaskDescription}
+                    onChange={(e) => setNewTaskDescription(e.target.value)}
+                    placeholder="Nhập ghi chú hoặc yêu cầu công việc..."
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
                   />
                 </div>
 
@@ -389,7 +472,7 @@ export const TasksPage: React.FC = () => {
                     <select
                       value={newTaskPriority}
                       onChange={(e) => setNewTaskPriority(e.target.value as any)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs"
                     >
                       <option value="URGENT">Khẩn cấp</option>
                       <option value="HIGH">Ưu tiên cao</option>
@@ -400,19 +483,53 @@ export const TasksPage: React.FC = () => {
                   <div>
                     <label className="font-semibold block mb-1">Hạn chót</label>
                     <input
-                      type="text"
+                      type="datetime-local"
                       value={newTaskDue}
                       onChange={(e) => setNewTaskDue(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs"
                     />
                   </div>
                 </div>
 
+                {/* Recurring toggle */}
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer font-semibold text-slate-700 dark:text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={newTaskIsRecurring}
+                      onChange={(e) => setNewTaskIsRecurring(e.target.checked)}
+                      className="w-4 h-4 rounded text-brand focus:ring-brand cursor-pointer"
+                    />
+                    <span>Lặp lại định kỳ (Recurring Engine)</span>
+                  </label>
+                  {newTaskIsRecurring && (
+                    <div className="grid grid-cols-3 gap-1.5 pt-1">
+                      {(['DAILY', 'WEEKLY', 'MONTHLY'] as const).map((rule) => (
+                        <button
+                          key={rule}
+                          type="button"
+                          onClick={() => setNewTaskRecurrenceRule(rule)}
+                          className={`py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                            newTaskRecurrenceRule === rule
+                              ? 'bg-brand text-white border-brand'
+                              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                          }`}
+                        >
+                          {rule === 'DAILY' && 'Hàng ngày'}
+                          {rule === 'WEEKLY' && 'Hàng tuần'}
+                          {rule === 'MONTHLY' && 'Hàng tháng'}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all cursor-pointer"
+                  disabled={isSubmitting}
+                  className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all disabled:opacity-50 cursor-pointer"
                 >
-                  Tạo Công Việc
+                  {isSubmitting ? 'Đang tạo...' : 'Tạo Công Việc'}
                 </button>
               </form>
             </div>
