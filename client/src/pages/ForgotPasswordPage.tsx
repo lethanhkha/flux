@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, KeyRound, Mail, Lock, ArrowLeft, ArrowRight } from 'lucide-react';
 import { apiClient, getErrorMessage } from '../api/client';
+import { TurnstileWidget, TurnstileWidgetRef } from '../components/common/TurnstileWidget';
 import { toast } from 'sonner';
 
 export const ForgotPasswordPage: React.FC = () => {
@@ -11,7 +12,9 @@ export const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [token, setToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const turnstileRef = useRef<TurnstileWidgetRef>(null);
 
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +26,10 @@ export const ForgotPasswordPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const res = await apiClient.post('/auth/forgot-password', { email: normalizedEmail });
+      const res = await apiClient.post('/auth/forgot-password', {
+        email: normalizedEmail,
+        turnstileToken,
+      });
       toast.success(res.data.data.message || 'Mã khôi phục đã được tạo.');
       if (res.data.data.resetToken) {
         setToken(res.data.data.resetToken);
@@ -31,6 +37,8 @@ export const ForgotPasswordPage: React.FC = () => {
       setStep('reset');
     } catch (err: any) {
       toast.error(getErrorMessage(err, 'Có lỗi xảy ra khi tạo yêu cầu.'));
+      setTurnstileToken('');
+      turnstileRef.current?.reset();
     } finally {
       setIsSubmitting(false);
     }
@@ -109,6 +117,14 @@ export const ForgotPasswordPage: React.FC = () => {
                   </div>
                   <p className="text-[11px] text-slate-500">Chỉ hỗ trợ hòm thư @gmail.com</p>
                 </div>
+
+                {/* Cloudflare Turnstile Anti-bot Protection */}
+                <TurnstileWidget
+                  ref={turnstileRef}
+                  action="forgot-password"
+                  onVerify={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken('')}
+                />
 
                 <button
                   type="submit"

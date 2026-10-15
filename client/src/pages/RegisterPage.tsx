@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, ShieldCheck, Mail, Lock, User, Check, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getErrorMessage } from '../api/client';
 import { GoogleAuthButton } from '../components/auth/GoogleAuthButton';
+import { TurnstileWidget, TurnstileWidgetRef } from '../components/common/TurnstileWidget';
 import { toast } from 'sonner';
 
 export const RegisterPage: React.FC = () => {
@@ -13,9 +14,11 @@ export const RegisterPage: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState<string>('');
   const [agreedToTerms, setAgreedToTerms] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileWidgetRef>(null);
 
   // Password strength checks
   const hasMinLength = password.length >= 8;
@@ -52,7 +55,12 @@ export const RegisterPage: React.FC = () => {
     setErrorMsg(null);
 
     try {
-      const result = await register(normalizedEmail, password, fullName);
+      const result = await register(
+        normalizedEmail,
+        password,
+        fullName,
+        turnstileToken
+      );
       toast.success(result.message || 'Đăng ký thành công! Vui lòng kiểm tra hộp thư Gmail.');
       navigate('/verify-email', {
         state: {
@@ -66,6 +74,9 @@ export const RegisterPage: React.FC = () => {
       );
       setErrorMsg(msg);
       toast.error(msg);
+      // Reset Turnstile on error
+      setTurnstileToken('');
+      turnstileRef.current?.reset();
     } finally {
       setIsSubmitting(false);
     }
@@ -223,6 +234,14 @@ export const RegisterPage: React.FC = () => {
                   <span className="text-brand font-medium">Chính sách bảo mật</span> dữ liệu cá nhân của Flux.
                 </span>
               </label>
+
+              {/* Cloudflare Turnstile Anti-bot Protection */}
+              <TurnstileWidget
+                ref={turnstileRef}
+                action="register"
+                onVerify={(token) => setTurnstileToken(token)}
+                onExpire={() => setTurnstileToken('')}
+              />
 
               <button
                 type="submit"

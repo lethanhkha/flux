@@ -14,7 +14,7 @@ router.post('/register', authLimiter, requireTurnstile, authController.register)
 router.post('/login', authLimiter, requireTurnstile, authController.login);
 router.post('/verify-2fa', authLimiter, authController.verify2FA);
 router.post('/verify-email', authController.verifyEmail);
-router.post('/resend-verification', authLimiter, requireTurnstile, authController.resendVerification);
+router.post('/resend-verification', authLimiter, authController.resendVerification);
 router.post('/refresh', authController.refresh);
 router.post('/forgot-password', authLimiter, requireTurnstile, authController.forgotPassword);
 router.post('/reset-password', authLimiter, authController.resetPassword);

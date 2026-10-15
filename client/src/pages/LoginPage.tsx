@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, ShieldCheck, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getErrorMessage } from '../api/client';
 import { GoogleAuthButton } from '../components/auth/GoogleAuthButton';
+import { TurnstileWidget, TurnstileWidgetRef } from '../components/common/TurnstileWidget';
 import { toast } from 'sonner';
 
 export const LoginPage: React.FC = () => {
@@ -13,8 +14,10 @@ export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileWidgetRef>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +31,13 @@ export const LoginPage: React.FC = () => {
     setErrorMsg(null);
 
     try {
-      const data = await login(normalizedEmail, password);
+      const data = await login(
+        normalizedEmail,
+        password,
+        undefined,
+        undefined,
+        turnstileToken
+      );
 
       if (data.require2FA) {
         toast.info('Tài khoản yêu cầu mã xác thực 2 bước (TOTP).');
@@ -47,6 +56,9 @@ export const LoginPage: React.FC = () => {
       );
       setErrorMsg(msg);
       toast.error(msg);
+      // Reset Turnstile on error
+      setTurnstileToken('');
+      turnstileRef.current?.reset();
     } finally {
       setIsSubmitting(false);
     }
@@ -158,6 +170,14 @@ export const LoginPage: React.FC = () => {
                   <span className="text-slate-600 dark:text-slate-400">Duy trì đăng nhập 7 ngày</span>
                 </label>
               </div>
+
+              {/* Cloudflare Turnstile Anti-bot Protection */}
+              <TurnstileWidget
+                ref={turnstileRef}
+                action="login"
+                onVerify={(token) => setTurnstileToken(token)}
+                onExpire={() => setTurnstileToken('')}
+              />
 
               <button
                 type="submit"

@@ -23,9 +23,20 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string, totpCode?: string, backupCode?: string) => Promise<any>;
+  login: (
+    email: string,
+    password: string,
+    totpCode?: string,
+    backupCode?: string,
+    turnstileToken?: string
+  ) => Promise<any>;
   verify2FA: (tempToken: string, code?: string, backupCode?: string) => Promise<any>;
-  register: (email: string, password: string, fullName: string) => Promise<any>;
+  register: (
+    email: string,
+    password: string,
+    fullName: string,
+    turnstileToken?: string
+  ) => Promise<any>;
   verifyEmail: (email: string, code: string) => Promise<any>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -82,12 +93,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initAuth();
   }, []);
 
-  const login = async (email: string, password: string, totpCode?: string, backupCode?: string) => {
+  const login = async (
+    email: string,
+    password: string,
+    totpCode?: string,
+    backupCode?: string,
+    turnstileToken?: string
+  ) => {
     const res = await apiClient.post('/auth/login', {
       email,
       password,
       totpCode,
       backupCode,
+      turnstileToken,
     });
 
     const data = res.data.data;
@@ -113,11 +131,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return data;
   };
 
-  const register = async (email: string, password: string, fullName: string) => {
+  const register = async (
+    email: string,
+    password: string,
+    fullName: string,
+    turnstileToken?: string
+  ) => {
     const res = await apiClient.post('/auth/register', {
       email,
       password,
       fullName,
+      turnstileToken,
     });
     return res.data.data;
   };
