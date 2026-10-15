@@ -15,9 +15,15 @@ export const ForgotPasswordPage: React.FC = () => {
 
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail.endsWith('@gmail.com')) {
+      toast.error('Vui lòng nhập địa chỉ Gmail hợp lệ (@gmail.com).');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const res = await apiClient.post('/auth/forgot-password', { email });
+      const res = await apiClient.post('/auth/forgot-password', { email: normalizedEmail });
       toast.success(res.data.data.message || 'Mã khôi phục đã được tạo.');
       if (res.data.data.resetToken) {
         setToken(res.data.data.resetToken);
@@ -77,7 +83,7 @@ export const ForgotPasswordPage: React.FC = () => {
               <h1 className="text-2xl font-bold tracking-tight">Khôi phục mật khẩu</h1>
               <p className="text-xs text-slate-500 max-w-xs mx-auto">
                 {step === 'request'
-                  ? 'Nhập địa chỉ email tài khoản của bạn để nhận liên kết xác thực HMAC 15 phút.'
+                  ? 'Nhập địa chỉ Gmail của bạn để nhận liên kết xác thực đặt lại mật khẩu.'
                   : 'Nhập mã token đã được cấp và mật khẩu mới cho tài khoản của bạn.'}
               </p>
             </div>
@@ -86,7 +92,7 @@ export const ForgotPasswordPage: React.FC = () => {
               <form onSubmit={handleRequestReset} className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    Địa chỉ Email
+                    Địa chỉ Gmail
                   </label>
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -97,10 +103,11 @@ export const ForgotPasswordPage: React.FC = () => {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="name@example.com"
+                      placeholder="ten_cua_ban@gmail.com"
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
                     />
                   </div>
+                  <p className="text-[11px] text-slate-500">Chỉ hỗ trợ hòm thư @gmail.com</p>
                 </div>
 
                 <button

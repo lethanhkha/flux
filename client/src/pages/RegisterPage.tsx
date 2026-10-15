@@ -36,6 +36,12 @@ export const RegisterPage: React.FC = () => {
       return;
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail.endsWith('@gmail.com')) {
+      toast.error('Hệ thống hiện tại chỉ hỗ trợ đăng ký tài khoản với địa chỉ Gmail (@gmail.com).');
+      return;
+    }
+
     if (passedCount < 5) {
       toast.error('Mật khẩu chưa đáp ứng đầy đủ yêu cầu bảo mật.');
       return;
@@ -45,13 +51,11 @@ export const RegisterPage: React.FC = () => {
     setErrorMsg(null);
 
     try {
-      const result = await register(email, password, fullName);
-      toast.success(result.message || 'Đăng ký thành công! Vui lòng nhập mã kích hoạt.');
+      const result = await register(normalizedEmail, password, fullName);
+      toast.success(result.message || 'Đăng ký thành công! Vui lòng kiểm tra hộp thư Gmail.');
       navigate('/verify-email', {
         state: {
-          email,
-          otpCode: result.otpCode,
-          verificationToken: result.verificationToken,
+          email: normalizedEmail,
         },
       });
     } catch (err: any) {
@@ -144,10 +148,11 @@ export const RegisterPage: React.FC = () => {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@example.com"
+                    placeholder="ten_cua_ban@gmail.com"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand transition-all"
                   />
                 </div>
+                <p className="text-[11px] text-slate-500">Chỉ hỗ trợ hòm thư @gmail.com</p>
               </div>
 
               {/* Password */}

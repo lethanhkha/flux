@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Sparkles, Mail, CheckCircle2, ArrowRight, RefreshCw, KeyRound, Edit2, Check } from 'lucide-react';
+import { Sparkles, Mail, CheckCircle2, ArrowRight, RefreshCw, Edit2, Check, ExternalLink } from 'lucide-react';
 import { apiClient, getErrorMessage } from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
@@ -14,13 +14,11 @@ export const VerifyEmailPage: React.FC = () => {
   const queryEmail = searchParams.get('email') || '';
   const queryCode = searchParams.get('code') || searchParams.get('token') || '';
   const stateEmail = location.state?.email || '';
-  const stateOtp = location.state?.otpCode || '';
 
   const [email, setEmail] = useState(queryEmail || stateEmail || '');
   const [isEditingEmail, setIsEditingEmail] = useState(!email);
   const [newEmailInput, setNewEmailInput] = useState(email);
   const [digits, setDigits] = useState<string[]>(['', '', '', '', '', '']);
-  const [demoOtp, setDemoOtp] = useState<string>(stateOtp || '');
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -86,21 +84,20 @@ export const VerifyEmailPage: React.FC = () => {
     }
   };
 
-  const handleQuickFill = (code: string) => {
-    if (!code || code.length !== 6) return;
-    setDigits(code.split(''));
-    inputRefs.current[5]?.focus();
-    submitCode(email, code);
-  };
-
   const submitCode = useCallback(
     async (targetEmail: string, codeToSubmit: string) => {
       if (!targetEmail) {
-        toast.error('Vui lòng nhập địa chỉ email của bạn.');
+        toast.error('Vui lòng nhập địa chỉ Gmail của bạn.');
         return;
       }
+
+      if (!targetEmail.toLowerCase().endsWith('@gmail.com')) {
+        toast.error('Hệ thống hiện tại chỉ hỗ trợ địa chỉ Gmail (@gmail.com).');
+        return;
+      }
+
       if (!codeToSubmit || codeToSubmit.length !== 6) {
-        toast.error('Vui lòng nhập đủ 6 chữ số mã kích hoạt.');
+        toast.error('Vui lòng nhập đủ 6 chữ số mã xác thực từ email.');
         return;
       }
 
@@ -130,7 +127,7 @@ export const VerifyEmailPage: React.FC = () => {
     [verifyEmail, navigate]
   );
 
-  // Auto verify if query code was present
+  // Auto verify if query code was present in URL link
   useEffect(() => {
     if (queryCode && queryEmail) {
       if (queryCode.length === 6 && /^\d+$/.test(queryCode)) {
@@ -142,7 +139,12 @@ export const VerifyEmailPage: React.FC = () => {
 
   const handleResend = async () => {
     if (!email) {
-      toast.error('Vui lòng nhập địa chỉ email để gửi lại mã.');
+      toast.error('Vui lòng nhập địa chỉ Gmail để gửi lại mã.');
+      return;
+    }
+
+    if (!email.toLowerCase().endsWith('@gmail.com')) {
+      toast.error('Hệ thống chỉ hỗ trợ địa chỉ Gmail (@gmail.com).');
       return;
     }
 
@@ -155,15 +157,11 @@ export const VerifyEmailPage: React.FC = () => {
     setErrorMsg(null);
 
     try {
-      const res = await apiClient.post('/auth/resend-verification', { email });
-      const newOtp = res.data?.data?.otpCode;
-      if (newOtp) {
-        setDemoOtp(newOtp);
-      }
+      await apiClient.post('/auth/resend-verification', { email });
       setCooldown(60);
       setDigits(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
-      toast.success('Mã kích hoạt 6 chữ số mới đã được gửi!');
+      toast.success('Mã kích hoạt 6 chữ số mới đã được gửi vào hộp thư Gmail của bạn!');
     } catch (err: any) {
       const msg = getErrorMessage(err, 'Không thể gửi lại mã kích hoạt.');
       toast.error(msg);
@@ -173,13 +171,20 @@ export const VerifyEmailPage: React.FC = () => {
   };
 
   const handleSaveEmail = () => {
-    if (!newEmailInput || !/^\S+@\S+\.\S+$/.test(newEmailInput)) {
+    const trimmed = newEmailInput.trim().toLowerCase();
+    if (!trimmed || !/^\S+@\S+\.\S+$/.test(trimmed)) {
       toast.error('Vui lòng nhập địa chỉ email hợp lệ.');
       return;
     }
-    setEmail(newEmailInput.trim().toLowerCase());
+
+    if (!trimmed.endsWith('@gmail.com')) {
+      toast.error('Hệ thống hiện tại chỉ hỗ trợ địa chỉ Gmail (@gmail.com).');
+      return;
+    }
+
+    setEmail(trimmed);
     setIsEditingEmail(false);
-    toast.success('Đã cập nhật email nhận mã.');
+    toast.success('Đã cập nhật email nhận mã kích hoạt.');
   };
 
   return (
@@ -230,10 +235,10 @@ export const VerifyEmailPage: React.FC = () => {
                   <Mail className="w-7 h-7" />
                 </div>
 
-                <div className="space-y-1">
-                  <h1 className="text-2xl font-bold tracking-tight">Kích hoạt tài khoản</h1>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
-                    Nhập mã xác thực 6 chữ số đã được gửi đến email của bạn để bắt đầu sử dụng.
+                <div className="space-y-2">
+                  <h1 className="text-2xl font-bold tracking-tight">Xác thực Email</h1>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+                    Mã xác thực gồm 6 chữ số đã được gửi đến hộp thư Gmail của bạn. Vui lòng kiểm tra email và nhập mã vào bên dưới.
                   </p>
                 </div>
 
@@ -245,7 +250,7 @@ export const VerifyEmailPage: React.FC = () => {
                         type="email"
                         value={newEmailInput}
                         onChange={(e) => setNewEmailInput(e.target.value)}
-                        placeholder="Nhập địa chỉ email của bạn"
+                        placeholder="ten_cua_ban@gmail.com"
                         className="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
                         autoFocus
                       />
@@ -262,7 +267,7 @@ export const VerifyEmailPage: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5 truncate">
                         <span className="text-slate-400">Gửi đến:</span>
-                        <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 truncate font-mono">
                           {email || 'Chưa có email'}
                         </span>
                       </div>
@@ -281,26 +286,22 @@ export const VerifyEmailPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Dev Quick-Fill Pill */}
-                {demoOtp && (
-                  <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <KeyRound className="w-3.5 h-3.5" />
-                      <span>Mã xác thực: <strong className="font-mono tracking-wider font-bold">{demoOtp}</strong></span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickFill(demoOtp)}
-                      className="px-2 py-0.5 rounded-md bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-semibold transition-colors cursor-pointer"
-                    >
-                      Điền nhanh
-                    </button>
-                  </div>
-                )}
+                {/* Open Gmail Mailbox Quick Link */}
+                <div className="flex items-center justify-center">
+                  <a
+                    href="https://mail.google.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300 text-xs font-medium transition-colors shadow-2xs"
+                  >
+                    <span>Mở hộp thư Gmail</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                  </a>
+                </div>
 
                 {/* Error Banner */}
                 {errorMsg && (
-                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-medium">
+                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-medium text-center">
                     {errorMsg}
                   </div>
                 )}
@@ -353,7 +354,7 @@ export const VerifyEmailPage: React.FC = () => {
 
                 {/* Resend Cooldown Section */}
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
-                  <span>Chưa nhận được mã?</span>
+                  <span>Chưa nhận được email?</span>
                   {cooldown > 0 ? (
                     <span className="text-slate-400 font-medium">
                       Gửi lại sau <strong className="font-mono text-slate-600 dark:text-slate-300">{cooldown}s</strong>
