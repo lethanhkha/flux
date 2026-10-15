@@ -32,6 +32,10 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().default(''),
   GOOGLE_CLIENT_SECRET: z.string().default(''),
   GOOGLE_CALLBACK_URL: z.string().default('http://localhost:5000/api/v1/auth/google/callback'),
+
+  // Cloudflare Turnstile Anti-Bot Security
+  CLOUDFLARE_TURNSTILE_SECRET_KEY: z.string().default('1x0000000000000000000000000000000AA'),
+  CLOUDFLARE_TURNSTILE_ENABLED: z.string().transform((v) => v === 'true' || v === '1').default('false'),
 });
 
 const parsed = envSchema.safeParse(process.env);

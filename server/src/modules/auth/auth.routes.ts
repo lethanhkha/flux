@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authController } from './auth.controller';
 import { authenticate } from '../../middlewares/auth.middleware';
 import { createRateLimiter } from '../../middlewares/rateLimiter.middleware';
+import { requireTurnstile } from '../../middlewares/turnstile.middleware';
 
 const router = Router();
 
@@ -9,13 +10,13 @@ const router = Router();
 const authLimiter = createRateLimiter('auth_shield', 10, 60);
 
 // Public Auth Endpoints
-router.post('/register', authLimiter, authController.register);
-router.post('/login', authLimiter, authController.login);
+router.post('/register', authLimiter, requireTurnstile, authController.register);
+router.post('/login', authLimiter, requireTurnstile, authController.login);
 router.post('/verify-2fa', authLimiter, authController.verify2FA);
 router.post('/verify-email', authController.verifyEmail);
-router.post('/resend-verification', authLimiter, authController.resendVerification);
+router.post('/resend-verification', authLimiter, requireTurnstile, authController.resendVerification);
 router.post('/refresh', authController.refresh);
-router.post('/forgot-password', authLimiter, authController.forgotPassword);
+router.post('/forgot-password', authLimiter, requireTurnstile, authController.forgotPassword);
 router.post('/reset-password', authLimiter, authController.resetPassword);
 
 // Google OAuth2 Endpoints
