@@ -1,66 +1,185 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Sparkles, Mail, CheckCircle2, ArrowRight, RefreshCw } from 'lucide-react';
+import { Sparkles, Mail, CheckCircle2, ArrowRight, RefreshCw, KeyRound, Edit2, Check } from 'lucide-react';
 import { apiClient } from '../api/client';
+import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 
 export const VerifyEmailPage: React.FC = () => {
+  const { verifyEmail } = useAuth();
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const initialEmail = searchParams.get('email') || location.state?.email || '';
-  const initialToken = searchParams.get('token') || location.state?.verificationToken || '';
+  const queryEmail = searchParams.get('email') || '';
+  const queryCode = searchParams.get('code') || searchParams.get('token') || '';
+  const stateEmail = location.state?.email || '';
+  const stateOtp = location.state?.otpCode || '';
 
-  const [email, setEmail] = useState(initialEmail);
-  const [token, setToken] = useState(initialToken);
+  const [email, setEmail] = useState(queryEmail || stateEmail || '');
+  const [isEditingEmail, setIsEditingEmail] = useState(!email);
+  const [newEmailInput, setNewEmailInput] = useState(email);
+  const [digits, setDigits] = useState<string[]>(['', '', '', '', '', '']);
+  const [demoOtp, setDemoOtp] = useState<string>(stateOtp || '');
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState<number>(stateEmail ? 60 : 0);
 
-  // If token is already present in query params, auto verify
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Cooldown countdown timer
   useEffect(() => {
-    if (initialToken && initialEmail) {
-      handleVerify(initialEmail, initialToken);
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
+  // Focus first input on mount
+  useEffect(() => {
+    if (email && inputRefs.current[0]) {
+      inputRefs.current[0]?.focus();
     }
-  }, []);
+  }, [email]);
 
-  const handleVerify = async (verifyEmail: string, verifyToken: string) => {
-    if (!verifyToken) {
-      toast.error('Vui lòng nhập mã xác thực (HMAC Token).');
-      return;
+  const handleDigitChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+    setErrorMsg(null);
+
+    const newDigits = [...digits];
+    newDigits[index] = value.slice(-1);
+    setDigits(newDigits);
+
+    // Auto advance to next input
+    if (value && index < 5) {
+      inputRefs.current[index + 1]?.focus();
     }
 
-    setIsVerifying(true);
-    try {
-      const res = await apiClient.post('/auth/verify-email', {
-        email: verifyEmail,
-        token: verifyToken,
-      });
-
-      setIsSuccess(true);
-      toast.success(res.data.data.message || 'Xác thực email thành công!');
-    } catch (err: any) {
-      const msg = err.response?.data?.message || err.message || 'Xác thực thất bại.';
-      toast.error(msg);
-    } finally {
-      setIsVerifying(false);
+    // Auto trigger submission if all 6 digits are filled
+    const fullCode = newDigits.join('');
+    if (value && index === 5 && fullCode.length === 6) {
+      submitCode(email, fullCode);
     }
   };
 
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !digits[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowRight' && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').trim();
+    if (/^\d{6}$/.test(pasted)) {
+      const arr = pasted.split('');
+      setDigits(arr);
+      inputRefs.current[5]?.focus();
+      submitCode(email, pasted);
+    }
+  };
+
+  const handleQuickFill = (code: string) => {
+    if (!code || code.length !== 6) return;
+    setDigits(code.split(''));
+    inputRefs.current[5]?.focus();
+    submitCode(email, code);
+  };
+
+  const submitCode = useCallback(
+    async (targetEmail: string, codeToSubmit: string) => {
+      if (!targetEmail) {
+        toast.error('Vui lòng nhập địa chỉ email của bạn.');
+        return;
+      }
+      if (!codeToSubmit || codeToSubmit.length !== 6) {
+        toast.error('Vui lòng nhập đủ 6 chữ số mã kích hoạt.');
+        return;
+      }
+
+      setIsVerifying(true);
+      setErrorMsg(null);
+
+      try {
+        const res = await verifyEmail(targetEmail, codeToSubmit);
+        setIsSuccess(true);
+        toast.success(res.message || 'Kích hoạt tài khoản thành công!');
+
+        // Automatically navigate to dashboard after a short pleasant delay
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1500);
+      } catch (err: any) {
+        const msg =
+          err.response?.data?.message ||
+          err.message ||
+          'Mã xác thực không hợp lệ hoặc đã hết hạn.';
+        setErrorMsg(msg);
+        toast.error(msg);
+      } finally {
+        setIsVerifying(false);
+      }
+    },
+    [verifyEmail, navigate]
+  );
+
+  // Auto verify if query code was present
+  useEffect(() => {
+    if (queryCode && queryEmail) {
+      if (queryCode.length === 6 && /^\d+$/.test(queryCode)) {
+        setDigits(queryCode.split(''));
+        submitCode(queryEmail, queryCode);
+      }
+    }
+  }, [queryCode, queryEmail, submitCode]);
+
   const handleResend = async () => {
+    if (!email) {
+      toast.error('Vui lòng nhập địa chỉ email để gửi lại mã.');
+      return;
+    }
+
+    if (cooldown > 0) {
+      toast.info(`Vui lòng chờ ${cooldown} giây trước khi gửi lại.`);
+      return;
+    }
+
     setIsResending(true);
+    setErrorMsg(null);
+
     try {
       const res = await apiClient.post('/auth/resend-verification', { email });
-      if (res.data.data.verificationToken) {
-        setToken(res.data.data.verificationToken);
+      const newOtp = res.data?.data?.otpCode;
+      if (newOtp) {
+        setDemoOtp(newOtp);
       }
-      toast.success('Mã kích hoạt mới đã được tạo!');
+      setCooldown(60);
+      setDigits(['', '', '', '', '', '']);
+      inputRefs.current[0]?.focus();
+      toast.success('Mã kích hoạt 6 chữ số mới đã được gửi!');
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Không thể gửi lại mã kích hoạt.');
+      const msg = err.response?.data?.message || 'Không thể gửi lại mã kích hoạt.';
+      toast.error(msg);
     } finally {
       setIsResending(false);
     }
+  };
+
+  const handleSaveEmail = () => {
+    if (!newEmailInput || !/^\S+@\S+\.\S+$/.test(newEmailInput)) {
+      toast.error('Vui lòng nhập địa chỉ email hợp lệ.');
+      return;
+    }
+    setEmail(newEmailInput.trim().toLowerCase());
+    setIsEditingEmail(false);
+    toast.success('Đã cập nhật email nhận mã.');
   };
 
   return (
@@ -85,20 +204,22 @@ export const VerifyEmailPage: React.FC = () => {
         <div className="w-full max-w-md space-y-6">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none space-y-6 text-center">
             {isSuccess ? (
-              <div className="space-y-4 py-4">
-                <div className="h-16 w-16 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto">
+              <div className="space-y-4 py-4 animate-in fade-in zoom-in-95 duration-300">
+                <div className="h-16 w-16 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto shadow-sm">
                   <CheckCircle2 className="w-10 h-10" />
                 </div>
-                <h1 className="text-2xl font-bold tracking-tight">Kích hoạt tài khoản thành công!</h1>
-                <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                  Email của bạn đã được xác thực an toàn. Bạn hiện có thể đăng nhập vào không gian làm việc Flux.
-                </p>
+                <div className="space-y-1">
+                  <h1 className="text-2xl font-bold tracking-tight">Kích hoạt tài khoản thành công!</h1>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+                    Tài khoản của bạn đã được xác thực an toàn. Đang tự động chuyển hướng vào không gian làm việc...
+                  </p>
+                </div>
                 <div className="pt-2">
                   <button
-                    onClick={() => navigate('/login')}
+                    onClick={() => navigate('/dashboard')}
                     className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-sm shadow-md shadow-brand/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    <span>Tiến Hành Đăng Nhập</span>
+                    <span>Vào Bảng Điều Khiển Ngay</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -110,73 +231,144 @@ export const VerifyEmailPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <h1 className="text-2xl font-bold tracking-tight">Xác thực tài khoản</h1>
-                  <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                    Mã xác nhận bảo mật đã được tạo để kích hoạt tài khoản của bạn:
+                  <h1 className="text-2xl font-bold tracking-tight">Kích hoạt tài khoản</h1>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+                    Nhập mã xác thực 6 chữ số đã được gửi đến email của bạn để bắt đầu sử dụng.
                   </p>
                 </div>
 
+                {/* Email Display & Inline Editor */}
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 text-xs">
+                  {isEditingEmail ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="email"
+                        value={newEmailInput}
+                        onChange={(e) => setNewEmailInput(e.target.value)}
+                        placeholder="Nhập địa chỉ email của bạn"
+                        className="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={handleSaveEmail}
+                        className="px-3 py-1.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-semibold flex items-center gap-1 cursor-pointer"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Lưu</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="text-slate-400">Gửi đến:</span>
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                          {email || 'Chưa có email'}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewEmailInput(email);
+                          setIsEditingEmail(true);
+                        }}
+                        className="text-brand hover:underline font-medium text-[11px] flex items-center gap-1 ml-2 flex-shrink-0 cursor-pointer"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                        <span>Đổi email</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Dev Quick-Fill Pill */}
+                {demoOtp && (
+                  <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <KeyRound className="w-3.5 h-3.5" />
+                      <span>Mã xác thực: <strong className="font-mono tracking-wider font-bold">{demoOtp}</strong></span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleQuickFill(demoOtp)}
+                      className="px-2 py-0.5 rounded-md bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-semibold transition-colors cursor-pointer"
+                    >
+                      Điền nhanh
+                    </button>
+                  </div>
+                )}
+
+                {/* Error Banner */}
+                {errorMsg && (
+                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-medium">
+                    {errorMsg}
+                  </div>
+                )}
+
+                {/* 6-Digit OTP Box Grid */}
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
-                    handleVerify(email, token);
+                    submitCode(email, digits.join(''));
                   }}
-                  className="space-y-4 text-left pt-2"
+                  className="space-y-5"
                 >
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      Địa chỉ Email
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      Mã xác thực tài khoản (Hiệu lực 15 phút)
-                    </label>
-                    <textarea
-                      rows={2}
-                      required
-                      value={token}
-                      onChange={(e) => setToken(e.target.value)}
-                      placeholder="Dán mã kích hoạt tại đây..."
-                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-brand break-all"
-                    />
+                  <div
+                    className="flex items-center justify-center gap-2 sm:gap-3"
+                    onPaste={handlePaste}
+                  >
+                    {digits.map((digit, idx) => (
+                      <input
+                        key={idx}
+                        ref={(el) => (inputRefs.current[idx] = el)}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleDigitChange(idx, e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(idx, e)}
+                        className="w-11 h-14 sm:w-12 sm:h-16 text-center text-xl sm:text-2xl font-bold font-mono rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand shadow-sm transition-all"
+                      />
+                    ))}
                   </div>
 
                   <button
                     type="submit"
-                    disabled={isVerifying}
-                    className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-sm shadow-md shadow-brand/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                    disabled={isVerifying || digits.join('').length !== 6}
+                    className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-sm shadow-md shadow-brand/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
                     {isVerifying ? (
-                      <span>Đang xác thực tài khoản...</span>
+                      <div className="flex items-center gap-2">
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>Đang xác thực...</span>
+                      </div>
                     ) : (
                       <>
-                        <span>Kích Hoạt Tài Khoản Ngay</span>
+                        <span>Xác Nhận Kích Hoạt</span>
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}
                   </button>
                 </form>
 
+                {/* Resend Cooldown Section */}
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
                   <span>Chưa nhận được mã?</span>
-                  <button
-                    type="button"
-                    onClick={handleResend}
-                    disabled={isResending}
-                    className="text-brand font-semibold hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isResending ? 'animate-spin' : ''}`} />
-                    <span>Gửi lại mã mới</span>
-                  </button>
+                  {cooldown > 0 ? (
+                    <span className="text-slate-400 font-medium">
+                      Gửi lại sau <strong className="font-mono text-slate-600 dark:text-slate-300">{cooldown}s</strong>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleResend}
+                      disabled={isResending}
+                      className="text-brand font-semibold hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isResending ? 'animate-spin' : ''}`} />
+                      <span>{isResending ? 'Đang gửi...' : 'Gửi lại mã OTP'}</span>
+                    </button>
+                  )}
                 </div>
               </>
             )}

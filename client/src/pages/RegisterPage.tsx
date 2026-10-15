@@ -45,10 +45,11 @@ export const RegisterPage: React.FC = () => {
 
     try {
       const result = await register(email, password, fullName);
-      toast.success(result.message || 'Đăng ký thành công! Hãy kiểm tra mã xác thực.');
+      toast.success(result.message || 'Đăng ký thành công! Vui lòng nhập mã kích hoạt.');
       navigate('/verify-email', {
         state: {
           email,
+          otpCode: result.otpCode,
           verificationToken: result.verificationToken,
         },
       });

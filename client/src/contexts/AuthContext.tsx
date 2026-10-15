@@ -26,6 +26,7 @@ interface AuthContextType {
   login: (email: string, password: string, totpCode?: string, backupCode?: string) => Promise<any>;
   verify2FA: (tempToken: string, code?: string, backupCode?: string) => Promise<any>;
   register: (email: string, password: string, fullName: string) => Promise<any>;
+  verifyEmail: (email: string, code: string) => Promise<any>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
@@ -121,6 +122,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return res.data.data;
   };
 
+  const verifyEmail = async (email: string, code: string) => {
+    const res = await apiClient.post('/auth/verify-email', {
+      email,
+      code,
+    });
+    const data = res.data.data;
+    if (data.accessToken) {
+      setAccessToken(data.accessToken);
+      setUser(data.user);
+    }
+    return data;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -130,6 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         verify2FA,
         register,
+        verifyEmail,
         logout,
         refreshUser,
         setUser,
