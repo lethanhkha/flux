@@ -104,6 +104,11 @@ export const NotesPage: React.FC = () => {
     };
 
     fetchNotes();
+    const handleRefresh = () => {
+      fetchNotes();
+    };
+    window.addEventListener('flux:refresh-data', handleRefresh);
+    return () => window.removeEventListener('flux:refresh-data', handleRefresh);
   }, []);
 
   const togglePin = async (id: string, e: React.MouseEvent) => {

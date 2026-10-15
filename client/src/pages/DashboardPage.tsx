@@ -92,6 +92,11 @@ export const DashboardPage: React.FC = () => {
     };
 
     fetchDashboard();
+    const handleRefresh = () => {
+      fetchDashboard();
+    };
+    window.addEventListener('flux:refresh-data', handleRefresh);
+    return () => window.removeEventListener('flux:refresh-data', handleRefresh);
   }, []);
 
   const toggleTask = async (id: string) => {

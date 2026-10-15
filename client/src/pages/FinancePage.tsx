@@ -137,6 +137,11 @@ export const FinancePage: React.FC = () => {
     };
 
     fetchFinanceData();
+    const handleRefresh = () => {
+      fetchFinanceData();
+    };
+    window.addEventListener('flux:refresh-data', handleRefresh);
+    return () => window.removeEventListener('flux:refresh-data', handleRefresh);
   }, []);
 
   const totalBalance = wallets.reduce((acc, curr) => acc + curr.balance, 0);

@@ -109,6 +109,11 @@ export const TasksPage: React.FC = () => {
     };
 
     fetchTasks();
+    const handleRefresh = () => {
+      fetchTasks();
+    };
+    window.addEventListener('flux:refresh-data', handleRefresh);
+    return () => window.removeEventListener('flux:refresh-data', handleRefresh);
   }, []);
 
   const toggleTaskStatus = async (id: string) => {

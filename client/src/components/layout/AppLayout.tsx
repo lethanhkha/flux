@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiClient } from '../../api/client';
 import { toast } from 'sonner';
 
 interface AppLayoutProps {
@@ -36,6 +37,44 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
   const [quickActionType, setQuickActionType] = useState<'transaction' | 'task' | 'note'>('transaction');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Available wallets for quick transaction
+  const [wallets, setWallets] = useState<Array<{ id: string; name: string; currency: string; currentBalance: number }>>([]);
+
+  // Quick Action form fields
+  const [txType, setTxType] = useState<'EXPENSE' | 'INCOME'>('EXPENSE');
+  const [txAmount, setTxAmount] = useState('120000');
+  const [txCategory, setTxCategory] = useState('Ăn uống & Cafe');
+  const [txNote, setTxNote] = useState('Ăn trưa với đồng nghiệp');
+  const [txWalletId, setTxWalletId] = useState('');
+
+  const [taskTitle, setTaskTitle] = useState('');
+  const [taskPriority, setTaskPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'>('MEDIUM');
+  const [taskDueDate, setTaskDueDate] = useState(() => new Date(Date.now() + 86400000).toISOString().slice(0, 16));
+
+  const [noteTitle, setNoteTitle] = useState('');
+  const [noteContent, setNoteContent] = useState('');
+  const [noteTag, setNoteTag] = useState('chung');
+
+  // Load user wallets when quick action opens
+  useEffect(() => {
+    if (isQuickActionOpen) {
+      apiClient
+        .get('/finance/wallets')
+        .then((res) => {
+          if (res.data.data?.length > 0) {
+            setWallets(res.data.data);
+            if (!txWalletId) {
+              setTxWalletId(res.data.data[0].id);
+            }
+          }
+        })
+        .catch(() => {
+          // Silent fallback if offline/mock
+        });
+    }
+  }, [isQuickActionOpen]);
 
   useEffect(() => {
     if (darkMode) {
@@ -305,59 +344,155 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             {/* Quick forms */}
             {quickActionType === 'transaction' && (
               <form
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
-                  toast.success('Đã lưu giao dịch tài chính mới thành công!');
-                  setIsQuickActionOpen(false);
+                  const amountNum = parseFloat(txAmount);
+                  if (isNaN(amountNum) || amountNum <= 0) {
+                    toast.error('Vui lòng nhập số tiền hợp lệ (> 0).');
+                    return;
+                  }
+
+                  const activeWalletId = txWalletId || wallets[0]?.id;
+                  if (!activeWalletId) {
+                    toast.error('Chưa có thông tin ví để ghi nhận giao dịch.');
+                    return;
+                  }
+
+                  setIsSubmitting(true);
+                  try {
+                    await apiClient.post('/finance/transactions', {
+                      walletId: activeWalletId,
+                      type: txType,
+                      amount: amountNum,
+                      category: txCategory,
+                      note: txNote || undefined,
+                    });
+                    toast.success('Đã lưu giao dịch tài chính mới thành công!');
+                    setIsQuickActionOpen(false);
+                    setTxAmount('120000');
+                    setTxNote('');
+                    window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+                  } catch (err: any) {
+                    toast.error(err.response?.data?.message || 'Không thể tạo giao dịch.');
+                  } finally {
+                    setIsSubmitting(false);
+                  }
                 }}
                 className="space-y-3 text-xs"
               >
                 <div>
                   <label className="font-semibold block text-slate-700 dark:text-slate-300 mb-1">Loại giao dịch</label>
                   <div className="grid grid-cols-2 gap-2">
-                    <button type="button" className="py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setTxType('EXPENSE')}
+                      className={`py-2 rounded-xl font-bold transition-all ${
+                        txType === 'EXPENSE'
+                          ? 'bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
                       Chi Tiền (-)
                     </button>
-                    <button type="button" className="py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 font-medium">
+                    <button
+                      type="button"
+                      onClick={() => setTxType('INCOME')}
+                      className={`py-2 rounded-xl font-bold transition-all ${
+                        txType === 'INCOME'
+                          ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
                       Thu Tiền (+)
                     </button>
                   </div>
                 </div>
+
+                {wallets.length > 0 && (
+                  <div>
+                    <label className="font-semibold block text-slate-700 dark:text-slate-300 mb-1">Ví thanh toán</label>
+                    <select
+                      value={txWalletId}
+                      onChange={(e) => setTxWalletId(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs"
+                    >
+                      {wallets.map((w) => (
+                        <option key={w.id} value={w.id}>
+                          {w.name} ({new Intl.NumberFormat('vi-VN').format(Number(w.currentBalance))} {w.currency})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div>
                   <label className="font-semibold block text-slate-700 dark:text-slate-300 mb-1">Số tiền (VND)</label>
                   <input
                     type="number"
                     required
+                    min="1"
                     placeholder="VD: 150000"
-                    defaultValue="120000"
+                    value={txAmount}
+                    onChange={(e) => setTxAmount(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-bold tabular-nums text-sm focus:outline-none focus:ring-2 focus:ring-brand"
                   />
                 </div>
                 <div>
-                  <label className="font-semibold block text-slate-700 dark:text-slate-300 mb-1">Danh mục & Ghi chú</label>
+                  <label className="font-semibold block text-slate-700 dark:text-slate-300 mb-1">Danh mục</label>
                   <input
                     type="text"
                     required
-                    placeholder="Ăn trưa, Cafe, Mua sắm..."
-                    defaultValue="Ăn trưa với đồng nghiệp"
+                    placeholder="Ăn uống, Cafe, Mua sắm, Lương..."
+                    value={txCategory}
+                    onChange={(e) => setTxCategory(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold block text-slate-700 dark:text-slate-300 mb-1">Ghi chú (Tùy chọn)</label>
+                  <input
+                    type="text"
+                    placeholder="VD: Ăn trưa với đồng nghiệp..."
+                    value={txNote}
+                    onChange={(e) => setTxNote(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
                   />
                 </div>
                 <button
                   type="submit"
-                  className="w-full py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs transition-all shadow-md shadow-brand/20"
+                  disabled={isSubmitting}
+                  className="w-full py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs transition-all shadow-md shadow-brand/20 disabled:opacity-50 cursor-pointer"
                 >
-                  Ghi Nhận Giao Dịch
+                  {isSubmitting ? 'Đang lưu...' : 'Ghi Nhận Giao Dịch'}
                 </button>
               </form>
             )}
 
             {quickActionType === 'task' && (
               <form
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
-                  toast.success('Đã thêm công việc mới vào danh sách to-do!');
-                  setIsQuickActionOpen(false);
+                  if (!taskTitle.trim()) {
+                    toast.error('Vui lòng nhập tiêu đề công việc.');
+                    return;
+                  }
+
+                  setIsSubmitting(true);
+                  try {
+                    await apiClient.post('/tasks', {
+                      title: taskTitle.trim(),
+                      priority: taskPriority,
+                      dueDate: taskDueDate ? new Date(taskDueDate).toISOString() : undefined,
+                    });
+                    toast.success('Đã thêm công việc mới vào danh sách to-do!');
+                    setIsQuickActionOpen(false);
+                    setTaskTitle('');
+                    window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+                  } catch (err: any) {
+                    toast.error(err.response?.data?.message || 'Không thể tạo công việc.');
+                  } finally {
+                    setIsSubmitting(false);
+                  }
                 }}
                 className="space-y-3 text-xs"
               >
@@ -367,43 +502,75 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     type="text"
                     required
                     placeholder="VD: Chuẩn bị tài liệu họp sáng mai..."
+                    value={taskTitle}
+                    onChange={(e) => setTaskTitle(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="font-semibold block text-slate-700 dark:text-slate-300 mb-1">Mức ưu tiên</label>
-                    <select className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs">
-                      <option>High (Cao)</option>
-                      <option>Urgent (Khẩn cấp)</option>
-                      <option>Medium (Trung bình)</option>
-                      <option>Low (Thấp)</option>
+                    <select
+                      value={taskPriority}
+                      onChange={(e) => setTaskPriority(e.target.value as any)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs"
+                    >
+                      <option value="LOW">Thấp (Low)</option>
+                      <option value="MEDIUM">Trung bình (Medium)</option>
+                      <option value="HIGH">Cao (High)</option>
+                      <option value="URGENT">Khẩn cấp (Urgent)</option>
                     </select>
                   </div>
                   <div>
                     <label className="font-semibold block text-slate-700 dark:text-slate-300 mb-1">Hạn chót</label>
                     <input
                       type="datetime-local"
-                      defaultValue={new Date().toISOString().slice(0, 16)}
+                      value={taskDueDate}
+                      onChange={(e) => setTaskDueDate(e.target.value)}
                       className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs"
                     />
                   </div>
                 </div>
                 <button
                   type="submit"
-                  className="w-full py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs transition-all shadow-md shadow-brand/20"
+                  disabled={isSubmitting}
+                  className="w-full py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs transition-all shadow-md shadow-brand/20 disabled:opacity-50 cursor-pointer"
                 >
-                  Tạo Công Việc Mới
+                  {isSubmitting ? 'Đang tạo...' : 'Tạo Công Việc Mới'}
                 </button>
               </form>
             )}
 
             {quickActionType === 'note' && (
               <form
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
-                  toast.success('Đã lưu ghi chú nhanh!');
-                  setIsQuickActionOpen(false);
+                  if (!noteTitle.trim()) {
+                    toast.error('Vui lòng nhập tiêu đề ghi chú.');
+                    return;
+                  }
+                  if (!noteContent.trim()) {
+                    toast.error('Vui lòng nhập nội dung ghi chú.');
+                    return;
+                  }
+
+                  setIsSubmitting(true);
+                  try {
+                    await apiClient.post('/notes', {
+                      title: noteTitle.trim(),
+                      content: noteContent.trim(),
+                      tags: noteTag ? [noteTag] : ['chung'],
+                    });
+                    toast.success('Đã lưu ghi chú nhanh thành công!');
+                    setIsQuickActionOpen(false);
+                    setNoteTitle('');
+                    setNoteContent('');
+                    window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+                  } catch (err: any) {
+                    toast.error(err.response?.data?.message || 'Không thể lưu ghi chú.');
+                  } finally {
+                    setIsSubmitting(false);
+                  }
                 }}
                 className="space-y-3 text-xs"
               >
@@ -413,8 +580,24 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     type="text"
                     required
                     placeholder="VD: Ý tưởng dự án mới..."
+                    value={noteTitle}
+                    onChange={(e) => setNoteTitle(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
                   />
+                </div>
+                <div>
+                  <label className="font-semibold block text-slate-700 dark:text-slate-300 mb-1">Thẻ / Phân loại</label>
+                  <select
+                    value={noteTag}
+                    onChange={(e) => setNoteTag(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs"
+                  >
+                    <option value="chung">Chung</option>
+                    <option value="tài-chính">Tài chính</option>
+                    <option value="công-việc">Công việc</option>
+                    <option value="ý-tưởng">Ý tưởng</option>
+                    <option value="bảo-mật">Bảo mật</option>
+                  </select>
                 </div>
                 <div>
                   <label className="font-semibold block text-slate-700 dark:text-slate-300 mb-1">Nội dung (Markdown)</label>
@@ -422,14 +605,17 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     rows={4}
                     required
                     placeholder="Nhập nội dung markdown tại đây..."
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-2 focus:ring-brand font-mono"
+                    value={noteContent}
+                    onChange={(e) => setNoteContent(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-2 focus:ring-brand font-mono"
                   />
                 </div>
                 <button
                   type="submit"
-                  className="w-full py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs transition-all shadow-md shadow-brand/20"
+                  disabled={isSubmitting}
+                  className="w-full py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs transition-all shadow-md shadow-brand/20 disabled:opacity-50 cursor-pointer"
                 >
-                  Lưu Ghi Chú
+                  {isSubmitting ? 'Đang lưu...' : 'Lưu Ghi Chú'}
                 </button>
               </form>
             )}
