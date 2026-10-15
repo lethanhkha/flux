@@ -9,6 +9,7 @@ import authRoutes from './modules/auth/auth.routes';
 import financeRoutes from './modules/finance/finance.routes';
 import tasksRoutes from './modules/tasks/tasks.routes';
 import notesRoutes from './modules/notes/notes.routes';
+import dashboardRoutes from './modules/dashboard/dashboard.routes';
 
 const app = express();
 
@@ -76,6 +77,7 @@ app.use(`${env.API_PREFIX}/auth`, authRoutes);
 app.use(`${env.API_PREFIX}/finance`, financeRoutes);
 app.use(`${env.API_PREFIX}/tasks`, tasksRoutes);
 app.use(`${env.API_PREFIX}/notes`, notesRoutes);
+app.use(`${env.API_PREFIX}/dashboard`, dashboardRoutes);
 
 // 7. Catch-all Unhandled Routes (404)
 app.all('*', (req: Request, _res: Response, next) => {

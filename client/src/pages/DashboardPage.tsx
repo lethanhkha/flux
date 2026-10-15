@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { apiClient } from '../api/client';
 import { Link } from 'react-router-dom';
 import {
   Wallet,
@@ -20,6 +21,13 @@ import { toast } from 'sonner';
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
 
+  const [financeSummary, setFinanceSummary] = useState({
+    totalBalance: 48500000,
+    monthlyIncome: 25000000,
+    monthlyExpense: 8300000,
+    activeWalletsCount: 3,
+  });
+
   const [tasks, setTasks] = useState([
     { id: '1', title: 'Thanh toán tiền điện & Internet tháng 10', completed: true, urgent: false, due: 'Đã xong' },
     { id: '2', title: 'Hoàn thành báo cáo tài chính cá nhân Q3', completed: false, urgent: true, due: 'Hôm nay, 17:00' },
@@ -27,7 +35,66 @@ export const DashboardPage: React.FC = () => {
     { id: '4', title: 'Kiểm tra sao kê thẻ tín dụng Techcombank', completed: false, urgent: false, due: 'Ngày mai' },
   ]);
 
-  const toggleTask = (id: string) => {
+  const [pinnedNotes, setPinnedNotes] = useState([
+    {
+      id: 'n1',
+      title: 'Kế hoạch tích lũy tài chính 2027',
+      snippet: 'Mục tiêu tích lũy 5 triệu/tháng vào quỹ đầu tư chỉ số VN30, phân bổ 3 ví dự phòng khẩn cấp...',
+    },
+    {
+      id: 'n2',
+      title: 'Checklist du lịch Đà Lạt cuối tuần',
+      snippet: 'CCCD gắn chip, sạc dự phòng 20000mAh, thuốc chống say xe, áo ấm chống sương mù...',
+    },
+  ]);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const res = await apiClient.get('/dashboard');
+        const data = res.data.data;
+
+        if (data.finance) {
+          setFinanceSummary({
+            totalBalance: data.finance.totalBalance || 0,
+            monthlyIncome: data.finance.monthlyIncome || 0,
+            monthlyExpense: data.finance.monthlyExpense || 0,
+            activeWalletsCount: data.finance.activeWalletsCount || 1,
+          });
+        }
+
+        if (data.priorityTasks?.length > 0) {
+          setTasks(
+            data.priorityTasks.map((t: any) => ({
+              id: t.id,
+              title: t.title,
+              completed: t.status === 'DONE',
+              urgent: t.priority === 'URGENT' || t.priority === 'HIGH',
+              due: t.dueDate
+                ? new Date(t.dueDate).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+                : 'Trong ngày',
+            }))
+          );
+        }
+
+        if (data.pinnedNotes?.length > 0) {
+          setPinnedNotes(
+            data.pinnedNotes.map((n: any) => ({
+              id: n.id,
+              title: n.title,
+              snippet: n.content.replace(/#/g, '').slice(0, 100),
+            }))
+          );
+        }
+      } catch {
+        // Fallback gracefully
+      }
+    };
+
+    fetchDashboard();
+  }, []);
+
+  const toggleTask = async (id: string) => {
     setTasks((prev) =>
       prev.map((t) => {
         if (t.id === id) {
@@ -40,6 +107,12 @@ export const DashboardPage: React.FC = () => {
         return t;
       })
     );
+
+    try {
+      await apiClient.patch(`/tasks/${id}/toggle`);
+    } catch {
+      // Degrade gracefully
+    }
   };
 
   const completedCount = tasks.filter((t) => t.completed).length;
@@ -86,9 +159,11 @@ export const DashboardPage: React.FC = () => {
               </div>
               <div className="mt-3">
                 <div className="text-3xl font-extrabold tracking-tight tabular-nums text-slate-900 dark:text-slate-100">
-                  {formatCurrency(48500000)}
+                  {formatCurrency(financeSummary.totalBalance)}
                 </div>
-                <p className="text-xs text-slate-500 mt-1">3 ví hoạt động (Tiền mặt, Techcombank, Tiết kiệm)</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  {financeSummary.activeWalletsCount} ví hoạt động được đồng bộ an toàn
+                </p>
               </div>
             </div>
 
@@ -96,11 +171,11 @@ export const DashboardPage: React.FC = () => {
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
                   <ArrowDownRight className="h-4 w-4" />
-                  <span>Thu: {formatCurrency(25000000)}</span>
+                  <span>Thu: {formatCurrency(financeSummary.monthlyIncome)}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-rose-500 font-semibold">
                   <ArrowUpRight className="h-4 w-4" />
-                  <span>Chi: {formatCurrency(8300000)}</span>
+                  <span>Chi: {formatCurrency(financeSummary.monthlyExpense)}</span>
                 </div>
               </div>
               <Link
@@ -178,29 +253,20 @@ export const DashboardPage: React.FC = () => {
                 <span className="text-xs text-slate-500 font-medium">Markdown</span>
               </div>
               <div className="mt-4 space-y-2.5">
-                <Link
-                  to="/notes"
-                  className="block p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 hover:border-brand/40 transition-colors"
-                >
-                  <div className="font-bold text-xs line-clamp-1 text-slate-800 dark:text-slate-200">
-                    Kế hoạch tích lũy tài chính 2027
-                  </div>
-                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">
-                    Mục tiêu tích lũy 5 triệu/tháng vào quỹ đầu tư chỉ số VN30, phân bổ 3 ví dự phòng khẩn cấp...
-                  </p>
-                </Link>
-
-                <Link
-                  to="/notes"
-                  className="block p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 hover:border-brand/40 transition-colors"
-                >
-                  <div className="font-bold text-xs line-clamp-1 text-slate-800 dark:text-slate-200">
-                    Checklist du lịch Đà Lạt cuối tuần
-                  </div>
-                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">
-                    CCCD gắn chip, sạc dự phòng 20000mAh, thuốc chống say xe, áo ấm chống sương mù...
-                  </p>
-                </Link>
+                {pinnedNotes.map((note) => (
+                  <Link
+                    key={note.id}
+                    to="/notes"
+                    className="block p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 hover:border-brand/40 transition-colors"
+                  >
+                    <div className="font-bold text-xs line-clamp-1 text-slate-800 dark:text-slate-200">
+                      {note.title}
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">
+                      {note.snippet}
+                    </p>
+                  </Link>
+                ))}
               </div>
             </div>
 
