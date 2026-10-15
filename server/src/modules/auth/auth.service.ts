@@ -695,6 +695,98 @@ export class AuthService {
       wallets: user.wallets,
     };
   }
+
+  /**
+   * 15. Google OAuth2 Login or Registration
+   */
+  async loginOrRegisterWithGoogle(profile: {
+    email: string;
+    name: string;
+    picture?: string;
+    sub: string;
+  }) {
+    const normalizedEmail = profile.email.toLowerCase().trim();
+
+    // Enforce our project's Gmail requirement
+    if (!normalizedEmail.endsWith('@gmail.com')) {
+      throw new AppError(
+        'Hệ thống hiện tại chỉ hỗ trợ đăng nhập với tài khoản Gmail (@gmail.com).',
+        400
+      );
+    }
+
+    let user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (user) {
+      // User exists -> update avatar & mark isEmailVerified if needed
+      const updateData: any = {};
+      if (!user.isEmailVerified) {
+        updateData.isEmailVerified = true;
+      }
+      if (!user.avatarUrl && profile.picture) {
+        updateData.avatarUrl = profile.picture;
+      }
+      if (user.failedLoginAttempts > 0 || user.lockedUntil) {
+        updateData.failedLoginAttempts = 0;
+        updateData.lockedUntil = null;
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: updateData,
+        });
+      }
+    } else {
+      // New User -> Create User with verified email and default wallet in a transaction
+      const randomPassword = crypto.randomBytes(32).toString('hex');
+      const passwordHash = await argon2.hash(randomPassword, {
+        type: argon2.argon2id,
+        memoryCost: 2 ** 16,
+        timeCost: 3,
+        parallelism: 1,
+      });
+
+      user = await prisma.$transaction(async (tx) => {
+        const newUser = await tx.user.create({
+          data: {
+            email: normalizedEmail,
+            fullName: profile.name || normalizedEmail.split('@')[0],
+            avatarUrl: profile.picture || null,
+            passwordHash,
+            isEmailVerified: true,
+          },
+        });
+
+        // Create default primary wallet
+        await tx.wallet.create({
+          data: {
+            userId: newUser.id,
+            name: 'Ví tiền mặt chính',
+            currency: 'VND',
+            initialBalance: 0,
+            currentBalance: 0,
+            icon: 'wallet',
+            color: '#6366F1',
+          },
+        });
+
+        return newUser;
+      });
+    }
+
+    // Issue Dual JWT + RTR Refresh token
+    const tokens = await this.issueTokens(user);
+
+    return {
+      user: this.formatUser(user),
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      message: 'Đăng nhập thành công với tài khoản Google!',
+    };
+  }
 }
 
 export const authService = new AuthService();

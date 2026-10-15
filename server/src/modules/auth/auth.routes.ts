@@ -18,6 +18,12 @@ router.post('/refresh', authController.refresh);
 router.post('/forgot-password', authLimiter, authController.forgotPassword);
 router.post('/reset-password', authLimiter, authController.resetPassword);
 
+// Google OAuth2 Endpoints
+router.get('/google/url', authController.getGoogleAuthUrl);
+router.get('/google/callback', authController.googleCallback);
+router.post('/google', authLimiter, authController.googleLoginApi);
+router.get('/google/mock', authController.googleMockLogin);
+
 // Protected Auth Endpoints (require valid JWT Access Token)
 router.get('/me', authenticate, authController.getMe);
 router.post('/logout', authenticate, authController.logout);

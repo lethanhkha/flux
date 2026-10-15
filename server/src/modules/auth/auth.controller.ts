@@ -12,6 +12,7 @@ import {
   disable2FASchema,
   verify2FASchema,
 } from './auth.schema';
+import { googleAuthService } from '../../services/googleAuth.service';
 import { env } from '../../config';
 
 const COOKIE_OPTIONS = {
@@ -182,6 +183,102 @@ export class AuthController {
     try {
       const result = await authService.getMe(req.user!.userId);
       res.status(200).json({ status: 'success', data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Google OAuth2: Get Authorization URL
+   */
+  async getGoogleAuthUrl(_req: Request, res: Response, next: NextFunction) {
+    try {
+      const isConfigured = googleAuthService.isConfigured();
+      const url = googleAuthService.getAuthorizationUrl();
+      res.status(200).json({
+        status: 'success',
+        data: { url, isConfigured },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Google OAuth2: Callback endpoint for authorization code
+   */
+  async googleCallback(req: Request, res: Response, next: NextFunction) {
+    try {
+      const code = req.query.code as string;
+      if (!code) {
+        return res.redirect(`${env.CLIENT_ORIGIN}/login?error=google_cancelled`);
+      }
+
+      const profile = await googleAuthService.getProfileFromCode(code);
+      const result = await authService.loginOrRegisterWithGoogle(profile);
+
+      if (result.refreshToken) {
+        res.cookie('refreshToken', result.refreshToken, COOKIE_OPTIONS);
+      }
+
+      // Redirect to frontend callback route with accessToken
+      res.redirect(`${env.CLIENT_ORIGIN}/auth/callback?token=${result.accessToken}`);
+    } catch (error) {
+      console.error('❌ Google Callback Error:', error);
+      res.redirect(`${env.CLIENT_ORIGIN}/login?error=google_failed`);
+    }
+  }
+
+  /**
+   * Google OAuth2: Direct API endpoint (ID Token or Code exchange)
+   */
+  async googleLoginApi(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { credential, code } = req.body;
+      let profile;
+
+      if (credential) {
+        profile = await googleAuthService.getProfileFromIdToken(credential);
+      } else if (code) {
+        profile = await googleAuthService.getProfileFromCode(code);
+      } else {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Vui lòng cung cấp mã ủy quyền hoặc Google ID Token (credential).',
+        });
+      }
+
+      const result = await authService.loginOrRegisterWithGoogle(profile);
+
+      if (result.refreshToken) {
+        res.cookie('refreshToken', result.refreshToken, COOKIE_OPTIONS);
+      }
+
+      res.status(200).json({ status: 'success', data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Google OAuth2: Local Dev Mock Handler (runs when Google Cloud credentials not yet set)
+   */
+  async googleMockLogin(_req: Request, res: Response, next: NextFunction) {
+    try {
+      const mockProfile = {
+        email: 'google_tester@gmail.com',
+        name: 'Người dùng Google Thử nghiệm',
+        picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c',
+        sub: 'mock_google_id_123456',
+      };
+
+      const result = await authService.loginOrRegisterWithGoogle(mockProfile);
+
+      if (result.refreshToken) {
+        res.cookie('refreshToken', result.refreshToken, COOKIE_OPTIONS);
+      }
+
+      res.redirect(`${env.CLIENT_ORIGIN}/auth/callback?token=${result.accessToken}`);
     } catch (error) {
       next(error);
     }

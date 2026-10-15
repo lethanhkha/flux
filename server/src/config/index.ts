@@ -27,6 +27,11 @@ const envSchema = z.object({
   SMTP_FROM: z.string().default('Flux Workspace <no-reply@flux.workspace>'),
   GMAIL_USER: z.string().default(''),
   GMAIL_APP_PASSWORD: z.string().default(''),
+
+  // Google OAuth2 Configuration
+  GOOGLE_CLIENT_ID: z.string().default(''),
+  GOOGLE_CLIENT_SECRET: z.string().default(''),
+  GOOGLE_CALLBACK_URL: z.string().default('http://localhost:5000/api/v1/auth/google/callback'),
 });
 
 const parsed = envSchema.safeParse(process.env);
