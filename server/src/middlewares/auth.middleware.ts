@@ -21,7 +21,7 @@ export const authenticate = async (req: Request, _res: Response, next: NextFunct
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new AppError('Authentication required. Missing or malformed token.', 401);
+      throw new AppError('Yêu cầu đăng nhập. Vui lòng đăng nhập để tiếp tục.', 401);
     }
 
     const token = authHeader.split(' ')[1];
@@ -29,7 +29,7 @@ export const authenticate = async (req: Request, _res: Response, next: NextFunct
     // Check Blacklist (for logged-out or revoked tokens)
     const isBlacklisted = await sessionStore.isTokenBlacklisted(token);
     if (isBlacklisted) {
-      throw new AppError('Token has been revoked. Please log in again.', 401);
+      throw new AppError('Phiên đăng nhập đã kết thúc. Vui lòng đăng nhập lại.', 401);
     }
 
     // Verify JWT
@@ -46,10 +46,10 @@ export const authenticate = async (req: Request, _res: Response, next: NextFunct
     next();
   } catch (error: any) {
     if (error.name === 'TokenExpiredError') {
-      return next(new AppError('Access token expired. Please refresh your session.', 401));
+      return next(new AppError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 401));
     }
     if (error.name === 'JsonWebTokenError') {
-      return next(new AppError('Invalid access token.', 401));
+      return next(new AppError('Mã xác thực không hợp lệ. Vui lòng đăng nhập lại.', 401));
     }
     next(error);
   }

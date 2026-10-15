@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, ShieldCheck, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { getErrorMessage } from '../api/client';
 import { toast } from 'sonner';
 
 export const LoginPage: React.FC = () => {
@@ -33,10 +34,10 @@ export const LoginPage: React.FC = () => {
       toast.success('Đăng nhập thành công! Chào mừng quay trở lại.');
       navigate('/dashboard');
     } catch (err: any) {
-      const msg =
-        err.response?.data?.message ||
-        err.message ||
-        'Đăng nhập không thành công. Vui lòng kiểm tra lại thông tin.';
+      const msg = getErrorMessage(
+        err,
+        'Email hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại.'
+      );
       setErrorMsg(msg);
       toast.error(msg);
     } finally {

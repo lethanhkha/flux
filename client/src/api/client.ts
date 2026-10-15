@@ -108,3 +108,64 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+/**
+ * Safely extract a clear, human-readable Vietnamese error message from any API error
+ * Eliminates raw developer jargon like "Request failed with status code 401"
+ */
+export const getErrorMessage = (
+  err: any,
+  fallback = 'Có lỗi xảy ra. Vui lòng thử lại.'
+): string => {
+  if (!err) return fallback;
+
+  // 1. Direct message from server response
+  const serverMsg =
+    err.response?.data?.message ||
+    err.response?.data?.error?.message;
+
+  if (serverMsg && typeof serverMsg === 'string' && serverMsg.trim()) {
+    return serverMsg.trim();
+  }
+
+  // 2. HTTP status code fallbacks (Vietnamese, zero jargon)
+  const status = err.response?.status;
+  if (status === 401) {
+    return 'Email hoặc mật khẩu không chính xác. Vui lòng thử lại.';
+  }
+  if (status === 403) {
+    return 'Bạn không có quyền thực hiện thao tác này.';
+  }
+  if (status === 404) {
+    return 'Không tìm thấy dữ liệu yêu cầu.';
+  }
+  if (status === 409) {
+    return 'Dữ liệu đã tồn tại hoặc xảy ra xung đột.';
+  }
+  if (status === 423) {
+    return 'Tài khoản đang bị tạm khóa để bảo vệ an toàn.';
+  }
+  if (status === 429) {
+    return 'Bạn thao tác quá nhanh. Vui lòng chờ trong giây lát.';
+  }
+  if (status && status >= 500) {
+    return 'Hệ thống đang gặp sự cố tạm thời. Vui lòng thử lại sau ít phút.';
+  }
+
+  // 3. Network connection issues
+  if (err.code === 'ECONNABORTED' || err.message?.includes('Network Error')) {
+    return 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại kết nối mạng.';
+  }
+
+  // 4. Suppress raw Axios error messages (e.g. "Request failed with status code ...")
+  if (
+    typeof err.message === 'string' &&
+    !err.message.includes('status code') &&
+    !err.message.includes('AxiosError') &&
+    !err.message.includes('Network Error')
+  ) {
+    return err.message;
+  }
+
+  return fallback;
+};

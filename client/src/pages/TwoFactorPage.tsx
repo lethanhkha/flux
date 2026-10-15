@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Sparkles, Shield, ArrowLeft, KeyRound, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { getErrorMessage } from '../api/client';
 import { toast } from 'sonner';
 
 export const TwoFactorPage: React.FC = () => {
@@ -78,10 +79,10 @@ export const TwoFactorPage: React.FC = () => {
       toast.success('Đăng nhập an toàn thành công!');
       navigate('/dashboard');
     } catch (err: any) {
-      const msg =
-        err.response?.data?.message ||
-        err.message ||
-        'Mã xác thực không hợp lệ. Vui lòng thử lại.';
+      const msg = getErrorMessage(
+        err,
+        'Mã xác thực không hợp lệ. Vui lòng kiểm tra lại.'
+      );
       setErrorMsg(msg);
       toast.error(msg);
     } finally {

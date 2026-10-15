@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Sparkles, Mail, CheckCircle2, ArrowRight, RefreshCw, KeyRound, Edit2, Check } from 'lucide-react';
-import { apiClient } from '../api/client';
+import { apiClient, getErrorMessage } from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -117,10 +117,10 @@ export const VerifyEmailPage: React.FC = () => {
           navigate('/dashboard');
         }, 1500);
       } catch (err: any) {
-        const msg =
-          err.response?.data?.message ||
-          err.message ||
-          'Mã xác thực không hợp lệ hoặc đã hết hạn.';
+        const msg = getErrorMessage(
+          err,
+          'Mã xác thực không hợp lệ hoặc đã hết hạn.'
+        );
         setErrorMsg(msg);
         toast.error(msg);
       } finally {
@@ -165,7 +165,7 @@ export const VerifyEmailPage: React.FC = () => {
       inputRefs.current[0]?.focus();
       toast.success('Mã kích hoạt 6 chữ số mới đã được gửi!');
     } catch (err: any) {
-      const msg = err.response?.data?.message || 'Không thể gửi lại mã kích hoạt.';
+      const msg = getErrorMessage(err, 'Không thể gửi lại mã kích hoạt.');
       toast.error(msg);
     } finally {
       setIsResending(false);

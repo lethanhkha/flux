@@ -14,7 +14,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { apiClient } from '../../api/client';
+import { apiClient, getErrorMessage } from '../../api/client';
 import { toast } from 'sonner';
 
 interface AppLayoutProps {
@@ -307,7 +307,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     setTxNote('');
                     window.dispatchEvent(new CustomEvent('flux:refresh-data'));
                   } catch (err: any) {
-                    toast.error(err.response?.data?.message || 'Không thể tạo giao dịch.');
+                    toast.error(getErrorMessage(err, 'Không thể tạo giao dịch.'));
                   } finally {
                     setIsSubmitting(false);
                   }
@@ -423,7 +423,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     setTaskTitle('');
                     window.dispatchEvent(new CustomEvent('flux:refresh-data'));
                   } catch (err: any) {
-                    toast.error(err.response?.data?.message || 'Không thể tạo công việc.');
+                    toast.error(getErrorMessage(err, 'Không thể tạo công việc.'));
                   } finally {
                     setIsSubmitting(false);
                   }
@@ -501,7 +501,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     setNoteContent('');
                     window.dispatchEvent(new CustomEvent('flux:refresh-data'));
                   } catch (err: any) {
-                    toast.error(err.response?.data?.message || 'Không thể lưu ghi chú.');
+                    toast.error(getErrorMessage(err, 'Không thể lưu ghi chú.'));
                   } finally {
                     setIsSubmitting(false);
                   }

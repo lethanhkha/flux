@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, KeyRound, Mail, Lock, ArrowLeft, ArrowRight } from 'lucide-react';
-import { apiClient } from '../api/client';
+import { apiClient, getErrorMessage } from '../api/client';
 import { toast } from 'sonner';
 
 export const ForgotPasswordPage: React.FC = () => {
@@ -24,7 +24,7 @@ export const ForgotPasswordPage: React.FC = () => {
       }
       setStep('reset');
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Có lỗi xảy ra.');
+      toast.error(getErrorMessage(err, 'Có lỗi xảy ra khi tạo yêu cầu.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -42,7 +42,7 @@ export const ForgotPasswordPage: React.FC = () => {
       toast.success(res.data.data.message || 'Đặt lại mật khẩu thành công!');
       navigate('/login');
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Không thể đặt lại mật khẩu.');
+      toast.error(getErrorMessage(err, 'Không thể đặt lại mật khẩu. Vui lòng thử lại.'));
     } finally {
       setIsSubmitting(false);
     }

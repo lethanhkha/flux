@@ -22,11 +22,13 @@ export const errorHandler = (
 ) => {
   // 1. Zod Validation Errors
   if (err instanceof ZodError) {
+    const primaryMsg = err.errors[0]?.message || 'Dữ liệu đầu vào không hợp lệ.';
     return res.status(400).json({
       success: false,
+      message: primaryMsg,
       error: {
         code: 'VALIDATION_ERROR',
-        message: 'Invalid input data',
+        message: primaryMsg,
         details: err.errors.map((e) => ({
           field: e.path.join('.'),
           message: e.message,
@@ -39,6 +41,7 @@ export const errorHandler = (
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
       success: false,
+      message: err.message,
       error: {
         code: 'APPLICATION_ERROR',
         message: err.message,
@@ -50,11 +53,13 @@ export const errorHandler = (
   console.error('💥 Unhandled Exception:', err);
 
   const isDev = env.NODE_ENV === 'development';
+  const defaultMsg = 'Hệ thống đang gặp sự cố tạm thời. Vui lòng thử lại sau.';
   return res.status(500).json({
     success: false,
+    message: isDev ? err.message : defaultMsg,
     error: {
       code: 'INTERNAL_SERVER_ERROR',
-      message: isDev ? err.message : 'An unexpected error occurred. Please try again later.',
+      message: isDev ? err.message : defaultMsg,
       ...(isDev && { stack: err.stack }),
     },
   });

@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { apiClient } from '../api/client';
+import { apiClient, getErrorMessage } from '../api/client';
 import { toast } from 'sonner';
 
 export const SettingsPage: React.FC = () => {
@@ -41,7 +41,7 @@ export const SettingsPage: React.FC = () => {
       setSecret(res.data.data.secret);
       setIs2FAModalOpen(true);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Không thể tạo mã cấu hình 2FA.');
+      toast.error(getErrorMessage(err, 'Không thể tạo mã cấu hình 2FA.'));
     }
   };
 
@@ -58,7 +58,7 @@ export const SettingsPage: React.FC = () => {
       await refreshUser();
       toast.success('Kích hoạt xác thực 2 bước (2FA) thành công!');
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Mã OTP không chính xác.');
+      toast.error(getErrorMessage(err, 'Mã OTP không chính xác.'));
     }
   };
 
@@ -80,7 +80,7 @@ export const SettingsPage: React.FC = () => {
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Không thể đổi mật khẩu.');
+      toast.error(getErrorMessage(err, 'Không thể đổi mật khẩu.'));
     } finally {
       setIsChangingPass(false);
     }

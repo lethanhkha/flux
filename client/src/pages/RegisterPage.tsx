@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, ShieldCheck, Mail, Lock, User, Check, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { getErrorMessage } from '../api/client';
 import { toast } from 'sonner';
 
 export const RegisterPage: React.FC = () => {
@@ -54,10 +55,10 @@ export const RegisterPage: React.FC = () => {
         },
       });
     } catch (err: any) {
-      const msg =
-        err.response?.data?.message ||
-        err.message ||
-        'Đăng ký không thành công. Vui lòng kiểm tra lại.';
+      const msg = getErrorMessage(
+        err,
+        'Đăng ký không thành công. Vui lòng kiểm tra lại thông tin.'
+      );
       setErrorMsg(msg);
       toast.error(msg);
     } finally {
