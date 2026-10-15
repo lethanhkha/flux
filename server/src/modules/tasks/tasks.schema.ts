@@ -12,6 +12,7 @@ export const createTaskSchema = z.object({
   dueDate: z.string().datetime().optional().nullable(),
   isRecurring: z.boolean().default(false),
   recurrenceRule: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).optional().nullable(),
+  tags: z.array(z.string().trim()).default([]),
 });
 
 export const updateTaskSchema = createTaskSchema.partial();
@@ -20,6 +21,7 @@ export const taskFilterSchema = z.object({
   status: z.enum(['TODO', 'IN_PROGRESS', 'DONE']).optional(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
   filter: z.enum(['all', 'today', 'overdue', 'done', 'next7days']).default('all'),
+  tag: z.string().optional(),
 });
 
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;

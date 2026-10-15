@@ -32,6 +32,12 @@ export class TasksService {
       where.status = 'DONE';
     }
 
+    if (filterInput?.tag) {
+      where.tags = {
+        array_contains: filterInput.tag,
+      };
+    }
+
     return prisma.task.findMany({
       where,
       orderBy: [{ status: 'asc' }, { dueDate: 'asc' }, { priority: 'desc' }],
@@ -52,6 +58,7 @@ export class TasksService {
         dueDate: input.dueDate ? new Date(input.dueDate) : null,
         isRecurring: input.isRecurring,
         recurrenceRule: input.recurrenceRule,
+        tags: input.tags || [],
       },
     });
   }
@@ -131,6 +138,7 @@ export class TasksService {
           dueDate: nextDue,
           isRecurring: true,
           recurrenceRule: task.recurrenceRule,
+          tags: task.tags || [],
         },
       });
     }
