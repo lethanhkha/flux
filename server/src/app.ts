@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { env } from './config';
 import { errorHandler, AppError } from './middlewares/error.middleware';
 import { createRateLimiter } from './middlewares/rateLimiter.middleware';
+import authRoutes from './modules/auth/auth.routes';
 
 const app = express();
 
@@ -59,7 +60,7 @@ app.get('/health', (_req: Request, res: Response) => {
   });
 });
 
-// 6. API Route Handlers (Placeholder for modules)
+// 6. API Route Handlers
 app.get(`${env.API_PREFIX}`, (_req: Request, res: Response) => {
   res.status(200).json({
     message: 'Welcome to Flux Personal Productivity & Financial Workspace API',
@@ -67,6 +68,8 @@ app.get(`${env.API_PREFIX}`, (_req: Request, res: Response) => {
     documentation: '/api/v1/docs',
   });
 });
+
+app.use(`${env.API_PREFIX}/auth`, authRoutes);
 
 // 7. Catch-all Unhandled Routes (404)
 app.all('*', (req: Request, _res: Response, next) => {

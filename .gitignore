@@ -54,3 +54,6 @@ tmp/
 # Uploads / Cache
 uploads/
 .cache/
+
+# Design prototypes & mockups (internal preview only)
+designs/

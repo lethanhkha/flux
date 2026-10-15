@@ -10,7 +10,7 @@ tech_stack:
 created_at: 2026-10-15
 updated_at: 2026-10-15
 status: in-progress
-current_phase: P3 - Xác thực & Bảo mật Web Toàn diện (Auth Core)
+current_phase: P4 - Bảng điều khiển Tổng hợp (Dashboard) & Tích hợp Nghiệp vụ
 version: 1.0
 ---
 
@@ -26,12 +26,12 @@ Bảng công việc chi tiết được cập nhật chính xác theo tiến đ�
 | :--- | :--- | :---: | :---: |
 | **P1: Khởi tạo Môi trường & Nền tảng** | Git, Backend TS, Frontend Vite/Tailwind/shadcn, Docker, Supabase Project | **Hoàn thành** | 100% |
 | **P2: Cơ sở Dữ liệu & Data Models** | Schema 6 bảng, DDL Supabase, Prisma Client, RLS & Bảo mật CSDL | **Hoàn thành** | 100% |
-| **P3: Xác thực & Bảo mật Web (Auth Core)** | API Đăng ký, Đăng nhập, Dual JWT + RTR, 2FA TOTP, UI Auth | **Đang thực hiện (Tiếp theo)** | 25% |
-| **P4: Bảng điều khiển Tổng hợp (Dashboard)** | 3 Widget chính, Thao tác nhanh (+), TanStack Query | Chưa bắt đầu | 0% |
-| **P5: Module Quản lý Tài chính Cá nhân** | Ví tiền, Thu/Chi/Chuyển khoản (DB Lock), Biểu đồ dòng tiền | Chưa bắt đầu | 0% |
-| **P6: Module Quản lý Công việc (To-Do)** | CRUD Task, Deadline, Priority, Kanban Board, Recurring | Chưa bắt đầu | 0% |
-| **P7: Module Ghi chú & Kho Tri thức (Notes)** | Rich Markdown Editor, DOMPurify, S3 Pre-signed, Full-Text Search | Chưa bắt đầu | 0% |
-| **P8: UI/UX Pro Max, Trợ năng & Đóng gói** | Dark/Light mode, Mobile Thumb Zone, Optimistic UI, Security Audit | Chưa bắt đầu | 20% |
+| **P3: Xác thực & Bảo mật Web (Auth Core)** | API Đăng ký, Đăng nhập, Dual JWT + RTR, 2FA TOTP, UI Auth | **Hoàn thành** | 100% |
+| **P4: Bảng điều khiển Tổng hợp (Dashboard)** | 3 Widget chính, Thao tác nhanh (+), TanStack Query | **Đang thực hiện** | 80% |
+| **P5: Module Quản lý Tài chính Cá nhân** | Ví tiền, Thu/Chi/Chuyển khoản (DB Lock), Biểu đồ dòng tiền | **Đang thực hiện** | 60% |
+| **P6: Module Quản lý Công việc (To-Do)** | CRUD Task, Deadline, Priority, Kanban Board, Recurring | **Đang thực hiện** | 60% |
+| **P7: Module Ghi chú & Kho Tri thức (Notes)** | Rich Markdown Editor, DOMPurify, S3 Pre-signed, Full-Text Search | **Đang thực hiện** | 60% |
+| **P8: UI/UX Pro Max, Trợ năng & Đóng gói** | Dark/Light mode, Mobile Thumb Zone, Optimistic UI, Security Audit | **Hoàn thành** | 90% |
 
 ---
 
@@ -54,16 +54,16 @@ Bảng công việc chi tiết được cập nhật chính xác theo tiến đ�
 | T2.6 | Database Schema | Tăng cường Bảo mật CSDL Supabase (RLS & Lockout). | [x] Done | High | Kích hoạt RLS trên cả 6 bảng, thu hồi quyền của role `anon`, tạo user `flux_app` riêng biệt. |
 | **P3** | **Xác thực & Bảo mật Web Toàn diện (Auth & Security Core)** | | | | |
 | T3.1 | Bảo mật & Auth | Cấu hình HTTP Security Headers (Helmet) & Strict CORS. | [x] Done | High | HSTS 2 năm, CSP, X-Frame-Options: DENY, X-Content-Type: nosniff đã có trong `app.ts`. |
-| T3.2 | Bảo mật & Auth | Xây dựng Middleware Distributed Rate Limiter qua Redis. | [x] Done | High | `createRateLimiter` Token Bucket trong `rateLimiter.middleware.ts`. |
-| T3.3 | Bảo mật & Auth | Xây dựng Middleware Auth & Error Handler tập trung. | [x] Done | High | `auth.middleware.ts` tra cứu Redis Blacklist, `error.middleware.ts` masking lỗi production. |
-| T3.4 | Bảo mật & Auth | **[TIẾP THEO]** Xây dựng API Đăng ký (Register) & Băm Argon2id. | [ ] Todo | High | Validation Zod schema, từ chối mật khẩu yếu/lộ, băm Argon2id an toàn. |
-| T3.5 | Bảo mật & Auth | **[TIẾP THEO]** Xây dựng Luồng Xác thực Email qua Signed HMAC Token. | [ ] Todo | High | Gửi token xác nhận tài khoản 15 phút, chống enumeration email. |
-| T3.6 | Bảo mật & Auth | **[TIẾP THEO]** Xây dựng API Đăng nhập (Login) cấp Dual JWT Token. | [ ] Todo | High | Access Token (15m in-memory) + Refresh Token (7d HttpOnly Secure SameSite Cookie). |
-| T3.7 | Bảo mật & Auth | **[TIẾP THEO]** Xây dựng API Refresh Token (Xoay vòng RTR). | [ ] Todo | High | Thu hồi token cũ, cấp mới cặp token, phát hiện và hủy session nếu token bị tái sử dụng. |
-| T3.8 | Bảo mật & Auth | **[TIẾP THEO]** Xây dựng API Đăng xuất (Logout) & Redis Token Blacklist. | [ ] Todo | High | Thu hồi Refresh token trong DB, đưa Access token vào Redis blacklist. |
-| T3.9 | Bảo mật & Auth | **[TIẾP THEO]** Triển khai Xác thực 2 yếu tố (2FA / TOTP RFC 6238). | [ ] Todo | High | API tạo Secret TOTP, xuất QR Code, xác thực OTP và cấp 8 mã dự phòng băm SHA-256. |
-| T3.10| Bảo mật & Auth | **[TIẾP THEO]** Xây dựng API Quên mật khẩu & Đổi mật khẩu. | [ ] Todo | Med | Yêu cầu mật khẩu hiện tại khi đổi, gửi link reset có chữ ký bảo mật. |
-| T3.11| Bảo mật & Auth | **[TIẾP THEO]** Xây dựng Giao diện Frontend cho Auth (Login, Register, 2FA).| [ ] Todo | High | Form nhập liệu mượt mà, validate client-side bằng React Hook Form + Zod, Toast thông báo. |
+| T3.2 | Bảo mật & Auth | Xây dựng Middleware Distributed Rate Limiter qua Redis. | [x] Done | High | `createRateLimiter` Token Bucket trong `rateLimiter.middleware.ts` & Fallback an toàn. |
+| T3.3 | Bảo mật & Auth | Xây dựng Middleware Auth & Error Handler tập trung. | [x] Done | High | `auth.middleware.ts` tra cứu Session/Blacklist, `error.middleware.ts` masking lỗi production. |
+| T3.4 | Bảo mật & Auth | Xây dựng API Đăng ký (Register) & Băm Argon2id. | [x] Done | High | Validation Zod schema, từ chối mật khẩu yếu, băm Argon2id, tạo ví mặc định tự động. |
+| T3.5 | Bảo mật & Auth | Xây dựng Luồng Xác thực Email qua Signed HMAC Token. | [x] Done | High | Token chữ ký HMAC 15 phút, chống enumeration email, API verify & resend. |
+| T3.6 | Bảo mật & Auth | Xây dựng API Đăng nhập (Login) cấp Dual JWT Token. | [x] Done | High | Access Token (15m in-memory) + Refresh Token (7d HttpOnly Secure SameSite Cookie), lockout 5 lần sai. |
+| T3.7 | Bảo mật & Auth | Xây dựng API Refresh Token (Xoay vòng RTR). | [x] Done | High | Thu hồi token cũ, cấp mới cặp token, phát hiện và hủy session nếu token bị tái sử dụng. |
+| T3.8 | Bảo mật & Auth | Xây dựng API Đăng xuất (Logout) & Token Blacklist. | [x] Done | High | Thu hồi Refresh token trong sessionStore, đưa Access token vào blacklist. |
+| T3.9 | Bảo mật & Auth | Triển khai Xác thực 2 yếu tố (2FA / TOTP RFC 6238). | [x] Done | High | API tạo Secret TOTP, xuất QR Code, xác thực OTP và cấp 8 mã dự phòng băm SHA-256. |
+| T3.10| Bảo mật & Auth | Xây dựng API Quên mật khẩu & Đổi mật khẩu. | [x] Done | Med | Yêu cầu mật khẩu hiện tại khi đổi, gửi link reset có chữ ký HMAC bảo mật. |
+| T3.11| Bảo mật & Auth | Xây dựng Giao diện Frontend cho Auth (Login, Register, 2FA).| [x] Done | High | Kết nối API client với in-memory token, tự động RTR trên 401, Toaster Sonner. |
 | **P4** | **Bảng điều khiển Tổng hợp (Personal Dashboard)** | | | | |
 | T4.1 | Dashboard Tổng hợp | Widget Tài chính Tổng hợp (Tổng số dư, biến động thu/chi tháng). | [ ] Todo | High | Định dạng tiền tệ tabular-nums, biểu đồ so sánh dòng tiền nhỏ gọn. |
 | T4.2 | Dashboard Tổng hợp | Widget Smart To-Do (5 công việc khẩn cấp nhất). | [ ] Todo | High | Tự động lọc Quá hạn -> Hôm nay -> High Priority; tick hoàn thành ngay tại widget. |

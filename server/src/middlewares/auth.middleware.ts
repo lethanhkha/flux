@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { env } from '../config';
-import { redis } from '../config/redis';
+import { sessionStore } from '../modules/auth/sessionStore';
 import { AppError } from './error.middleware';
 
 export interface AuthenticatedUser {
@@ -26,14 +26,10 @@ export const authenticate = async (req: Request, _res: Response, next: NextFunct
 
     const token = authHeader.split(' ')[1];
 
-    // Check Redis Blacklist (for logged-out or revoked tokens)
-    try {
-      const isBlacklisted = await redis.get(`blacklist:${token}`);
-      if (isBlacklisted) {
-        throw new AppError('Token has been revoked. Please log in again.', 401);
-      }
-    } catch (redisErr) {
-      // Degrade gracefully if redis is offline
+    // Check Blacklist (for logged-out or revoked tokens)
+    const isBlacklisted = await sessionStore.isTokenBlacklisted(token);
+    if (isBlacklisted) {
+      throw new AppError('Token has been revoked. Please log in again.', 401);
     }
 
     // Verify JWT
