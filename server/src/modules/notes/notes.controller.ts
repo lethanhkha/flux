@@ -1,6 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { notesService } from './notes.service';
-import { createNoteSchema, updateNoteSchema, searchNoteSchema } from './notes.schema';
+import {
+  createNoteSchema,
+  updateNoteSchema,
+  searchNoteSchema,
+  renameTagSchema,
+  deleteTagSchema,
+} from './notes.schema';
 
 export class NotesController {
   async getNotes(req: Request, res: Response, next: NextFunction) {
@@ -68,6 +74,35 @@ export class NotesController {
     try {
       const notes = await notesService.getPinnedNotes(req.user!.userId);
       res.status(200).json({ status: 'success', data: notes });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getTags(req: Request, res: Response, next: NextFunction) {
+    try {
+      const tags = await notesService.getTags(req.user!.userId);
+      res.status(200).json({ status: 'success', data: tags });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async renameTag(req: Request, res: Response, next: NextFunction) {
+    try {
+      const validated = renameTagSchema.parse(req.body);
+      const result = await notesService.renameTag(req.user!.userId, validated);
+      res.status(200).json({ status: 'success', data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteTag(req: Request, res: Response, next: NextFunction) {
+    try {
+      const validated = deleteTagSchema.parse(req.body);
+      const result = await notesService.deleteTag(req.user!.userId, validated);
+      res.status(200).json({ status: 'success', data: result });
     } catch (error) {
       next(error);
     }

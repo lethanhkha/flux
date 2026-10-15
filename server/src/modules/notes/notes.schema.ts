@@ -19,6 +19,17 @@ export const searchNoteSchema = z.object({
   tag: z.string().optional(),
 });
 
+export const renameTagSchema = z.object({
+  oldTag: z.string().trim().min(1, 'Tên thẻ cũ không được để trống').toLowerCase(),
+  newTag: z.string().trim().min(1, 'Tên thẻ mới không được để trống').toLowerCase(),
+});
+
+export const deleteTagSchema = z.object({
+  tag: z.string().trim().min(1, 'Tên thẻ cần xóa không được để trống').toLowerCase(),
+});
+
 export type CreateNoteInput = z.infer<typeof createNoteSchema>;
 export type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
 export type SearchNoteInput = z.infer<typeof searchNoteSchema>;
+export type RenameTagInput = z.infer<typeof renameTagSchema>;
+export type DeleteTagInput = z.infer<typeof deleteTagSchema>;

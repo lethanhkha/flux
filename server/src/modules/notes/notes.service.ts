@@ -2,7 +2,13 @@ import createDOMPurify from 'dompurify';
 import { JSDOM } from 'jsdom';
 import { prisma } from '../../config/prisma';
 import { AppError } from '../../middlewares/error.middleware';
-import { CreateNoteInput, UpdateNoteInput, SearchNoteInput } from './notes.schema';
+import {
+  CreateNoteInput,
+  UpdateNoteInput,
+  SearchNoteInput,
+  RenameTagInput,
+  DeleteTagInput,
+} from './notes.schema';
 
 const window = new JSDOM('').window;
 const DOMPurify = createDOMPurify(window as any);
@@ -155,6 +161,98 @@ export class NotesService {
       orderBy: { updatedAt: 'desc' },
       take: limit,
     });
+  }
+
+  /**
+   * 8. Get all unique tags with count
+   */
+  async getTags(userId: string) {
+    const notes = await prisma.note.findMany({
+      where: { userId },
+      select: { tags: true },
+    });
+
+    const tagCounts: Record<string, number> = {};
+    for (const n of notes) {
+      const tags = (n.tags as string[]) || [];
+      for (const t of tags) {
+        if (!t) continue;
+        const normalized = t.toLowerCase().trim();
+        tagCounts[normalized] = (tagCounts[normalized] || 0) + 1;
+      }
+    }
+
+    return Object.entries(tagCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  }
+
+  /**
+   * 9. Rename tag across all notes of user
+   */
+  async renameTag(userId: string, input: RenameTagInput) {
+    const { oldTag, newTag } = input;
+    const notes = await prisma.note.findMany({
+      where: { userId },
+      select: { id: true, tags: true },
+    });
+
+    const notesToUpdate = notes.filter((n) => {
+      const tags = (n.tags as string[]) || [];
+      return tags.some((t) => t.toLowerCase().trim() === oldTag);
+    });
+
+    if (notesToUpdate.length === 0) {
+      return { updatedCount: 0, oldTag, newTag };
+    }
+
+    const updates = notesToUpdate.map((n) => {
+      const tags = (n.tags as string[]) || [];
+      const updatedTags = Array.from(
+        new Set(
+          tags.map((t) => (t.toLowerCase().trim() === oldTag ? newTag : t))
+        )
+      );
+      return prisma.note.update({
+        where: { id: n.id },
+        data: { tags: updatedTags },
+      });
+    });
+
+    await prisma.$transaction(updates);
+    return { updatedCount: updates.length, oldTag, newTag };
+  }
+
+  /**
+   * 10. Delete tag across all notes of user
+   */
+  async deleteTag(userId: string, input: DeleteTagInput) {
+    const { tag } = input;
+    const notes = await prisma.note.findMany({
+      where: { userId },
+      select: { id: true, tags: true },
+    });
+
+    const notesToUpdate = notes.filter((n) => {
+      const tags = (n.tags as string[]) || [];
+      return tags.some((t) => t.toLowerCase().trim() === tag);
+    });
+
+    if (notesToUpdate.length === 0) {
+      return { updatedCount: 0, deletedTag: tag };
+    }
+
+    const updates = notesToUpdate.map((n) => {
+      const tags = (n.tags as string[]) || [];
+      const updatedTags = tags.filter((t) => t.toLowerCase().trim() !== tag);
+      return prisma.note.update({
+        where: { id: n.id },
+        data: { tags: updatedTags },
+      });
+    });
+
+    await prisma.$transaction(updates);
+    return { updatedCount: updates.length, deletedTag: tag };
   }
 }
 

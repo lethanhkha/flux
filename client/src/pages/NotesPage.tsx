@@ -10,6 +10,10 @@ import {
   List,
   X,
   Trash2,
+  Tag,
+  Edit3,
+  Check,
+  Sparkles,
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { toast } from 'sonner';
@@ -30,6 +34,12 @@ export const NotesPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [activeNote, setActiveNote] = useState<NoteItem | null>(null);
+
+  // Tag Manager modal state
+  const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
+  const [editingTag, setEditingTag] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [tagActionLoading, setTagActionLoading] = useState(false);
 
   const [notes, setNotes] = useState<NoteItem[]>([
     {
@@ -194,7 +204,96 @@ export const NotesPage: React.FC = () => {
     }
   };
 
-  const allTags = Array.from(new Set(notes.flatMap((n) => n.tags)));
+  const allTags = Array.from(new Set(notes.flatMap((n) => n.tags))).filter(Boolean);
+
+  const tagCounts = allTags.map((tag) => ({
+    name: tag,
+    count: notes.filter((n) => n.tags.includes(tag)).length,
+  }));
+
+  const handleStartRenameTag = (tag: string) => {
+    setEditingTag(tag);
+    setRenameValue(tag);
+  };
+
+  const handleSaveRenameTag = async (oldTag: string) => {
+    const cleanNewTag = renameValue.trim().toLowerCase().replace(/^#/, '');
+    if (!cleanNewTag || cleanNewTag === oldTag) {
+      setEditingTag(null);
+      return;
+    }
+
+    setTagActionLoading(true);
+    try {
+      await apiClient.post('/notes/tags/rename', { oldTag, newTag: cleanNewTag });
+      setNotes((prev) =>
+        prev.map((n) => ({
+          ...n,
+          tags: Array.from(
+            new Set(n.tags.map((t) => (t.toLowerCase() === oldTag.toLowerCase() ? cleanNewTag : t)))
+          ),
+        }))
+      );
+      if (selectedTag.toLowerCase() === oldTag.toLowerCase()) {
+        setSelectedTag(cleanNewTag);
+      }
+      toast.success(`Đã đổi tên thẻ "#${oldTag}" thành "#${cleanNewTag}"!`);
+      setEditingTag(null);
+      window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+    } catch {
+      // Local fallback for offline/prototype
+      setNotes((prev) =>
+        prev.map((n) => ({
+          ...n,
+          tags: Array.from(
+            new Set(n.tags.map((t) => (t.toLowerCase() === oldTag.toLowerCase() ? cleanNewTag : t)))
+          ),
+        }))
+      );
+      if (selectedTag.toLowerCase() === oldTag.toLowerCase()) {
+        setSelectedTag(cleanNewTag);
+      }
+      toast.success(`Đã cập nhật tên thẻ "#${cleanNewTag}".`);
+      setEditingTag(null);
+    } finally {
+      setTagActionLoading(false);
+    }
+  };
+
+  const handleDeleteTag = async (tagToDelete: string) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa thẻ "#${tagToDelete}" khỏi tất cả ghi chú?`)) {
+      return;
+    }
+
+    setTagActionLoading(true);
+    try {
+      await apiClient.post('/notes/tags/delete', { tag: tagToDelete });
+      setNotes((prev) =>
+        prev.map((n) => ({
+          ...n,
+          tags: n.tags.filter((t) => t.toLowerCase() !== tagToDelete.toLowerCase()),
+        }))
+      );
+      if (selectedTag.toLowerCase() === tagToDelete.toLowerCase()) {
+        setSelectedTag('ALL');
+      }
+      toast.success(`Đã xóa thẻ "#${tagToDelete}" khỏi toàn bộ ghi chú!`);
+      window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+    } catch {
+      setNotes((prev) =>
+        prev.map((n) => ({
+          ...n,
+          tags: n.tags.filter((t) => t.toLowerCase() !== tagToDelete.toLowerCase()),
+        }))
+      );
+      if (selectedTag.toLowerCase() === tagToDelete.toLowerCase()) {
+        setSelectedTag('ALL');
+      }
+      toast.success(`Đã xóa thẻ "#${tagToDelete}".`);
+    } finally {
+      setTagActionLoading(false);
+    }
+  };
 
   const filteredNotes = notes.filter((n) => {
     const matchesQuery =
@@ -210,9 +309,15 @@ export const NotesPage: React.FC = () => {
         {/* Header Controls */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Kho Tri Thức & Ghi Chú</h1>
-            <p className="text-xs text-slate-500 mt-1">
-              Trình soạn thảo Markdown, lọc nhãn tags và PostgreSQL Full-Text Search
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/10 text-brand text-xs font-bold mb-2">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Ý Tưởng & Tư Duy Không Giới Hạn</span>
+            </div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+              Trạm Ý Tưởng & Kho Tri Thức
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Hội tụ tư duy sáng tạo, tài liệu markdown cá nhân và tổ chức nhãn thông minh
             </p>
           </div>
 
@@ -239,6 +344,15 @@ export const NotesPage: React.FC = () => {
                 <span>Danh Sách</span>
               </button>
             </div>
+
+            <button
+              onClick={() => setIsTagManagerOpen(true)}
+              className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              title="Quản lý thẻ phân loại"
+            >
+              <Tag className="w-3.5 h-3.5 text-brand" />
+              <span>Quản Lý Thẻ</span>
+            </button>
 
             <button
               onClick={() => setIsAddModalOpen(true)}
@@ -502,6 +616,125 @@ export const NotesPage: React.FC = () => {
                   Lưu Ghi Chú Vào CSDL
                 </button>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Tag Manager Modal */}
+        {isTagManagerOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm modal-backdrop-animate">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl modal-dialog-animate space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center">
+                    <Tag className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base">Quản Lý Thẻ Phân Loại</h3>
+                    <p className="text-[11px] text-slate-400">Đổi tên hoặc xóa thẻ trên toàn bộ ghi chú</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsTagManagerOpen(false);
+                    setEditingTag(null);
+                  }}
+                  className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {tagCounts.length === 0 ? (
+                <div className="py-8 text-center text-slate-400 text-xs">
+                  Chưa có thẻ phân loại nào trong ghi chú.
+                </div>
+              ) : (
+                <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
+                  {tagCounts.map(({ name, count }) => {
+                    const isEditing = editingTag === name;
+                    return (
+                      <div
+                        key={name}
+                        className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800/80 gap-3 text-xs"
+                      >
+                        {isEditing ? (
+                          <div className="flex items-center gap-2 flex-1">
+                            <input
+                              type="text"
+                              value={renameValue}
+                              onChange={(e) => setRenameValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveRenameTag(name);
+                                if (e.key === 'Escape') setEditingTag(null);
+                              }}
+                              autoFocus
+                              className="flex-1 px-3 py-1.5 rounded-xl border border-brand bg-white dark:bg-slate-900 text-xs focus:outline-none"
+                            />
+                            <button
+                              onClick={() => handleSaveRenameTag(name)}
+                              disabled={tagActionLoading}
+                              className="p-1.5 rounded-lg bg-brand text-white hover:bg-brand-hover cursor-pointer"
+                              title="Lưu tên mới"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setEditingTag(null)}
+                              className="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 cursor-pointer"
+                              title="Hủy"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="font-semibold text-brand bg-brand/10 dark:bg-brand/20 px-2.5 py-1 rounded-lg truncate">
+                                #{name}
+                              </span>
+                              <span className="text-[11px] text-slate-400 flex-shrink-0">
+                                ({count} ghi chú)
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                              <button
+                                onClick={() => handleStartRenameTag(name)}
+                                disabled={tagActionLoading}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-brand hover:bg-brand/10 transition-colors cursor-pointer"
+                                title="Đổi tên thẻ"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTag(name)}
+                                disabled={tagActionLoading}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                                title="Xóa thẻ khỏi ghi chú"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                <button
+                  onClick={() => {
+                    setIsTagManagerOpen(false);
+                    setEditingTag(null);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs cursor-pointer"
+                >
+                  Đóng
+                </button>
+              </div>
             </div>
           </div>
         )}
