@@ -11,6 +11,7 @@ import {
   PiggyBank,
   X,
   ShieldCheck,
+  Download,
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { formatCurrency } from '../lib/utils';
@@ -204,6 +205,34 @@ export const FinancePage: React.FC = () => {
     toast.success('Chuyển tiền thành công! ACID Transaction đã cập nhật số dư cả 2 ví.');
   };
 
+  const handleExportCSV = () => {
+    if (transactions.length === 0) {
+      toast.error('Không có giao dịch nào để xuất.');
+      return;
+    }
+    const headers = ['Mã Giao Dịch', 'Loại', 'Ví Nguồn', 'Ví Đích', 'Danh Mục', 'Số Tiền (VND)', 'Ngày', 'Ghi Chú'];
+    const rows = transactions.map((tx) => [
+      tx.id,
+      tx.type,
+      `"${tx.wallet || ''}"`,
+      `"${tx.destWallet || ''}"`,
+      `"${tx.category || ''}"`,
+      tx.amount,
+      `"${tx.date || ''}"`,
+      `"${(tx.note || '').replace(/"/g, '""')}"`,
+    ]);
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `flux_transactions_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Đã xuất báo cáo giao dịch ra file CSV thành công!');
+  };
+
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -286,24 +315,35 @@ export const FinancePage: React.FC = () => {
               <p className="text-xs text-slate-500">Mọi khoản thu, chi và chuyển khoản có định dạng tabular-nums</p>
             </div>
 
-            {/* Filter buttons */}
-            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold">
-              {(['ALL', 'INCOME', 'EXPENSE', 'TRANSFER'] as const).map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setFilter(type)}
-                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                    filter === type
-                      ? 'bg-white dark:bg-slate-900 text-brand shadow-sm font-bold'
-                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                  }`}
-                >
-                  {type === 'ALL' && 'Tất Cả'}
-                  {type === 'INCOME' && 'Thu (+)'}
-                  {type === 'EXPENSE' && 'Chi (-)'}
-                  {type === 'TRANSFER' && 'Chuyển (↔)'}
-                </button>
-              ))}
+            {/* Action buttons & Filter */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={handleExportCSV}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 hover:border-brand/40 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all cursor-pointer"
+                title="Xuất danh sách giao dịch ra file CSV"
+              >
+                <Download className="w-3.5 h-3.5 text-brand" />
+                <span>Xuất CSV</span>
+              </button>
+
+              <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold">
+                {(['ALL', 'INCOME', 'EXPENSE', 'TRANSFER'] as const).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setFilter(type)}
+                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                      filter === type
+                        ? 'bg-white dark:bg-slate-900 text-brand shadow-sm font-bold'
+                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    {type === 'ALL' && 'Tất Cả'}
+                    {type === 'INCOME' && 'Thu (+)'}
+                    {type === 'EXPENSE' && 'Chi (-)'}
+                    {type === 'TRANSFER' && 'Chuyển (↔)'}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
