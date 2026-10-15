@@ -111,21 +111,22 @@ export const DashboardPage: React.FC = () => {
         {/* Welcome Banner */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm">
           <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/10 text-brand text-xs font-bold mb-2">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Không Gian Điều Hành Tổng Thể</span>
+            </div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight">
-                Xin chào{user?.fullName ? `, ${user.fullName}` : ''}! 👋
+              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                Chào ngày mới{user?.fullName ? `, ${user.fullName}` : ''}! 👋
               </h1>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-brand/10 text-brand font-semibold border border-brand/20">
-                All-in-one Hub
-              </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               {tasks.length > 0 ? (
                 <>
-                  Hôm nay bạn có <span className="font-semibold text-slate-900 dark:text-slate-100">{tasks.length - completedCount} việc cần làm</span> và số dư các ví đang tăng trưởng ổn định.
+                  Hôm nay bạn có <span className="font-semibold text-slate-900 dark:text-slate-100">{tasks.length - completedCount} việc cần làm</span> và dòng tiền các ví đang tăng trưởng ổn định.
                 </>
               ) : (
-                'Không có công việc khẩn cấp nào cần giải quyết. Chúc bạn một ngày làm việc hiệu quả!'
+                'Không có công việc khẩn cấp nào cần giải quyết. Chúc bạn một ngày làm việc tràn đầy năng lượng!'
               )}
             </p>
           </div>

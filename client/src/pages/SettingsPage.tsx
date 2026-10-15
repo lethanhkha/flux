@@ -118,10 +118,16 @@ export const SettingsPage: React.FC = () => {
     <AppLayout>
       <div className="space-y-6 max-w-4xl mx-auto">
         {/* Header */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">Cài Đặt & Trung Tâm Bảo Mật</h1>
-          <p className="text-xs text-slate-500">
-            Quản lý định danh tài khoản, xác thực 2 bước (TOTP), đổi mật khẩu và phiên đăng nhập
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm space-y-1.5">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/10 text-brand text-xs font-bold mb-1">
+            <Shield className="w-3.5 h-3.5" />
+            <span>Trung Tâm An Toàn & Định Danh Số</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            Bảo Mật & Thiết Lập Hệ Thống
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Kiểm soát an toàn tuyệt đối, cấu hình xác thực đa yếu tố (2FA TOTP), quản lý phiên đăng nhập và định danh cá nhân
           </p>
         </div>
 
