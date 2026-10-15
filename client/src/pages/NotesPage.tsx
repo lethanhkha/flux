@@ -66,7 +66,7 @@ export const NotesPage: React.FC = () => {
       id: 'n4',
       title: 'Ghi chú cuộc họp thảo luận chiến lược quý 4',
       content:
-        'Đạt 100% mục tiêu bảo mật web: Dual JWT in-memory, Argon2id password hash, khóa dòng database chống race conditions.',
+        'Kế hoạch hành động quý 4: Hoàn thiện không gian làm việc cá nhân Flux và tối ưu hiệu suất công việc hàng ngày.',
       tags: ['công-việc', 'bảo-mật'],
       isPinned: false,
       color: '#F59E0B',
@@ -354,7 +354,7 @@ export const NotesPage: React.FC = () => {
 
               <div className="flex items-center gap-2 p-2 rounded-xl bg-emerald-500/10 text-emerald-600 text-[11px]">
                 <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>Nội dung đã được làm sạch bằng DOMPurify chống Stored XSS.</span>
+                <span>Trình soạn thảo hỗ trợ hiển thị Markdown an toàn và trực quan.</span>
               </div>
 
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 font-mono text-xs whitespace-pre-wrap leading-relaxed max-h-80 overflow-y-auto">

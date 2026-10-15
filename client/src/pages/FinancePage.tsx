@@ -202,7 +202,7 @@ export const FinancePage: React.FC = () => {
 
     setTransactions([newTx, ...transactions]);
     setIsTransferModalOpen(false);
-    toast.success('Chuyển tiền thành công! ACID Transaction đã cập nhật số dư cả 2 ví.');
+    toast.success('Chuyển tiền thành công! Số dư các ví đã được cập nhật.');
   };
 
   const handleExportCSV = () => {
@@ -248,7 +248,7 @@ export const FinancePage: React.FC = () => {
             <div className="text-3xl sm:text-4xl font-extrabold tracking-tight tabular-nums text-slate-900 dark:text-slate-100">
               {formatCurrency(totalBalance)}
             </div>
-            <p className="text-xs text-slate-500">Được bảo vệ bởi cơ chế khóa dòng ACID Transaction SELECT FOR UPDATE</p>
+            <p className="text-xs text-slate-500">Tự động đồng bộ và bảo vệ an toàn theo thời gian thực</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
@@ -421,7 +421,7 @@ export const FinancePage: React.FC = () => {
 
               <div className="flex items-center gap-2 p-2.5 rounded-xl bg-brand/10 text-brand text-xs">
                 <ShieldCheck className="w-4 h-4 flex-shrink-0" />
-                <span>Khóa dòng SELECT FOR UPDATE đảm bảo toàn vẹn số dư ví.</span>
+                <span>Giao dịch an toàn đảm bảo số dư các ví luôn chính xác tuyệt đối.</span>
               </div>
 
               <form onSubmit={handleTransferSubmit} className="space-y-4 text-xs">

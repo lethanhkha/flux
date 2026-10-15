@@ -130,7 +130,7 @@ export const DashboardPage: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold tracking-tight">
-                Xin chào, {user?.fullName || 'John Doe'}! 👋
+                Xin chào{user?.fullName ? `, ${user.fullName}` : ''}! 👋
               </h1>
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-brand/10 text-brand font-semibold border border-brand/20">
                 All-in-one Hub
@@ -143,7 +143,7 @@ export const DashboardPage: React.FC = () => {
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
               <ShieldCheck className="h-4 w-4" />
-              Bảo mật cấp cao (Dual JWT + 2FA)
+              Bảo mật đa lớp (2FA TOTP)
             </span>
           </div>
         </div>

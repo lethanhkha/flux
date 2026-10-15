@@ -107,19 +107,19 @@ export const SettingsPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="h-14 w-14 rounded-2xl bg-brand/20 text-brand flex items-center justify-center font-extrabold text-xl">
-                {user?.fullName?.charAt(0) || 'JD'}
+                {user?.fullName?.charAt(0) || 'F'}
               </div>
               <div>
                 <div className="font-bold text-base text-slate-900 dark:text-slate-100">
-                  {user?.fullName || 'John Doe'}
+                  {user?.fullName || 'Tài khoản Flux'}
                 </div>
-                <div className="text-xs text-slate-500">{user?.email || 'demo.user@flux.workspace'}</div>
+                <div className="text-xs text-slate-500">{user?.email || 'Chưa cập nhật email'}</div>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-semibold">
                     Đã xác thực email
                   </span>
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand/10 text-brand font-semibold">
-                    Supabase PostgreSQL
+                    Tài khoản chính thức
                   </span>
                 </div>
               </div>
@@ -217,7 +217,7 @@ export const SettingsPage: React.FC = () => {
                   disabled={isChangingPass}
                   className="px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/20 transition-all cursor-pointer"
                 >
-                  {isChangingPass ? 'Đang cập nhật...' : 'Cập Nhật Mật Khẩu (Argon2id)'}
+                  {isChangingPass ? 'Đang cập nhật...' : 'Cập Nhật Mật Khẩu Mới'}
                 </button>
               </div>
             </form>
