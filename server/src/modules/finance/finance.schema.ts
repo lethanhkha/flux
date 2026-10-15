@@ -63,9 +63,21 @@ export const updateCategorySchema = z.object({
   color: z.string().optional(),
 });
 
+export const updateTransactionSchema = z.object({
+  walletId: z.string().uuid('ID ví không hợp lệ').optional(),
+  destinationWalletId: z.string().uuid('ID ví đích không hợp lệ').optional().nullable(),
+  type: z.enum(['INCOME', 'EXPENSE', 'TRANSFER']).optional(),
+  amount: z.number().positive('Số tiền phải lớn hơn 0').optional(),
+  category: z.string().min(1).max(100).trim().optional(),
+  transactionDate: z.string().optional(),
+  note: z.string().max(500).optional().nullable(),
+  receiptUrl: z.string().url().optional().nullable(),
+});
+
 export type CreateWalletInput = z.infer<typeof createWalletSchema>;
 export type UpdateWalletInput = z.infer<typeof updateWalletSchema>;
 export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
+export type UpdateTransactionInput = z.infer<typeof updateTransactionSchema>;
 export type TransferMoneyInput = z.infer<typeof transferMoneySchema>;
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;

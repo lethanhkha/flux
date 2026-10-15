@@ -5,6 +5,7 @@ import {
   CreateWalletInput,
   UpdateWalletInput,
   CreateTransactionInput,
+  UpdateTransactionInput,
   TransferMoneyInput,
   CreateCategoryInput,
   UpdateCategoryInput,
@@ -215,6 +216,178 @@ export class FinanceService {
       amount: input.amount,
       category: 'Chuyển tiền nội bộ',
       note: input.note,
+    });
+  }
+
+  /**
+   * 8. Update transaction with full balance recalculation in an ACID transaction
+   */
+  async updateTransaction(userId: string, transactionId: string, input: UpdateTransactionInput) {
+    return prisma.$transaction(async (tx) => {
+      const existing = await tx.transaction.findFirst({
+        where: { id: transactionId, userId },
+      });
+
+      if (!existing) {
+        throw new AppError('Không tìm thấy giao dịch.', 404);
+      }
+
+      const oldAmount = new Decimal(existing.amount.toString());
+      const newAmount = input.amount !== undefined ? new Decimal(input.amount) : oldAmount;
+      const targetType = input.type ?? (existing.type as 'INCOME' | 'EXPENSE' | 'TRANSFER');
+      const targetWalletId = input.walletId ?? existing.walletId;
+      const targetDestWalletId =
+        input.destinationWalletId !== undefined ? input.destinationWalletId : existing.destinationWalletId;
+
+      // 1. REVERSE old transaction effects from wallets
+      const oldSourceWallet = await tx.wallet.findFirst({
+        where: { id: existing.walletId, userId },
+      });
+      if (!oldSourceWallet) {
+        throw new AppError('Ví của giao dịch cũ không tồn tại.', 404);
+      }
+
+      let oldSourceBal = new Decimal(oldSourceWallet.currentBalance.toString());
+      if (existing.type === 'INCOME') {
+        oldSourceBal = oldSourceBal.minus(oldAmount);
+      } else if (existing.type === 'EXPENSE') {
+        oldSourceBal = oldSourceBal.plus(oldAmount);
+      } else if (existing.type === 'TRANSFER' && existing.destinationWalletId) {
+        oldSourceBal = oldSourceBal.plus(oldAmount);
+        const oldDestWallet = await tx.wallet.findFirst({
+          where: { id: existing.destinationWalletId, userId },
+        });
+        if (oldDestWallet) {
+          const oldDestBal = new Decimal(oldDestWallet.currentBalance.toString()).minus(oldAmount);
+          await tx.wallet.update({
+            where: { id: oldDestWallet.id },
+            data: { currentBalance: oldDestBal.toNumber() },
+          });
+        }
+      }
+
+      await tx.wallet.update({
+        where: { id: oldSourceWallet.id },
+        data: { currentBalance: oldSourceBal.toNumber() },
+      });
+
+      // 2. APPLY new transaction effects to target wallets
+      const newSourceWallet = await tx.wallet.findFirst({
+        where: { id: targetWalletId, userId },
+      });
+      if (!newSourceWallet) {
+        throw new AppError('Ví nguồn được chọn không tồn tại.', 404);
+      }
+
+      let newSourceBal = new Decimal(newSourceWallet.currentBalance.toString());
+
+      if (targetType === 'INCOME') {
+        newSourceBal = newSourceBal.plus(newAmount);
+      } else if (targetType === 'EXPENSE') {
+        newSourceBal = newSourceBal.minus(newAmount);
+      } else if (targetType === 'TRANSFER') {
+        if (!targetDestWalletId || targetDestWalletId === targetWalletId) {
+          throw new AppError('Giao dịch chuyển khoản yêu cầu ví đích hợp lệ và khác ví nguồn.', 400);
+        }
+
+        const newDestWallet = await tx.wallet.findFirst({
+          where: { id: targetDestWalletId, userId },
+        });
+        if (!newDestWallet) {
+          throw new AppError('Ví đích không tồn tại hoặc không thuộc về bạn.', 404);
+        }
+
+        if (newSourceBal.lessThan(newAmount)) {
+          throw new AppError('Số dư ví nguồn không đủ để thực hiện chuyển tiền.', 400);
+        }
+
+        newSourceBal = newSourceBal.minus(newAmount);
+        const newDestBal = new Decimal(newDestWallet.currentBalance.toString()).plus(newAmount);
+
+        await tx.wallet.update({
+          where: { id: newDestWallet.id },
+          data: { currentBalance: newDestBal.toNumber() },
+        });
+      }
+
+      await tx.wallet.update({
+        where: { id: newSourceWallet.id },
+        data: { currentBalance: newSourceBal.toNumber() },
+      });
+
+      // 3. Update the transaction row
+      return tx.transaction.update({
+        where: { id: transactionId },
+        data: {
+          walletId: targetWalletId,
+          destinationWalletId: targetDestWalletId || null,
+          type: targetType,
+          amount: newAmount.toNumber(),
+          category: input.category ?? existing.category,
+          transactionDate: input.transactionDate ? new Date(input.transactionDate) : existing.transactionDate,
+          note: input.note !== undefined ? input.note : existing.note,
+          receiptUrl: input.receiptUrl !== undefined ? input.receiptUrl : existing.receiptUrl,
+        },
+        include: {
+          wallet: { select: { id: true, name: true, color: true } },
+          destinationWallet: { select: { id: true, name: true, color: true } },
+        },
+      });
+    });
+  }
+
+  /**
+   * 9. Delete transaction and reverse its balance effects in an ACID transaction
+   */
+  async deleteTransaction(userId: string, transactionId: string) {
+    return prisma.$transaction(async (tx) => {
+      const existing = await tx.transaction.findFirst({
+        where: { id: transactionId, userId },
+      });
+
+      if (!existing) {
+        throw new AppError('Không tìm thấy giao dịch.', 404);
+      }
+
+      const amt = new Decimal(existing.amount.toString());
+
+      // 1. REVERSE balance effects
+      const sourceWallet = await tx.wallet.findFirst({
+        where: { id: existing.walletId, userId },
+      });
+
+      if (sourceWallet) {
+        let sourceBal = new Decimal(sourceWallet.currentBalance.toString());
+        if (existing.type === 'INCOME') {
+          sourceBal = sourceBal.minus(amt);
+        } else if (existing.type === 'EXPENSE') {
+          sourceBal = sourceBal.plus(amt);
+        } else if (existing.type === 'TRANSFER' && existing.destinationWalletId) {
+          sourceBal = sourceBal.plus(amt);
+          const destWallet = await tx.wallet.findFirst({
+            where: { id: existing.destinationWalletId, userId },
+          });
+          if (destWallet) {
+            const destBal = new Decimal(destWallet.currentBalance.toString()).minus(amt);
+            await tx.wallet.update({
+              where: { id: destWallet.id },
+              data: { currentBalance: destBal.toNumber() },
+            });
+          }
+        }
+
+        await tx.wallet.update({
+          where: { id: sourceWallet.id },
+          data: { currentBalance: sourceBal.toNumber() },
+        });
+      }
+
+      // 2. Delete the transaction record
+      await tx.transaction.delete({
+        where: { id: transactionId },
+      });
+
+      return { message: 'Đã xóa giao dịch thành công.' };
     });
   }
 

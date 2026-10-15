@@ -16,6 +16,8 @@ router.delete('/wallets/:id', financeController.deleteWallet);
 // Transaction endpoints
 router.get('/transactions', financeController.getTransactions);
 router.post('/transactions', financeController.createTransaction);
+router.patch('/transactions/:id', financeController.updateTransaction);
+router.delete('/transactions/:id', financeController.deleteTransaction);
 router.post('/transfer', financeController.transferMoney);
 
 // Category endpoints

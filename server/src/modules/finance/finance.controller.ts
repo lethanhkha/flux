@@ -4,6 +4,7 @@ import {
   createWalletSchema,
   updateWalletSchema,
   createTransactionSchema,
+  updateTransactionSchema,
   transferMoneySchema,
   createCategorySchema,
   updateCategorySchema,
@@ -73,6 +74,32 @@ export class FinanceController {
       const validated = createTransactionSchema.parse(req.body);
       const transaction = await financeService.createTransaction(req.user!.userId, validated);
       res.status(201).json({ status: 'success', data: transaction });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateTransaction(req: Request, res: Response, next: NextFunction) {
+    try {
+      const validated = updateTransactionSchema.parse(req.body);
+      const transaction = await financeService.updateTransaction(
+        req.user!.userId,
+        req.params.id,
+        validated
+      );
+      res.status(200).json({ status: 'success', data: transaction });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteTransaction(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await financeService.deleteTransaction(
+        req.user!.userId,
+        req.params.id
+      );
+      res.status(200).json({ status: 'success', data: result });
     } catch (error) {
       next(error);
     }

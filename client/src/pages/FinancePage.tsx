@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { apiClient } from '../api/client';
+import { apiClient, getErrorMessage } from '../api/client';
 import {
   Wallet,
   ArrowUpRight,
@@ -35,10 +35,13 @@ interface TransactionItem {
   id: string;
   type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
   wallet: string;
+  walletId?: string;
   destWallet?: string;
+  destWalletId?: string;
   category: string;
   amount: number;
   date: string;
+  rawDate?: string;
   note: string;
 }
 
@@ -143,6 +146,18 @@ export const FinancePage: React.FC = () => {
   const [txCategory, setTxCategory] = useState('Ăn uống & Cafe');
   const [txNote, setTxNote] = useState('');
 
+  // Edit Transaction Modal State
+  const [isEditTxModalOpen, setIsEditTxModalOpen] = useState(false);
+  const [editingTxId, setEditingTxId] = useState<string | null>(null);
+  const [editTxType, setEditTxType] = useState<'INCOME' | 'EXPENSE' | 'TRANSFER'>('EXPENSE');
+  const [editTxWalletId, setEditTxWalletId] = useState('');
+  const [editTxDestWalletId, setEditTxDestWalletId] = useState('');
+  const [editTxAmount, setEditTxAmount] = useState('100000');
+  const [editTxCategory, setEditTxCategory] = useState('Ăn uống & Cafe');
+  const [editTxDate, setEditTxDate] = useState(new Date().toISOString().slice(0, 10));
+  const [editTxNote, setEditTxNote] = useState('');
+  const [isSubmittingEditTx, setIsSubmittingEditTx] = useState(false);
+
   // Load real data from backend if user is logged in
   useEffect(() => {
     const fetchFinanceData = async () => {
@@ -176,10 +191,13 @@ export const FinancePage: React.FC = () => {
               id: tx.id,
               type: tx.type,
               wallet: tx.wallet?.name || 'Ví',
+              walletId: tx.walletId,
               destWallet: tx.destinationWallet?.name,
+              destWalletId: tx.destinationWalletId,
               category: tx.category,
               amount: parseFloat(tx.amount),
               date: new Date(tx.transactionDate).toLocaleDateString('vi-VN'),
+              rawDate: tx.transactionDate ? new Date(tx.transactionDate).toISOString().slice(0, 10) : undefined,
               note: tx.note || '',
             }))
           );
@@ -322,13 +340,17 @@ export const FinancePage: React.FC = () => {
       return;
     }
 
+    let createdTxId = `tx-${Date.now()}`;
     try {
-      await apiClient.post('/finance/transfer', {
+      const res = await apiClient.post('/finance/transfer', {
         sourceWalletId,
         destinationWalletId: destWalletId,
         amount: amt,
         note: transferNote,
       });
+      if (res.data?.data?.id) {
+        createdTxId = res.data.data.id;
+      }
     } catch {
       // Degrade gracefully if backend/session is offline
     }
@@ -345,19 +367,23 @@ export const FinancePage: React.FC = () => {
     const dest = wallets.find((w) => w.id === destWalletId);
 
     const newTx: TransactionItem = {
-      id: `tx-${Date.now()}`,
+      id: createdTxId,
       type: 'TRANSFER',
       wallet: src.name,
+      walletId: sourceWalletId,
       destWallet: dest?.name,
+      destWalletId: destWalletId,
       category: 'Chuyển tiền nội bộ',
       amount: amt,
       date: new Date().toLocaleDateString('vi-VN'),
+      rawDate: new Date().toISOString().slice(0, 10),
       note: transferNote,
     };
 
     setTransactions([newTx, ...transactions]);
     setIsTransferModalOpen(false);
     toast.success('Chuyển tiền thành công! Số dư các ví đã được cập nhật.');
+    window.dispatchEvent(new CustomEvent('flux:refresh-data'));
   };
 
   const handleCreateWallet = async (e: React.FormEvent) => {
@@ -436,16 +462,21 @@ export const FinancePage: React.FC = () => {
       return;
     }
 
+    let createdId = `tx-${Date.now()}`;
     try {
-      await apiClient.post('/finance/transactions', {
+      const res = await apiClient.post('/finance/transactions', {
         walletId: selectedWalletId,
         type: txType,
         amount: amt,
         category: txCategory,
         note: txNote || undefined,
       });
-    } catch {
-      // Fallback
+      if (res.data?.data?.id) {
+        createdId = res.data.data.id;
+      }
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể ghi nhận giao dịch.'));
+      return;
     }
 
     // Update wallet balance
@@ -460,12 +491,14 @@ export const FinancePage: React.FC = () => {
     );
 
     const newTx: TransactionItem = {
-      id: `tx-${Date.now()}`,
+      id: createdId,
       type: txType,
       wallet: targetWallet.name,
+      walletId: selectedWalletId,
       category: txCategory,
       amount: amt,
       date: new Date().toLocaleDateString('vi-VN'),
+      rawDate: new Date().toISOString().slice(0, 10),
       note: txNote,
     };
 
@@ -479,6 +512,93 @@ export const FinancePage: React.FC = () => {
         : `Đã ghi nhận khoản chi: -${formatCurrency(amt)}`
     );
     window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+  };
+
+  const handleOpenEditTx = (tx: TransactionItem) => {
+    setEditingTxId(tx.id);
+    setEditTxType(tx.type);
+
+    const matchedWallet = wallets.find((w) => w.id === tx.walletId || w.name === tx.wallet);
+    setEditTxWalletId(matchedWallet?.id || wallets[0]?.id || '');
+
+    if (tx.destWalletId || tx.destWallet) {
+      const matchedDestWallet = wallets.find((w) => w.id === tx.destWalletId || w.name === tx.destWallet);
+      setEditTxDestWalletId(matchedDestWallet?.id || wallets[1]?.id || wallets[0]?.id || '');
+    } else {
+      setEditTxDestWalletId(wallets[1]?.id || wallets[0]?.id || '');
+    }
+
+    setEditTxAmount(tx.amount.toString());
+    setEditTxCategory(tx.category);
+    setEditTxDate(tx.rawDate || new Date().toISOString().slice(0, 10));
+    setEditTxNote(tx.note || '');
+    setIsEditTxModalOpen(true);
+  };
+
+  const handleUpdateTransaction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTxId) return;
+
+    const amt = parseFloat(editTxAmount);
+    if (isNaN(amt) || amt <= 0) {
+      toast.error('Vui lòng nhập số tiền hợp lệ (> 0).');
+      return;
+    }
+
+    const srcWallet = wallets.find((w) => w.id === editTxWalletId);
+    if (!srcWallet) {
+      toast.error('Vui lòng chọn ví thực hiện.');
+      return;
+    }
+
+    if (editTxType === 'TRANSFER' && editTxWalletId === editTxDestWalletId) {
+      toast.error('Ví nguồn và ví đích không được trùng nhau.');
+      return;
+    }
+
+    setIsSubmittingEditTx(true);
+    try {
+      const payload: any = {
+        type: editTxType,
+        walletId: editTxWalletId,
+        amount: amt,
+        category: editTxType === 'TRANSFER' ? 'Chuyển tiền nội bộ' : (editTxCategory || 'Khác'),
+        note: editTxNote || undefined,
+        transactionDate: editTxDate ? new Date(editTxDate).toISOString() : undefined,
+      };
+      if (editTxType === 'TRANSFER') {
+        payload.destinationWalletId = editTxDestWalletId;
+      }
+
+      await apiClient.patch(`/finance/transactions/${editingTxId}`, payload);
+
+      toast.success('Đã cập nhật giao dịch thành công!');
+      setIsEditTxModalOpen(false);
+      setEditingTxId(null);
+      window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể cập nhật giao dịch.'));
+    } finally {
+      setIsSubmittingEditTx(false);
+    }
+  };
+
+  const handleDeleteTransaction = async (txId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const targetTx = transactions.find((t) => t.id === txId);
+    if (!targetTx) return;
+
+    const confirmMsg = `Bạn có chắc muốn xóa giao dịch "${targetTx.category}" (${formatCurrency(targetTx.amount)})?\nSố dư các ví sẽ tự động được hoàn lại chính xác.`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      await apiClient.delete(`/finance/transactions/${txId}`);
+      toast.success('Đã xóa giao dịch và hoàn lại số dư ví thành công!');
+      setTransactions((prev) => prev.filter((t) => t.id !== txId));
+      window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể xóa giao dịch.'));
+    }
   };
 
   const handleExportCSV = () => {
@@ -711,11 +831,11 @@ export const FinancePage: React.FC = () => {
               filteredTransactions.map((tx) => (
               <div
                 key={tx.id}
-                className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4 hover:border-brand/40 transition-colors"
+                className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4 hover:border-brand/40 transition-colors group"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                   <div
-                    className={`h-10 w-10 rounded-xl flex items-center justify-center ${
+                    className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                       tx.type === 'INCOME'
                         ? 'bg-emerald-500/10 text-emerald-600'
                         : tx.type === 'EXPENSE'
@@ -728,41 +848,63 @@ export const FinancePage: React.FC = () => {
                     {tx.type === 'TRANSFER' && <ArrowRightLeft className="w-5 h-5" />}
                   </div>
 
-                  <div>
+                  <div className="min-w-0">
                     <div
                       onClick={() =>
                         setSelectedCategory(
                           selectedCategory === tx.category ? 'ALL' : tx.category
                         )
                       }
-                      className="font-bold text-xs text-slate-800 dark:text-slate-100 hover:text-brand transition-colors cursor-pointer"
+                      className="font-bold text-xs text-slate-800 dark:text-slate-100 hover:text-brand transition-colors cursor-pointer truncate"
                       title={`Lọc theo danh mục "${tx.category}"`}
                     >
                       {tx.category}
                     </div>
-                    <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
+                    <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5 truncate">
                       <span>{tx.date}</span>
                       <span>•</span>
-                      <span>
+                      <span className="truncate">
                         {tx.type === 'TRANSFER' ? `${tx.wallet} → ${tx.destWallet}` : tx.wallet}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="text-right">
-                  <div
-                    className={`text-sm font-extrabold tabular-nums ${
-                      tx.type === 'INCOME'
-                        ? 'text-emerald-600 dark:text-emerald-400'
-                        : tx.type === 'EXPENSE'
-                        ? 'text-rose-500 dark:text-rose-400'
-                        : 'text-brand'
-                    }`}
-                  >
-                    {tx.type === 'INCOME' ? `+${formatCurrency(tx.amount)}` : `-${formatCurrency(tx.amount)}`}
+                <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+                  <div className="text-right">
+                    <div
+                      className={`text-sm font-extrabold tabular-nums ${
+                        tx.type === 'INCOME'
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : tx.type === 'EXPENSE'
+                          ? 'text-rose-500 dark:text-rose-400'
+                          : 'text-brand'
+                      }`}
+                    >
+                      {tx.type === 'INCOME' ? `+${formatCurrency(tx.amount)}` : `-${formatCurrency(tx.amount)}`}
+                    </div>
+                    <div className="text-[10px] text-slate-400 line-clamp-1 max-w-[140px] sm:max-w-[200px]">{tx.note}</div>
                   </div>
-                  <div className="text-[10px] text-slate-400 line-clamp-1">{tx.note}</div>
+
+                  {/* Actions: Edit & Delete buttons */}
+                  <div className="flex items-center gap-1 opacity-80 sm:opacity-40 group-hover:opacity-100 transition-opacity">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditTx(tx)}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-brand hover:bg-brand/10 transition-colors cursor-pointer"
+                      title="Chỉnh sửa giao dịch"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeleteTransaction(tx.id, e)}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                      title="Xóa giao dịch"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             )))}
@@ -1073,6 +1215,212 @@ export const FinancePage: React.FC = () => {
                 >
                   Lưu Giao Dịch
                 </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Transaction Modal */}
+        {isEditTxModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm modal-backdrop-animate">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl modal-dialog-animate space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center font-bold">
+                    <Edit3 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base">Chỉnh Sửa Giao Dịch</h3>
+                    <p className="text-[11px] text-slate-400">
+                      Số dư các ví liên quan sẽ được tự động tính toán lại
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsEditTxModalOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleUpdateTransaction} className="space-y-4 text-xs">
+                {/* Transaction Type Buttons */}
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditTxType('EXPENSE')}
+                    className={`py-2 rounded-xl font-bold transition-all cursor-pointer text-center text-xs ${
+                      editTxType === 'EXPENSE'
+                        ? 'bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    Chi tiền (-)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditTxType('INCOME')}
+                    className={`py-2 rounded-xl font-bold transition-all cursor-pointer text-center text-xs ${
+                      editTxType === 'INCOME'
+                        ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    Thu tiền (+)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditTxType('TRANSFER')}
+                    className={`py-2 rounded-xl font-bold transition-all cursor-pointer text-center text-xs ${
+                      editTxType === 'TRANSFER'
+                        ? 'bg-brand/10 border border-brand/30 text-brand'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    Chuyển khoản
+                  </button>
+                </div>
+
+                {/* Wallets selection */}
+                {editTxType === 'TRANSFER' ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+                        Ví nguồn (Trừ tiền)
+                      </label>
+                      <select
+                        value={editTxWalletId}
+                        onChange={(e) => setEditTxWalletId(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
+                      >
+                        {wallets.map((w) => (
+                          <option key={w.id} value={w.id}>
+                            {w.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+                        Ví đích (Cộng tiền)
+                      </label>
+                      <select
+                        value={editTxDestWalletId}
+                        onChange={(e) => setEditTxDestWalletId(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
+                      >
+                        {wallets.map((w) => (
+                          <option key={w.id} value={w.id}>
+                            {w.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+                      Chọn Ví
+                    </label>
+                    <select
+                      value={editTxWalletId}
+                      onChange={(e) => setEditTxWalletId(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
+                    >
+                      {wallets.map((w) => (
+                        <option key={w.id} value={w.id}>
+                          {w.name} ({formatCurrency(w.balance)})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Amount & Date */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+                      Số tiền (VND)
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min="1000"
+                      step="1000"
+                      value={editTxAmount}
+                      onChange={(e) => setEditTxAmount(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-base font-extrabold tabular-nums focus:outline-none focus:ring-2 focus:ring-brand"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+                      Ngày giao dịch
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={editTxDate}
+                      onChange={(e) => setEditTxDate(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium focus:outline-none focus:ring-2 focus:ring-brand"
+                    />
+                  </div>
+                </div>
+
+                {/* Category if not transfer */}
+                {editTxType !== 'TRANSFER' && (
+                  <div>
+                    <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+                      Danh mục
+                    </label>
+                    <select
+                      value={editTxCategory}
+                      onChange={(e) => setEditTxCategory(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
+                    >
+                      {categories
+                        .filter((c) => c.type === editTxType || c.type === 'EXPENSE')
+                        .map((c) => (
+                          <option key={c.id} value={c.name}>
+                            {c.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Note */}
+                <div>
+                  <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+                    Ghi chú
+                  </label>
+                  <input
+                    type="text"
+                    value={editTxNote}
+                    onChange={(e) => setEditTxNote(e.target.value)}
+                    placeholder="VD: Ăn tối với bạn, thanh toán hóa đơn..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditTxModalOpen(false)}
+                    className="flex-1 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-all cursor-pointer"
+                  >
+                    Hủy bỏ
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingEditTx}
+                    className="flex-1 py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {isSubmittingEditTx ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+                  </button>
+                </div>
               </form>
             </div>
           </div>
