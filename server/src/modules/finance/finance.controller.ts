@@ -1,0 +1,98 @@
+import { Request, Response, NextFunction } from 'express';
+import { financeService } from './finance.service';
+import {
+  createWalletSchema,
+  updateWalletSchema,
+  createTransactionSchema,
+  transferMoneySchema,
+} from './finance.schema';
+
+export class FinanceController {
+  async getWallets(req: Request, res: Response, next: NextFunction) {
+    try {
+      const wallets = await financeService.getWallets(req.user!.userId);
+      res.status(200).json({ status: 'success', data: wallets });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async createWallet(req: Request, res: Response, next: NextFunction) {
+    try {
+      const validated = createWalletSchema.parse(req.body);
+      const wallet = await financeService.createWallet(req.user!.userId, validated);
+      res.status(201).json({ status: 'success', data: wallet });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateWallet(req: Request, res: Response, next: NextFunction) {
+    try {
+      const validated = updateWalletSchema.parse(req.body);
+      const wallet = await financeService.updateWallet(
+        req.user!.userId,
+        req.params.id,
+        validated
+      );
+      res.status(200).json({ status: 'success', data: wallet });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteWallet(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await financeService.deleteWallet(req.user!.userId, req.params.id);
+      res.status(200).json({ status: 'success', data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getTransactions(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { walletId, type, limit, offset } = req.query;
+      const result = await financeService.getTransactions(req.user!.userId, {
+        walletId: walletId as string,
+        type: type as any,
+        limit: limit ? parseInt(limit as string, 10) : undefined,
+        offset: offset ? parseInt(offset as string, 10) : undefined,
+      });
+      res.status(200).json({ status: 'success', data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async createTransaction(req: Request, res: Response, next: NextFunction) {
+    try {
+      const validated = createTransactionSchema.parse(req.body);
+      const transaction = await financeService.createTransaction(req.user!.userId, validated);
+      res.status(201).json({ status: 'success', data: transaction });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async transferMoney(req: Request, res: Response, next: NextFunction) {
+    try {
+      const validated = transferMoneySchema.parse(req.body);
+      const transaction = await financeService.transferMoney(req.user!.userId, validated);
+      res.status(201).json({ status: 'success', data: transaction });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getSummary(req: Request, res: Response, next: NextFunction) {
+    try {
+      const summary = await financeService.getFinanceSummary(req.user!.userId);
+      res.status(200).json({ status: 'success', data: summary });
+    } catch (error) {
+      next(error);
+    }
+  }
+}
+
+export const financeController = new FinanceController();
