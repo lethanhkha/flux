@@ -19,6 +19,7 @@ import {
   Tag,
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
+import { ConfirmModal } from '../components/common/ConfirmModal';
 import { formatCurrency } from '../lib/utils';
 import { toast } from 'sonner';
 
@@ -157,6 +158,19 @@ export const FinancePage: React.FC = () => {
   const [editTxDate, setEditTxDate] = useState(new Date().toISOString().slice(0, 10));
   const [editTxNote, setEditTxNote] = useState('');
   const [isSubmittingEditTx, setIsSubmittingEditTx] = useState(false);
+
+  // Modern Delete Confirmation State
+  const [deleteModalState, setDeleteModalState] = useState<{
+    isOpen: boolean;
+    type: 'TRANSACTION' | 'CATEGORY' | null;
+    targetTx?: TransactionItem;
+    targetCategory?: CategoryItem;
+    isLoading: boolean;
+  }>({
+    isOpen: false,
+    type: null,
+    isLoading: false,
+  });
 
   // Load real data from backend if user is logged in
   useEffect(() => {
@@ -302,21 +316,13 @@ export const FinancePage: React.FC = () => {
     }
   };
 
-  const handleDeleteCategory = async (catId: string) => {
-    const cat = categories.find((c) => c.id === catId);
-    if (!cat) return;
-    if (!window.confirm(`Bạn có chắc muốn xóa danh mục "${cat.name}"?`)) return;
-
-    setCategories((prev) => prev.filter((c) => c.id !== catId));
-    if (selectedCategory === cat.name) setSelectedCategory('ALL');
-    toast.success(`Đã xóa danh mục "${cat.name}".`);
-
-    try {
-      await apiClient.delete(`/finance/categories/${catId}`);
-      window.dispatchEvent(new CustomEvent('flux:refresh-data'));
-    } catch {
-      // Degrade gracefully
-    }
+  const handleRequestDeleteCategory = (cat: CategoryItem) => {
+    setDeleteModalState({
+      isOpen: true,
+      type: 'CATEGORY',
+      targetCategory: cat,
+      isLoading: false,
+    });
   };
 
   const filteredTransactions = transactions.filter((tx) => {
@@ -583,21 +589,45 @@ export const FinancePage: React.FC = () => {
     }
   };
 
-  const handleDeleteTransaction = async (txId: string, e?: React.MouseEvent) => {
+  const handleRequestDeleteTransaction = (tx: TransactionItem, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    const targetTx = transactions.find((t) => t.id === txId);
-    if (!targetTx) return;
+    setDeleteModalState({
+      isOpen: true,
+      type: 'TRANSACTION',
+      targetTx: tx,
+      isLoading: false,
+    });
+  };
 
-    const confirmMsg = `Bạn có chắc muốn xóa giao dịch "${targetTx.category}" (${formatCurrency(targetTx.amount)})?\nSố dư các ví sẽ tự động được hoàn lại chính xác.`;
-    if (!window.confirm(confirmMsg)) return;
+  const handleConfirmDelete = async () => {
+    if (deleteModalState.type === 'TRANSACTION' && deleteModalState.targetTx) {
+      const tx = deleteModalState.targetTx;
+      setDeleteModalState((prev) => ({ ...prev, isLoading: true }));
+      try {
+        await apiClient.delete(`/finance/transactions/${tx.id}`);
+        toast.success('Đã xóa giao dịch và hoàn lại số dư ví thành công!');
+        setTransactions((prev) => prev.filter((t) => t.id !== tx.id));
+        setDeleteModalState({ isOpen: false, type: null, isLoading: false });
+        window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+      } catch (err) {
+        toast.error(getErrorMessage(err, 'Không thể xóa giao dịch.'));
+        setDeleteModalState((prev) => ({ ...prev, isLoading: false }));
+      }
+    } else if (deleteModalState.type === 'CATEGORY' && deleteModalState.targetCategory) {
+      const cat = deleteModalState.targetCategory;
+      setDeleteModalState((prev) => ({ ...prev, isLoading: true }));
+      setCategories((prev) => prev.filter((c) => c.id !== cat.id));
+      if (selectedCategory === cat.name) setSelectedCategory('ALL');
+      toast.success(`Đã xóa danh mục "${cat.name}".`);
 
-    try {
-      await apiClient.delete(`/finance/transactions/${txId}`);
-      toast.success('Đã xóa giao dịch và hoàn lại số dư ví thành công!');
-      setTransactions((prev) => prev.filter((t) => t.id !== txId));
-      window.dispatchEvent(new CustomEvent('flux:refresh-data'));
-    } catch (err) {
-      toast.error(getErrorMessage(err, 'Không thể xóa giao dịch.'));
+      try {
+        await apiClient.delete(`/finance/categories/${cat.id}`);
+        setDeleteModalState({ isOpen: false, type: null, isLoading: false });
+        window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+      } catch {
+        // Degrade gracefully
+        setDeleteModalState({ isOpen: false, type: null, isLoading: false });
+      }
     }
   };
 
@@ -898,7 +928,7 @@ export const FinancePage: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={(e) => handleDeleteTransaction(tx.id, e)}
+                      onClick={(e) => handleRequestDeleteTransaction(tx, e)}
                       className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
                       title="Xóa giao dịch"
                     >
@@ -1607,7 +1637,7 @@ export const FinancePage: React.FC = () => {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleDeleteCategory(cat.id)}
+                                onClick={() => handleRequestDeleteCategory(cat)}
                                 className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
                                 title="Xóa danh mục"
                               >
@@ -1637,6 +1667,90 @@ export const FinancePage: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Modern Delete Confirmation Dialog */}
+        <ConfirmModal
+          isOpen={deleteModalState.isOpen}
+          isLoading={deleteModalState.isLoading}
+          onClose={() => {
+            if (!deleteModalState.isLoading) {
+              setDeleteModalState({ isOpen: false, type: null, isLoading: false });
+            }
+          }}
+          onConfirm={handleConfirmDelete}
+          title={
+            deleteModalState.type === 'TRANSACTION'
+              ? 'Xác Nhận Xóa Giao Dịch?'
+              : 'Xác Nhận Xóa Danh Mục?'
+          }
+          description={
+            deleteModalState.type === 'TRANSACTION'
+              ? 'Hành động này sẽ xóa vĩnh viễn giao dịch khỏi hệ thống. Số dư các ví liên quan sẽ tự động được hoàn trả chính xác.'
+              : 'Danh mục này sẽ bị xóa khỏi danh sách. Các giao dịch trước đây vẫn được bảo toàn dữ liệu.'
+          }
+          confirmText="Xác Nhận Xóa"
+          cancelText="Giữ Lại"
+          variant="danger"
+          highlightContent={
+            deleteModalState.type === 'TRANSACTION' && deleteModalState.targetTx ? (
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="font-bold text-slate-900 dark:text-slate-100 truncate">
+                    {deleteModalState.targetTx.category}
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                    <span>{deleteModalState.targetTx.date}</span>
+                    <span className="mx-1">•</span>
+                    <span>
+                      {deleteModalState.targetTx.type === 'TRANSFER'
+                        ? `${deleteModalState.targetTx.wallet} → ${deleteModalState.targetTx.destWallet}`
+                        : deleteModalState.targetTx.wallet}
+                    </span>
+                  </div>
+                  {deleteModalState.targetTx.note && (
+                    <div className="text-[10px] text-slate-400 italic mt-0.5 line-clamp-1">
+                      "{deleteModalState.targetTx.note}"
+                    </div>
+                  )}
+                </div>
+                <div
+                  className={`text-sm font-extrabold tabular-nums flex-shrink-0 ${
+                    deleteModalState.targetTx.type === 'INCOME'
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : deleteModalState.targetTx.type === 'EXPENSE'
+                      ? 'text-rose-500 dark:text-rose-400'
+                      : 'text-brand'
+                  }`}
+                >
+                  {deleteModalState.targetTx.type === 'INCOME'
+                    ? `+${formatCurrency(deleteModalState.targetTx.amount)}`
+                    : `-${formatCurrency(deleteModalState.targetTx.amount)}`}
+                </div>
+              </div>
+            ) : deleteModalState.type === 'CATEGORY' && deleteModalState.targetCategory ? (
+              <div className="flex items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span
+                    className="w-3.5 h-3.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: deleteModalState.targetCategory.color || '#6366F1' }}
+                  />
+                  <span className="font-bold text-slate-900 dark:text-slate-100 truncate">
+                    {deleteModalState.targetCategory.name}
+                  </span>
+                </div>
+                <span
+                  className={`text-[10px] px-2 py-0.5 rounded-md font-bold flex-shrink-0 ${
+                    deleteModalState.targetCategory.type === 'INCOME'
+                      ? 'bg-emerald-500/10 text-emerald-600'
+                      : 'bg-rose-500/10 text-rose-500'
+                  }`}
+                >
+                  {deleteModalState.targetCategory.type === 'INCOME' ? 'Khoản thu' : 'Khoản chi'}
+                </span>
+              </div>
+            ) : null
+          }
+        />
       </div>
     </AppLayout>
   );

@@ -173,3 +173,31 @@
   animation: fabPulse 3s infinite cubic-bezier(0.4, 0, 0.6, 1);
 }
 
+@keyframes modalBackdropFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalDialogScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-backdrop-animate {
+  animation: modalBackdropFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.modal-dialog-animate {
+  animation: modalDialogScaleIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+

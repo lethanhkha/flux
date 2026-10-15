@@ -16,6 +16,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
+import { ConfirmModal } from '../components/common/ConfirmModal';
 import { toast } from 'sonner';
 
 interface NoteItem {
@@ -40,6 +41,7 @@ export const NotesPage: React.FC = () => {
   const [editingTag, setEditingTag] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [tagActionLoading, setTagActionLoading] = useState(false);
+  const [confirmDeleteTag, setConfirmDeleteTag] = useState<string | null>(null);
 
   const [notes, setNotes] = useState<NoteItem[]>([
     {
@@ -260,10 +262,9 @@ export const NotesPage: React.FC = () => {
     }
   };
 
-  const handleDeleteTag = async (tagToDelete: string) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa thẻ "#${tagToDelete}" khỏi tất cả ghi chú?`)) {
-      return;
-    }
+  const handleConfirmDeleteTag = async () => {
+    if (!confirmDeleteTag) return;
+    const tagToDelete = confirmDeleteTag;
 
     setTagActionLoading(true);
     try {
@@ -292,6 +293,7 @@ export const NotesPage: React.FC = () => {
       toast.success(`Đã xóa thẻ "#${tagToDelete}".`);
     } finally {
       setTagActionLoading(false);
+      setConfirmDeleteTag(null);
     }
   };
 
@@ -708,7 +710,7 @@ export const NotesPage: React.FC = () => {
                                 <Edit3 className="w-3.5 h-3.5" />
                               </button>
                               <button
-                                onClick={() => handleDeleteTag(name)}
+                                onClick={() => setConfirmDeleteTag(name)}
                                 disabled={tagActionLoading}
                                 className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
                                 title="Xóa thẻ khỏi ghi chú"
@@ -738,6 +740,33 @@ export const NotesPage: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Modern Delete Confirmation Dialog for Tags */}
+        <ConfirmModal
+          isOpen={!!confirmDeleteTag}
+          isLoading={tagActionLoading}
+          onClose={() => {
+            if (!tagActionLoading) setConfirmDeleteTag(null);
+          }}
+          onConfirm={handleConfirmDeleteTag}
+          title="Xác Nhận Xóa Thẻ Phân Loại?"
+          description="Thẻ này sẽ được gỡ bỏ khỏi toàn bộ các ghi chú hiện có. Dữ liệu và nội dung ghi chú vẫn được bảo toàn nguyên vẹn."
+          confirmText="Xác Nhận Xóa"
+          cancelText="Hủy Bỏ"
+          variant="danger"
+          highlightContent={
+            confirmDeleteTag && (
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-brand bg-brand/10 dark:bg-brand/20 px-2.5 py-1 rounded-lg">
+                  #{confirmDeleteTag}
+                </span>
+                <span className="text-slate-500 dark:text-slate-400">
+                  (Sẽ được gỡ bỏ khỏi tất cả ghi chú đang gắn thẻ này)
+                </span>
+              </div>
+            )
+          }
+        />
       </div>
     </AppLayout>
   );
