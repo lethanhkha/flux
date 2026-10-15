@@ -18,32 +18,8 @@ import {
 export const LandingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 font-sans selection:bg-brand selection:text-white page-enter">
-      {/* Top Prototype Navigation Bar */}
-      <div className="bg-indigo-950 text-indigo-200 text-xs py-1.5 px-4 border-b border-indigo-900/60 sticky top-0 z-50 overflow-x-auto whitespace-nowrap">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-white flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-brand" /> Flux Workspace:
-            </span>
-            <Link to="/" className="text-white font-bold bg-white/10 px-1.5 py-0.5 rounded">Landing</Link> •
-            <Link to="/login" className="hover:text-white">Login</Link> •
-            <Link to="/two-factor-auth" className="hover:text-white">2FA</Link> •
-            <Link to="/register" className="hover:text-white">Register</Link> •
-            <Link to="/verify-email" className="hover:text-white">Verify Email</Link> •
-            <Link to="/dashboard" className="hover:text-white font-semibold text-emerald-300">Live Dashboard</Link> •
-            <Link to="/finance" className="hover:text-white">Finance</Link> •
-            <Link to="/tasks" className="hover:text-white">Tasks</Link> •
-            <Link to="/notes" className="hover:text-white">Notes</Link> •
-            <Link to="/settings" className="hover:text-white">Settings</Link>
-          </div>
-          <Link to="/login" className="text-white/90 hover:text-white font-semibold">
-            Đăng Nhập →
-          </Link>
-        </div>
-      </div>
-
       {/* Main Header */}
-      <header className="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#0B0F19]/80 backdrop-blur-md sticky top-7 z-40">
+      <header className="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#0B0F19]/80 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
             <div className="h-9 w-9 rounded-xl bg-brand flex items-center justify-center text-white shadow-sm shadow-brand/30">
@@ -58,8 +34,8 @@ export const LandingPage: React.FC = () => {
             <a href="#features" className="hover:text-brand transition-colors">Tính Năng Cốt Lõi</a>
             <a href="#security" className="hover:text-brand transition-colors">Bảo Mật Cấp Cao</a>
             <a href="#architecture" className="hover:text-brand transition-colors">Kiến Trúc</a>
-            <Link to="/dashboard" className="hover:text-brand transition-colors font-semibold text-brand">
-              Xem Bản Mẫu
+            <Link to="/login" className="hover:text-brand transition-colors font-semibold text-brand">
+              Khám Phá Workspace
             </Link>
           </nav>
 
@@ -225,7 +201,7 @@ export const LandingPage: React.FC = () => {
           <div className="flex items-center gap-4">
             <Link to="/login" className="hover:text-brand font-medium">Đăng Nhập</Link>
             <Link to="/register" className="hover:text-brand font-medium">Đăng Ký</Link>
-            <Link to="/dashboard" className="text-brand font-bold hover:underline">Bản Demo Giao Diện</Link>
+            <Link to="/login" className="text-brand font-bold hover:underline">Bắt Đầu Trải Nghiệm</Link>
           </div>
         </div>
       </footer>
