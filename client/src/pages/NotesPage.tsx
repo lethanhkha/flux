@@ -8,7 +8,6 @@ import {
   Clock,
   LayoutGrid,
   List,
-  ShieldCheck,
   X,
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
@@ -350,11 +349,6 @@ export const NotesPage: React.FC = () => {
                 <button onClick={() => setActiveNote(null)} className="p-1 text-slate-400 hover:text-slate-600">
                   <X className="w-5 h-5" />
                 </button>
-              </div>
-
-              <div className="flex items-center gap-2 p-2 rounded-xl bg-emerald-500/10 text-emerald-600 text-[11px]">
-                <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>Trình soạn thảo hỗ trợ hiển thị Markdown an toàn và trực quan.</span>
               </div>
 
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 font-mono text-xs whitespace-pre-wrap leading-relaxed max-h-80 overflow-y-auto">

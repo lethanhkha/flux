@@ -75,10 +75,10 @@ export const LoginPage: React.FC = () => {
               </p>
             </div>
 
-            {/* Security Badge */}
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs">
-              <ShieldCheck className="w-4 h-4 flex-shrink-0" />
-              <span>Bảo mật Dual JWT In-Memory & Phiên xoay vòng (RTR).</span>
+            {/* Security Note */}
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 text-slate-500 text-xs">
+              <ShieldCheck className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+              <span>Đăng nhập bảo mật vào không gian làm việc của bạn.</span>
             </div>
 
             {errorMsg && (

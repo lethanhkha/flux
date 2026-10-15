@@ -10,7 +10,6 @@ import {
   Building,
   PiggyBank,
   X,
-  ShieldCheck,
   Download,
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
@@ -417,11 +416,6 @@ export const FinancePage: React.FC = () => {
                 >
                   <X className="w-5 h-5" />
                 </button>
-              </div>
-
-              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-brand/10 text-brand text-xs">
-                <ShieldCheck className="w-4 h-4 flex-shrink-0" />
-                <span>Giao dịch an toàn đảm bảo số dư các ví luôn chính xác tuyệt đối.</span>
               </div>
 
               <form onSubmit={handleTransferSubmit} className="space-y-4 text-xs">

@@ -69,7 +69,7 @@ export const LandingPage: React.FC = () => {
           </h1>
 
           <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Flux loại bỏ sự phân mảnh giữa hàng tá ứng dụng rời rạc. Tinh gọn, tốc độ dưới 200ms, bảo mật nghiêm ngặt với Dual JWT + Argon2id và hoàn toàn thuộc quyền kiểm soát của bạn.
+            Flux loại bỏ sự phân mảnh giữa hàng tá ứng dụng rời rạc. Tinh gọn, tốc độ tức thì, bảo mật dữ liệu nghiêm ngặt và hoàn toàn thuộc quyền kiểm soát của bạn.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
@@ -81,20 +81,20 @@ export const LandingPage: React.FC = () => {
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
-              to="/dashboard"
+              to="/login"
               className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 font-semibold text-sm hover:border-brand/40 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
             >
               <Eye className="w-4 h-4 text-brand" />
-              <span>Trải Nghiệm Live Demo</span>
+              <span>Khám Phá Ngay</span>
             </Link>
           </div>
 
           {/* Badges */}
           <div className="pt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500 dark:text-slate-400">
-            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-500" /> Miễn phí 100%</span>
-            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-500" /> PostgreSQL 17 + Supabase</span>
-            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-500" /> Mật khẩu Argon2id</span>
-            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-500" /> Xác thực 2FA TOTP</span>
+            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-500" /> Miễn phí sử dụng</span>
+            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-500" /> Đồng bộ đám mây</span>
+            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-500" /> Bảo mật đa lớp</span>
+            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-500" /> Riêng tư tuyệt đối</span>
           </div>
         </div>
       </section>
@@ -116,10 +116,10 @@ export const LandingPage: React.FC = () => {
             </div>
             <h3 className="font-bold text-lg">Quản Lý Tài Chính & Ví</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Theo dõi tiền mặt, tài khoản ngân hàng, sổ tiết kiệm. Quản lý thu chi và chuyển khoản giữa các ví với độ chính xác cao và khóa dòng chống xung đột dữ liệu.
+              Theo dõi tiền mặt, tài khoản ngân hàng, sổ tiết kiệm. Quản lý thu chi và chuyển khoản giữa các ví với độ chính xác cao và số dư được đồng bộ tức thì.
             </p>
             <div className="pt-2 text-xs font-semibold text-emerald-600 flex items-center gap-1">
-              <TrendingUp className="w-3.5 h-3.5" /> Khóa dòng SELECT FOR UPDATE
+              <TrendingUp className="w-3.5 h-3.5" /> Quản lý dòng tiền thông minh
             </div>
           </div>
 
@@ -130,10 +130,10 @@ export const LandingPage: React.FC = () => {
             </div>
             <h3 className="font-bold text-lg">Công Việc & To-Do List</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Lập kế hoạch công việc theo deadline, phân loại ưu tiên từ Low đến Urgent. Xem dạng danh sách hoặc Kanban kéo thả linh hoạt.
+              Lập kế hoạch công việc theo hạn chót, phân loại mức độ ưu tiên rõ ràng. Xem dạng danh sách hoặc bảng trực quan giúp bạn không bỏ lỡ việc quan trọng.
             </p>
             <div className="pt-2 text-xs font-semibold text-brand flex items-center gap-1">
-              <Zap className="w-3.5 h-3.5" /> Recurring Engine hàng ngày/tuần
+              <Zap className="w-3.5 h-3.5" /> Tự động lặp lại theo chu kỳ
             </div>
           </div>
 
@@ -144,10 +144,10 @@ export const LandingPage: React.FC = () => {
             </div>
             <h3 className="font-bold text-lg">Ghi Chú & Kho Tri Thức</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Soạn thảo Markdown đầy đủ với khả năng làm sạch DOMPurify chống XSS, gắn nhãn Tags JSONB và tìm kiếm toàn văn Full-Text Search qua PostgreSQL tsvector.
+              Soạn thảo định dạng Markdown trực quan, phân loại linh hoạt theo thẻ nhãn, ghim ghi chú quan trọng và tìm kiếm nội dung nhanh chóng.
             </p>
             <div className="pt-2 text-xs font-semibold text-purple-600 flex items-center gap-1">
-              <Lock className="w-3.5 h-3.5" /> DOMPurify Sanitize Zero XSS
+              <Lock className="w-3.5 h-3.5" /> Lưu trữ an toàn & riêng tư
             </div>
           </div>
         </div>
@@ -158,34 +158,34 @@ export const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="text-center space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/10 text-brand text-xs font-bold">
-              Tiêu chuẩn Bảo mật Nghiêm ngặt
+              Tiêu Chuẩn Bảo Mật
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Phòng Thủ Theo Chiều Sâu (Defense-in-Depth)</h2>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Bảo Vệ Toàn Diện Cho Dữ Liệu Của Bạn</h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
             <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
               <KeyRound className="w-5 h-5 text-brand" />
-              <div className="font-bold text-sm">Dual JWT + RTR</div>
-              <p className="text-slate-500">Access Token 15 phút lưu trong Memory. Refresh Token 7 ngày trong HttpOnly SameSite Cookie.</p>
+              <div className="font-bold text-sm">Bảo Vệ Đăng Nhập</div>
+              <p className="text-slate-500">Tự động duy trì phiên làm việc an toàn, bảo vệ tài khoản khỏi nguy cơ bị đánh cắp thông tin đăng nhập.</p>
             </div>
 
             <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
               <ShieldCheck className="w-5 h-5 text-emerald-500" />
-              <div className="font-bold text-sm">2FA TOTP RFC 6238</div>
-              <p className="text-slate-500">Tương thích Google Authenticator, 1Password kèm 8 mã khôi phục băm SHA-256 một chiều.</p>
+              <div className="font-bold text-sm">Xác Thực 2 Bước (2FA)</div>
+              <p className="text-slate-500">Bảo vệ tài khoản qua ứng dụng Google Authenticator và cung cấp mã dự phòng khi cần thiết.</p>
             </div>
 
             <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
               <Lock className="w-5 h-5 text-indigo-500" />
-              <div className="font-bold text-sm">Argon2id Hashing</div>
-              <p className="text-slate-500">Mã hóa mật khẩu bằng thuật toán đoạt giải Password Hashing Competition với chi phí bộ nhớ 64MB.</p>
+              <div className="font-bold text-sm">Mã Hóa Mật Khẩu</div>
+              <p className="text-slate-500">Mật khẩu của bạn được mã hóa an toàn ở mức cao nhất, đảm bảo tính bảo mật và riêng tư tuyệt đối.</p>
             </div>
 
             <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
               <Zap className="w-5 h-5 text-amber-500" />
-              <div className="font-bold text-sm">Chống Brute-Force</div>
-              <p className="text-slate-500">Distributed Token Bucket Rate Limiter và tự động khóa tài khoản 15 phút sau 5 lần nhập sai.</p>
+              <div className="font-bold text-sm">Chống Xâm Nhập</div>
+              <p className="text-slate-500">Hệ thống tự động phát hiện và ngăn chặn các hành vi dò đoán mật khẩu bất thường trên tài khoản của bạn.</p>
             </div>
           </div>
         </div>

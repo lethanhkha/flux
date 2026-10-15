@@ -95,10 +95,10 @@ export const RegisterPage: React.FC = () => {
               </p>
             </div>
 
-            {/* Security Badge */}
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-700 dark:text-indigo-400 text-xs">
-              <ShieldCheck className="w-4 h-4 flex-shrink-0" />
-              <span>Mã hóa một chiều Argon2id & Cơ sở dữ liệu phân quyền RLS.</span>
+            {/* Security Note */}
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 text-slate-500 text-xs">
+              <ShieldCheck className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+              <span>Dữ liệu cá nhân của bạn được mã hóa an toàn và bảo mật riêng tư.</span>
             </div>
 
             {errorMsg && (

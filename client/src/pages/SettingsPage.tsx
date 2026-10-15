@@ -131,7 +131,7 @@ export const SettingsPage: React.FC = () => {
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-5">
           <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
             <Shield className="w-5 h-5 text-emerald-500" />
-            <h2 className="font-bold text-sm">Xác Thực Đa Yếu Tố (2FA / TOTP RFC 6238)</h2>
+            <h2 className="font-bold text-sm">Xác Thực 2 Bước (2FA)</h2>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
@@ -287,7 +287,7 @@ export const SettingsPage: React.FC = () => {
                   <div className="h-8 w-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center">
                     <QrCode className="w-4 h-4" />
                   </div>
-                  <h3 className="font-bold text-base">Cấu Hình 2FA TOTP</h3>
+                  <h3 className="font-bold text-base">Cấu Hình Xác Thực 2 Bước (2FA)</h3>
                 </div>
                 <button onClick={() => setIs2FAModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-600">
                   <X className="w-5 h-5" />

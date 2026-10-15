@@ -112,7 +112,7 @@ export const VerifyEmailPage: React.FC = () => {
                 <div className="space-y-1">
                   <h1 className="text-2xl font-bold tracking-tight">Xác thực tài khoản</h1>
                   <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                    Chúng tôi đã tạo mã chữ ký HMAC bảo mật để kích hoạt tài khoản của bạn:
+                    Mã xác nhận bảo mật đã được tạo để kích hoạt tài khoản của bạn:
                   </p>
                 </div>
 
@@ -138,7 +138,7 @@ export const VerifyEmailPage: React.FC = () => {
 
                   <div className="space-y-1.5">
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      Mã xác thực HMAC (15 phút)
+                      Mã xác thực tài khoản (Hiệu lực 15 phút)
                     </label>
                     <textarea
                       rows={2}
@@ -156,7 +156,7 @@ export const VerifyEmailPage: React.FC = () => {
                     className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-sm shadow-md shadow-brand/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                   >
                     {isVerifying ? (
-                      <span>Đang kiểm tra chữ ký...</span>
+                      <span>Đang xác thực tài khoản...</span>
                     ) : (
                       <>
                         <span>Kích Hoạt Tài Khoản Ngay</span>
