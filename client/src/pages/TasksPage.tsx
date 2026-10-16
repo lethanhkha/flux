@@ -11,6 +11,9 @@ import {
   Trash2,
   Tag,
   Settings,
+  ChevronDown,
+  ChevronUp,
+  AlignLeft,
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { toast } from 'sonner';
@@ -65,6 +68,22 @@ export const TasksPage: React.FC = () => {
   // Drag and Drop State for Kanban
   const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<'TODO' | 'IN_PROGRESS' | 'DONE' | null>(null);
+
+  // Set of task IDs with expanded descriptions
+  const [expandedTaskIds, setExpandedTaskIds] = useState<Set<string>>(new Set());
+
+  const toggleDescriptionExpand = (taskId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setExpandedTaskIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(taskId)) {
+        next.delete(taskId);
+      } else {
+        next.add(taskId);
+      }
+      return next;
+    });
+  };
 
   // Mouse-wheel horizontal scroll ref for tags
   const tagBarRef = useHorizontalScroll<HTMLDivElement>();
@@ -646,18 +665,20 @@ export const TasksPage: React.FC = () => {
                 <div
                   key={t.id}
                   onClick={() => toggleTaskStatus(t.id)}
-                  className={`p-4 rounded-2xl border transition-all flex items-start sm:items-center justify-between gap-4 cursor-pointer hover:border-brand/50 ${
+                  className={`p-4 rounded-2xl border transition-all flex ${
+                    expandedTaskIds.has(t.id) ? 'items-start' : 'items-start sm:items-center'
+                  } justify-between gap-4 cursor-pointer hover:border-brand/50 ${
                     t.status === 'DONE'
                       ? 'bg-slate-50/50 dark:bg-slate-950/30 border-slate-100 dark:border-slate-800/80 opacity-70'
                       : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover-lift'
                   }`}
                 >
-                  <div className="flex items-start sm:items-center gap-3.5 flex-1 min-w-0">
+                  <div className={`flex ${expandedTaskIds.has(t.id) ? 'items-start' : 'items-start sm:items-center'} gap-3.5 flex-1 min-w-0`}>
                     <input
                       type="checkbox"
                       checked={t.status === 'DONE'}
                       onChange={() => {}}
-                      className="mt-0.5 sm:mt-0 w-4 h-4 rounded text-brand focus:ring-brand cursor-pointer"
+                      className={`${expandedTaskIds.has(t.id) ? 'mt-1' : 'mt-0.5 sm:mt-0'} w-4 h-4 rounded text-brand focus:ring-brand cursor-pointer flex-shrink-0`}
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
@@ -676,9 +697,46 @@ export const TasksPage: React.FC = () => {
                       </div>
 
                       {t.description && (
-                        <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
-                          {t.description}
-                        </p>
+                        <div className="mt-1">
+                          {expandedTaskIds.has(t.id) ? (
+                            <div
+                              onClick={(e) => e.stopPropagation()}
+                              className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-100 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 select-text leading-relaxed whitespace-pre-wrap break-words shadow-xs"
+                            >
+                              <div className="flex items-center justify-between gap-2 pb-1.5 mb-2 border-b border-slate-200/60 dark:border-slate-800 text-[10px] font-semibold text-slate-400">
+                                <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                                  <AlignLeft className="w-3 h-3 text-brand" /> Chi tiết công việc
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => toggleDescriptionExpand(t.id, e)}
+                                  className="inline-flex items-center gap-0.5 text-brand hover:underline cursor-pointer font-medium"
+                                >
+                                  Thu gọn <ChevronUp className="w-3 h-3" />
+                                </button>
+                              </div>
+                              {t.description}
+                            </div>
+                          ) : (
+                            <div className="flex items-start gap-1.5">
+                              <p
+                                onClick={(e) => toggleDescriptionExpand(t.id, e)}
+                                title={t.description}
+                                className="text-[11px] text-slate-400 dark:text-slate-500 line-clamp-1 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer transition-colors flex-1"
+                              >
+                                {t.description}
+                              </p>
+                              <button
+                                type="button"
+                                onClick={(e) => toggleDescriptionExpand(t.id, e)}
+                                title="Bấm để xem toàn bộ mô tả"
+                                className="inline-flex items-center gap-0.5 text-[10px] font-medium text-brand hover:underline cursor-pointer flex-shrink-0"
+                              >
+                                Xem thêm <ChevronDown className="w-2.5 h-2.5" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       )}
 
                       {t.tags && t.tags.length > 0 && (
@@ -836,6 +894,38 @@ export const TasksPage: React.FC = () => {
                             >
                               {t.title}
                             </div>
+                            {t.description && (
+                              <div
+                                onClick={(e) => toggleDescriptionExpand(t.id, e)}
+                                className="cursor-pointer"
+                              >
+                                {expandedTaskIds.has(t.id) ? (
+                                  <div
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-100 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300 select-text leading-relaxed whitespace-pre-wrap break-words mt-1 shadow-xs"
+                                  >
+                                    <div className="flex items-center justify-between text-[9px] text-slate-400 font-semibold mb-1 pb-1 border-b border-slate-200/50 dark:border-slate-800">
+                                      <span>Mô tả chi tiết</span>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => toggleDescriptionExpand(t.id, e)}
+                                        className="text-brand hover:underline cursor-pointer font-medium"
+                                      >
+                                        Thu gọn ▲
+                                      </button>
+                                    </div>
+                                    {t.description}
+                                  </div>
+                                ) : (
+                                  <p
+                                    title="Bấm để xem toàn bộ mô tả"
+                                    className="text-[11px] text-slate-400 dark:text-slate-500 line-clamp-2 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                  >
+                                    {t.description}
+                                  </p>
+                                )}
+                              </div>
+                            )}
                             {t.tags && t.tags.length > 0 && (
                               <div className="flex flex-wrap items-center gap-1 pt-1">
                                 {t.tags.map((tag) => {
