@@ -118,7 +118,7 @@ export const FinancePage: React.FC = () => {
         }
       }
 
-      if (Array.isArray(rawCategories) && rawCategories.length > 0) {
+      if (Array.isArray(rawCategories)) {
         setCategories(rawCategories);
       }
 
@@ -337,17 +337,17 @@ export const FinancePage: React.FC = () => {
     } else if (deleteModalState.type === 'CATEGORY' && deleteModalState.targetCategory) {
       const cat = deleteModalState.targetCategory;
       setDeleteModalState((prev) => ({ ...prev, isLoading: true }));
-      setCategories((prev) => prev.filter((c) => c.id !== cat.id));
-      if (selectedCategory === cat.name) setSelectedCategory('ALL');
-      toast.success(`Đã xóa danh mục "${cat.name}".`);
 
       try {
         await apiClient.delete(`/finance/categories/${cat.id}`);
+        setCategories((prev) => prev.filter((c) => c.id !== cat.id));
+        if (selectedCategory === cat.name) setSelectedCategory('ALL');
+        toast.success(`Đã xóa danh mục "${cat.name}".`);
         setDeleteModalState({ isOpen: false, type: null, isLoading: false });
         window.dispatchEvent(new CustomEvent('flux:refresh-data'));
-      } catch {
-        // Degrade gracefully
-        setDeleteModalState({ isOpen: false, type: null, isLoading: false });
+      } catch (err) {
+        toast.error(getErrorMessage(err, 'Không thể xóa danh mục.'));
+        setDeleteModalState((prev) => ({ ...prev, isLoading: false }));
       }
     }
   };

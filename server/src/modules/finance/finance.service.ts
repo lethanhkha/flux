@@ -624,10 +624,10 @@ export class FinanceService {
   }
 
   /**
-   * 11. Create a custom category
+   * 10. Create a custom category
    */
   async createCategory(userId: string, input: CreateCategoryInput) {
-    return prisma.category.create({
+    const created = await prisma.category.create({
       data: {
         userId,
         name: input.name,
@@ -636,10 +636,13 @@ export class FinanceService {
         color: input.color,
       },
     });
+
+    await this.invalidateUserFinanceCache(userId);
+    return created;
   }
 
   /**
-   * 12. Update category & cascade update transactions historical records
+   * 11. Update category & cascade update transactions historical records
    */
   async updateCategory(userId: string, categoryId: string, input: UpdateCategoryInput) {
     const existing = await prisma.category.findFirst({
@@ -662,11 +665,12 @@ export class FinanceService {
       });
     }
 
+    await this.invalidateUserFinanceCache(userId);
     return updated;
   }
 
   /**
-   * 13. Delete category
+   * 12. Delete category
    */
   async deleteCategory(userId: string, categoryId: string) {
     const existing = await prisma.category.findFirst({
@@ -681,6 +685,7 @@ export class FinanceService {
       where: { id: categoryId },
     });
 
+    await this.invalidateUserFinanceCache(userId);
     return { message: 'Đã xóa danh mục thành công.' };
   }
 }
