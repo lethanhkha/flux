@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { AlertTriangle, Trash2, X, Loader2 } from 'lucide-react';
+import { Modal } from './Modal';
 
 export interface ConfirmModalProps {
   isOpen: boolean;
@@ -46,19 +47,13 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   const isWarning = variant === 'warning';
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="confirm-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm modal-backdrop-animate"
-      onClick={() => {
-        if (!isLoading) onClose();
-      }}
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      disableClose={isLoading}
+      ariaLabelledBy="confirm-modal-title"
+      maxWidth="md"
     >
-      <div
-        className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl modal-dialog-animate space-y-5"
-        onClick={(e) => e.stopPropagation()}
-      >
         {/* Header with Icon badge & Close button */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3.5">
@@ -142,7 +137,6 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             )}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 };

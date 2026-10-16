@@ -12,10 +12,12 @@ import {
   LogOut,
   Plus,
   X,
+  ArrowUp,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient, getErrorMessage } from '../../api/client';
 import { toast } from 'sonner';
+import { Modal } from '../common/Modal';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -37,6 +39,20 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
   const [quickActionType, setQuickActionType] = useState<'transaction' | 'task' | 'note'>('transaction');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  // Smooth scroll tracking
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Available wallets for quick transaction
   const [wallets, setWallets] = useState<Array<{ id: string; name: string; currency: string; currentBalance: number }>>([]);
@@ -85,6 +101,18 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     }
   }, [darkMode]);
 
+  // Keyboard accessibility: Close Quick Action on Escape key
+  useEffect(() => {
+    if (!isQuickActionOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isSubmitting) {
+        setIsQuickActionOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isQuickActionOpen, isSubmitting]);
+
   const toggleTheme = () => {
     setDarkMode(!darkMode);
   };
@@ -119,7 +147,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             </Link>
 
             {/* Desktop Navigation Links */}
-            <nav className="hidden md:flex items-center gap-1.5">
+            <nav className="hidden md:flex items-center gap-1.5" aria-label="Điều hướng chính">
               {navLinks.map((link) => {
                 const Icon = link.icon;
                 const isActive = location.pathname === link.to;
@@ -127,9 +155,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   <Link
                     key={link.to}
                     to={link.to}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all focus-ring ${
                       isActive
-                        ? 'bg-brand/10 text-brand dark:bg-brand/20'
+                        ? 'bg-brand/10 text-brand dark:bg-brand/20 font-bold'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/60'
                     }`}
                   >
@@ -144,8 +172,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           <div className="flex items-center gap-3">
             {/* Quick Action Trigger Button */}
             <button
+              type="button"
               onClick={() => setIsQuickActionOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold shadow-sm shadow-brand/25 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              aria-label="Thao tác nhanh (Giao dịch, Công việc, Ghi chú)"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold shadow-sm shadow-brand/25 transition-all hover:scale-105 active:scale-95 cursor-pointer focus-ring"
             >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Thêm Nhanh</span>
@@ -153,9 +183,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
             {/* Theme Toggle */}
             <button
+              type="button"
               onClick={toggleTheme}
-              className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-card hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
-              title="Đổi màu nền"
+              aria-label={darkMode ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
+              className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-card hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer focus-ring"
+              title={darkMode ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
             >
               {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
             </button>
@@ -172,8 +204,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 <div className="text-[10px] text-slate-500 line-clamp-1">{user?.email || ''}</div>
               </div>
               <button
+                type="button"
                 onClick={handleLogout}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                aria-label="Đăng xuất"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer focus-ring"
                 title="Đăng xuất"
               >
                 <LogOut className="w-4 h-4" />
@@ -188,8 +222,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         {children}
       </main>
 
-      {/* 4. Mobile Bottom Navigation Bar (Thumb Zone) */}
-      <div className="md:hidden sticky bottom-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-4 py-2 flex items-center justify-around">
+      {/* 4. Mobile Bottom Navigation Bar (Thumb Zone with Safe-Area) */}
+      <nav
+        aria-label="Điều hướng di động"
+        className="md:hidden sticky bottom-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-4 pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] flex items-center justify-around"
+      >
         {navLinks.map((link) => {
           const Icon = link.icon;
           const isActive = location.pathname === link.to;
@@ -197,8 +234,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             <Link
               key={link.to}
               to={link.to}
-              className={`flex flex-col items-center gap-1 py-1 px-2 rounded-lg text-[10px] font-semibold transition-colors ${
-                isActive ? 'text-brand' : 'text-slate-500 dark:text-slate-400'
+              className={`flex flex-col items-center gap-1 min-w-[56px] min-h-[44px] justify-center py-1 px-2 rounded-xl text-[10px] font-semibold transition-colors focus-ring ${
+                isActive ? 'text-brand font-bold bg-brand/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
               <Icon className="w-5 h-5" />
@@ -206,33 +243,55 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             </Link>
           );
         })}
-      </div>
+      </nav>
 
       {/* 5. Floating Quick Action Button (FAB) for Mobile */}
-      <div className="fixed bottom-16 right-5 z-50 md:hidden">
+      <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] right-5 z-50 md:hidden">
         <button
+          type="button"
           onClick={() => setIsQuickActionOpen(true)}
-          className="h-12 w-12 rounded-full bg-brand text-white flex items-center justify-center shadow-lg shadow-brand/40 fab-breathing hover:scale-105 active:scale-95 transition-all"
+          className="h-12 w-12 rounded-full bg-brand text-white flex items-center justify-center shadow-lg shadow-brand/40 fab-breathing hover:scale-105 active:scale-95 transition-all cursor-pointer focus-ring"
           aria-label="Thao tác nhanh"
         >
           <Plus className="w-6 h-6" />
         </button>
       </div>
 
+      {/* 5b. Smooth Scroll to Top Floating Button */}
+      {showScrollTop && (
+        <button
+          type="button"
+          onClick={scrollToTop}
+          aria-label="Cuộn lên đầu trang"
+          title="Cuộn lên đầu trang mượt mà"
+          className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] md:bottom-8 right-5 md:right-8 z-40 p-2.5 rounded-2xl bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-800/80 shadow-lg backdrop-blur-md hover:bg-brand hover:text-white dark:hover:bg-brand dark:hover:text-white hover:scale-105 active:scale-95 transition-all focus-ring cursor-pointer hover-lift"
+        >
+          <ArrowUp className="w-5 h-5" />
+        </button>
+      )}
+
       {/* 6. Quick Action Modal Dialog */}
-      {isQuickActionOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm modal-backdrop-animate">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl modal-dialog-animate space-y-5">
+      <Modal
+        isOpen={isQuickActionOpen}
+        onClose={() => {
+          if (!isSubmitting) setIsQuickActionOpen(false);
+        }}
+        disableClose={isSubmitting}
+        ariaLabelledBy="quick-action-modal-title"
+        maxWidth="md"
+      >
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center font-bold">
                   <Plus className="w-4 h-4" />
                 </div>
-                <h3 className="font-bold text-base">Thao Tác Nhanh</h3>
+                <h3 id="quick-action-modal-title" className="font-bold text-base">Thao Tác Nhanh</h3>
               </div>
               <button
+                type="button"
                 onClick={() => setIsQuickActionOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                aria-label="Đóng thao tác nhanh"
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -553,9 +612,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 </button>
               </form>
             )}
-          </div>
-        </div>
-      )}
+      </Modal>
 
       {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-xs text-slate-500 dark:text-slate-400 mt-auto">
