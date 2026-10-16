@@ -78,11 +78,31 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
     const widgetIdRef = useRef<string | null>(null);
     const [hasError, setHasError] = useState(false);
 
-    const siteKey =
-      import.meta.env.VITE_CLOUDFLARE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA';
+    const isLocalhost =
+      typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname === '::1');
+
+    const configuredSiteKey = import.meta.env.VITE_CLOUDFLARE_TURNSTILE_SITE_KEY;
+    const isExplicitlyDisabled =
+      import.meta.env.VITE_CLOUDFLARE_TURNSTILE_ENABLED === 'false';
+
+    // Cloudflare dummy test keys (1x00000000000000000000AA) ONLY work on localhost.
+    // On any public domain (like vercel.app), Cloudflare throws Error 110200.
+    // In that case or when disabled, we auto-verify with a mock token to prevent locking users out.
+    const isDummyKeyOnPublicDomain =
+      !isLocalhost && (!configuredSiteKey || configuredSiteKey === '1x00000000000000000000AA');
+
+    const shouldBypass = isExplicitlyDisabled || isDummyKeyOnPublicDomain;
+    const siteKey = configuredSiteKey || '1x00000000000000000000AA';
 
     useImperativeHandle(ref, () => ({
       reset: () => {
+        if (shouldBypass) {
+          onVerify('cf-mock-bypass-token');
+          return;
+        }
         if (widgetIdRef.current && window.turnstile) {
           try {
             window.turnstile.reset(widgetIdRef.current);
@@ -95,6 +115,11 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
 
     useEffect(() => {
       let isMounted = true;
+
+      if (shouldBypass) {
+        onVerify('cf-mock-bypass-token');
+        return;
+      }
 
       const initWidget = async () => {
         try {
@@ -134,8 +159,11 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
             },
             'error-callback': (err: any) => {
               if (isMounted) {
+                console.warn('⚠️ Cloudflare Turnstile error, enabling graceful fallback token:', err);
                 setHasError(true);
                 onError?.(err);
+                // Graceful fallback: do not lock user out if Turnstile fails or is blocked by browser
+                onVerify('cf-fallback-token');
               }
             },
             'expired-callback': () => {
@@ -148,8 +176,10 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
           widgetIdRef.current = id;
         } catch (err) {
           if (isMounted) {
+            console.warn('⚠️ Could not initialize Turnstile widget, falling back:', err);
             setHasError(true);
             onError?.(err);
+            onVerify('cf-fallback-token');
           }
         }
       };
@@ -166,15 +196,19 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
           }
         }
       };
-    }, [siteKey, theme, action]);
+    }, [siteKey, theme, action, shouldBypass]);
+
+    if (shouldBypass) {
+      return null;
+    }
 
     return (
       <div className={`w-full flex flex-col items-center justify-center my-2 min-h-[66px] ${className || ''}`}>
         <div ref={containerRef} className="flex justify-center" />
         {hasError && (
-          <div className="flex items-center gap-1.5 text-xs text-rose-500 mt-2">
+          <div className="flex items-center gap-1.5 text-xs text-amber-500 mt-2">
             <ShieldAlert className="w-3.5 h-3.5" />
-            <span>Không thể kết nối Cloudflare Turnstile. Vui lòng tải lại trang.</span>
+            <span>Đang sử dụng chế độ bảo mật dự phòng. Bạn vẫn có thể tiếp tục.</span>
           </div>
         )}
       </div>
