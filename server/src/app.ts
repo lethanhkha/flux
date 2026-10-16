@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { env } from './config';
 import { errorHandler, AppError } from './middlewares/error.middleware';
 import { createRateLimiter } from './middlewares/rateLimiter.middleware';
+import { requestTimeout } from './middlewares/timeout.middleware';
 import authRoutes from './modules/auth/auth.routes';
 import financeRoutes from './modules/finance/finance.routes';
 import tasksRoutes from './modules/tasks/tasks.routes';
@@ -42,7 +43,7 @@ app.use(
     origin: env.CLIENT_ORIGIN,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Flux-Load-Test'],
   })
 );
 
@@ -51,8 +52,11 @@ app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 app.use(cookieParser(env.COOKIE_SECRET));
 
-// 4. Global API Rate Limiting (120 req / minute)
-app.use(createRateLimiter('general', 120, 60));
+// 4. Request Timeout Guard (15 seconds to prevent socket leaks)
+app.use(requestTimeout(15000));
+
+// 5. Global User-Aware API Rate Limiting (600 req / minute per user/IP)
+app.use(createRateLimiter('general', 600, 60));
 
 // 5. Health Check Endpoint
 app.get('/health', (_req: Request, res: Response) => {

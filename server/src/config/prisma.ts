@@ -6,12 +6,29 @@ declare global {
   var __prisma: PrismaClient | undefined;
 }
 
-export const prisma =
+const basePrisma =
   global.__prisma ||
   new PrismaClient({
-    log: env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    log: env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
   });
 
+// Query Timing Logger: Warns when any DB operation exceeds 100ms
+export const prisma = (basePrisma.$extends({
+  query: {
+    $allModels: {
+      async $allOperations({ model, operation, args, query }) {
+        const start = performance.now();
+        const result = await query(args);
+        const duration = performance.now() - start;
+        if (duration > 100 && env.NODE_ENV === 'development') {
+          console.warn(`⚠️ [SLOW QUERY] ${model}.${operation} took ${duration.toFixed(2)}ms`);
+        }
+        return result;
+      },
+    },
+  },
+}) as unknown) as PrismaClient;
+
 if (env.NODE_ENV !== 'production') {
-  global.__prisma = prisma;
+  global.__prisma = basePrisma;
 }

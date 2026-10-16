@@ -15,10 +15,15 @@ import {
 import { googleAuthService } from '../../services/googleAuth.service';
 import { env } from '../../config';
 
+const isCrossDomainProduction =
+  env.NODE_ENV === 'production' &&
+  !env.CLIENT_ORIGIN.includes('localhost') &&
+  !env.CLIENT_ORIGIN.includes('127.0.0.1');
+
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: env.NODE_ENV === 'production',
-  sameSite: 'strict' as const,
+  sameSite: (isCrossDomainProduction ? 'none' : 'lax') as 'none' | 'lax' | 'strict',
   path: `${env.API_PREFIX}/auth`,
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
