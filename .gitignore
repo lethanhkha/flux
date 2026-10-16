@@ -57,3 +57,19 @@ uploads/
 
 # Design prototypes & mockups (internal preview only)
 designs/
+design-system/
+
+# Local documentation & specifications (Private to local machine - not pushed to git)
+local_docs/
+PRD.md
+PRD.txt
+task_list.md
+
+# AI agent configuration, skills & rules
+.agents/
+.gemini/
+
+# Ad-hoc test scripts & benchmark results
+server/src/scripts/
+server/tests/
+
