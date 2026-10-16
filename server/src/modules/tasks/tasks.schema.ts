@@ -9,9 +9,15 @@ export const createTaskSchema = z.object({
   description: z.string().max(2000).optional().nullable(),
   status: z.enum(['TODO', 'IN_PROGRESS', 'DONE']).default('TODO'),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).default('MEDIUM'),
-  dueDate: z.string().datetime().optional().nullable(),
+  dueDate: z
+    .union([z.string().datetime(), z.literal(''), z.null()])
+    .optional()
+    .transform((val) => (val === '' ? null : val)),
   isRecurring: z.boolean().default(false),
-  recurrenceRule: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).optional().nullable(),
+  recurrenceRule: z
+    .union([z.enum(['DAILY', 'WEEKLY', 'MONTHLY']), z.literal(''), z.null()])
+    .optional()
+    .transform((val) => (val === '' ? null : val)),
   tags: z.array(z.string().trim()).default([]),
 });
 

@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ChevronUp,
   AlignLeft,
+  Edit3,
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { toast } from 'sonner';
@@ -21,6 +22,7 @@ import { PaginationControl, PaginationMeta } from '../components/common/Paginati
 import { Modal } from '../components/common/Modal';
 import { TaskTagModal, TaskTagItem } from '../components/tasks/TaskTagModal';
 import { TagSelect } from '../components/notes/TagSelect';
+import { EditTaskModal } from '../components/tasks/EditTaskModal';
 import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
 
 interface TaskItem {
@@ -30,8 +32,10 @@ interface TaskItem {
   status: 'TODO' | 'IN_PROGRESS' | 'DONE';
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
   dueDate: string;
+  rawDueDate?: string | null;
   isRecurring: boolean;
   recurrenceRule?: string;
+  rawRecurrenceRule?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | null;
   tags?: string[];
 }
 
@@ -42,6 +46,8 @@ export const TasksPage: React.FC = () => {
   const [filter, setFilter] = useState<TaskFilterKey>('ALL');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
 
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [availableTags, setAvailableTags] = useState<TaskTagItem[]>([]);
@@ -129,6 +135,7 @@ export const TasksPage: React.FC = () => {
                 minute: '2-digit',
               })
             : 'Không có hạn',
+          rawDueDate: t.dueDate || null,
           isRecurring: t.isRecurring,
           recurrenceRule:
             t.recurrenceRule === 'DAILY'
@@ -138,6 +145,7 @@ export const TasksPage: React.FC = () => {
               : t.recurrenceRule === 'MONTHLY'
               ? 'Hàng tháng'
               : undefined,
+          rawRecurrenceRule: t.recurrenceRule || null,
           tags: Array.isArray(t.tags) ? t.tags : [],
         }))
       );
@@ -211,6 +219,12 @@ export const TasksPage: React.FC = () => {
     }
   };
 
+  const handleOpenEditTask = (task: TaskItem, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setEditingTask(task);
+    setIsEditModalOpen(true);
+  };
+
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
@@ -229,6 +243,7 @@ export const TasksPage: React.FC = () => {
             minute: '2-digit',
           })
         : 'Không có hạn',
+      rawDueDate: newTaskDue ? new Date(newTaskDue).toISOString() : null,
       isRecurring: newTaskIsRecurring,
       recurrenceRule: newTaskIsRecurring
         ? newTaskRecurrenceRule === 'DAILY'
@@ -237,6 +252,7 @@ export const TasksPage: React.FC = () => {
           ? 'Hàng tuần'
           : 'Hàng tháng'
         : undefined,
+      rawRecurrenceRule: newTaskIsRecurring ? newTaskRecurrenceRule : null,
       tags: [...newTaskTags],
     };
 
@@ -772,15 +788,26 @@ export const TasksPage: React.FC = () => {
                       </div>
                     )}
 
-                    <button
-                      type="button"
-                      onClick={(e) => handleDeleteTask(t.id, e)}
-                      aria-label={`Xóa công việc: ${t.title}`}
-                      className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors focus-ring cursor-pointer"
-                      title="Xóa công việc"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={(e) => handleOpenEditTask(t, e)}
+                        aria-label={`Chỉnh sửa công việc: ${t.title}`}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-brand hover:bg-brand/10 transition-colors focus-ring cursor-pointer"
+                        title="Chỉnh sửa công việc"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteTask(t.id, e)}
+                        aria-label={`Xóa công việc: ${t.title}`}
+                        className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors focus-ring cursor-pointer"
+                        title="Xóa công việc"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -872,15 +899,24 @@ export const TasksPage: React.FC = () => {
                           >
                             <div className="flex items-center justify-between">
                               {priorityBadge(t.priority)}
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1.5">
                                 <span className="text-[10px] text-slate-400 flex items-center gap-1">
                                   <Clock className="w-3 h-3" /> {t.dueDate}
                                 </span>
                                 <button
                                   type="button"
+                                  onClick={(e) => handleOpenEditTask(t, e)}
+                                  aria-label={`Chỉnh sửa công việc: ${t.title}`}
+                                  className="text-slate-400 hover:text-brand hover:bg-brand/10 p-1 rounded-md transition-colors cursor-pointer focus-ring"
+                                  title="Chỉnh sửa công việc"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                                <button
+                                  type="button"
                                   onClick={(e) => handleDeleteTask(t.id, e)}
                                   aria-label={`Xóa công việc: ${t.title}`}
-                                  className="text-slate-300 hover:text-rose-500 p-1 rounded-md transition-colors cursor-pointer focus-ring"
+                                  className="text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 p-1 rounded-md transition-colors cursor-pointer focus-ring"
                                   title="Xóa"
                                 >
                                   <Trash2 className="w-3 h-3" />
@@ -1124,6 +1160,21 @@ export const TasksPage: React.FC = () => {
           onRenameTag={handleRenameTag}
           onDeleteTag={handleDeleteTag}
           onChangeColor={handleUpdateTagColor}
+        />
+
+        {/* Edit Task Modal */}
+        <EditTaskModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditingTask(null);
+          }}
+          task={editingTask}
+          availableTags={availableTags}
+          onSuccess={() => {
+            fetchTasks(pagination.page);
+            fetchTags();
+          }}
         />
       </div>
     </AppLayout>

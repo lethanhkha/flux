@@ -23,6 +23,7 @@ import { ColorPickerPopover } from '../components/common/ColorPickerPopover';
 import { TagSelect } from '../components/notes/TagSelect';
 import { MarkdownEditor } from '../components/notes/MarkdownEditor';
 import { MarkdownViewer } from '../components/notes/MarkdownViewer';
+import { EditNoteModal } from '../components/notes/EditNoteModal';
 import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
 import { toast } from 'sonner';
 
@@ -42,6 +43,8 @@ export const NotesPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [activeNote, setActiveNote] = useState<NoteItem | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingNote, setEditingNote] = useState<NoteItem | null>(null);
 
   // Tag Manager modal state
   const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
@@ -210,6 +213,12 @@ export const NotesPage: React.FC = () => {
       if (noteToDelete) setNotes((prev) => [noteToDelete, ...prev]);
       toast.error('Không thể xóa ghi chú trên máy chủ.');
     }
+  };
+
+  const handleOpenEditNote = (note: NoteItem, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setEditingNote(note);
+    setIsEditModalOpen(true);
   };
 
   const handleCreateNote = async (e: React.FormEvent) => {
@@ -517,6 +526,15 @@ export const NotesPage: React.FC = () => {
                         </button>
                         <button
                           type="button"
+                          onClick={(e) => handleOpenEditNote(note, e)}
+                          aria-label={`Chỉnh sửa ghi chú: ${note.title}`}
+                          className="p-1.5 rounded-lg text-slate-300 hover:text-brand hover:bg-brand/10 transition-colors cursor-pointer focus-ring"
+                          title="Chỉnh sửa ghi chú"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
                           onClick={(e) => handleDeleteNote(note.id, e)}
                           aria-label={`Xóa ghi chú: ${note.title}`}
                           className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer focus-ring"
@@ -653,6 +671,15 @@ export const NotesPage: React.FC = () => {
                     </button>
                     <button
                       type="button"
+                      onClick={(e) => handleOpenEditNote(note, e)}
+                      aria-label={`Chỉnh sửa ghi chú: ${note.title}`}
+                      className="p-1.5 text-slate-300 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors cursor-pointer focus-ring"
+                      title="Chỉnh sửa ghi chú"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
                       onClick={(e) => handleDeleteNote(note.id, e)}
                       aria-label={`Xóa ghi chú: ${note.title}`}
                       className="p-1.5 text-slate-300 hover:text-rose-500 rounded-lg transition-colors cursor-pointer focus-ring"
@@ -725,15 +752,31 @@ export const NotesPage: React.FC = () => {
                     );
                   })}
                 </div>
-                <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+                <div className="flex items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto">
                   <span>Cập nhật: {activeNote.updatedAt}</span>
-                  <button
-                    onClick={() => handleDeleteNote(activeNote.id)}
-                    className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Xóa ghi chú</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const noteToEdit = activeNote;
+                        setActiveNote(null);
+                        handleOpenEditNote(noteToEdit);
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-brand/10 hover:bg-brand text-brand hover:text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                      title="Chỉnh sửa nội dung ghi chú này"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>Chỉnh sửa</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteNote(activeNote.id)}
+                      className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Xóa ghi chú</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -994,6 +1037,21 @@ export const NotesPage: React.FC = () => {
               </div>
             )
           }
+        />
+
+        {/* Edit Note Modal */}
+        <EditNoteModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditingNote(null);
+          }}
+          note={editingNote}
+          availableTags={availableTags}
+          onSuccess={() => {
+            fetchNotes(pagination.page);
+            fetchTags();
+          }}
         />
       </div>
     </AppLayout>

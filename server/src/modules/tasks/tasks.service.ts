@@ -133,8 +133,17 @@ export class TasksService {
     }
 
     const data: any = { ...input };
+    if (input.title !== undefined) {
+      data.title = input.title.trim();
+    }
+    if (input.description !== undefined) {
+      data.description = input.description ? input.description.trim() : null;
+    }
     if (input.dueDate !== undefined) {
       data.dueDate = input.dueDate ? new Date(input.dueDate) : null;
+    }
+    if (input.isRecurring === false) {
+      data.recurrenceRule = null;
     }
 
     if (input.status === 'DONE' && task.status !== 'DONE') {
