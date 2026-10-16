@@ -17,6 +17,13 @@ import {
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { ConfirmModal } from '../components/common/ConfirmModal';
+import { Modal } from '../components/common/Modal';
+import { PaginationControl, PaginationMeta } from '../components/common/PaginationControl';
+import { ColorPickerPopover } from '../components/common/ColorPickerPopover';
+import { TagSelect } from '../components/notes/TagSelect';
+import { MarkdownEditor } from '../components/notes/MarkdownEditor';
+import { MarkdownViewer } from '../components/notes/MarkdownViewer';
+import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
 import { toast } from 'sonner';
 
 interface NoteItem {
@@ -42,86 +49,130 @@ export const NotesPage: React.FC = () => {
   const [renameValue, setRenameValue] = useState('');
   const [tagActionLoading, setTagActionLoading] = useState(false);
   const [confirmDeleteTag, setConfirmDeleteTag] = useState<string | null>(null);
+  const [colorPickerTag, setColorPickerTag] = useState<string | null>(null);
+  const [availableTags, setAvailableTags] = useState<{ name: string; count: number; color?: string }[]>([]);
+  const tagBarRef = useHorizontalScroll<HTMLDivElement>();
 
-  const [notes, setNotes] = useState<NoteItem[]>([
-    {
-      id: 'n1',
-      title: 'Kế hoạch tích lũy tài chính dài hạn 2027',
-      content:
-        '# Mục tiêu chính\n- Tích lũy 5 triệu/tháng vào quỹ chỉ số VN30.\n- Phân bổ 3 ví dự phòng khẩn cấp 6 tháng chi phí sinh hoạt.\n- Học thêm chứng chỉ CFA Level 1.',
-      tags: ['tài-chính', 'kế-hoạch'],
-      isPinned: true,
-      color: '#6366F1',
-      updatedAt: 'Hôm nay, 10:15',
-    },
-    {
-      id: 'n2',
-      title: 'Checklist chuẩn bị đi Đà Lạt cuối tuần',
-      content:
-        '- CCCD gắn chip & Bằng lái xe\n- Sạc dự phòng Anker 20.000mAh\n- Thuốc hạ sốt & chống say xe\n- Áo ấm len và áo khoác chống nước\n- Đặt vé xe Limousine trước 2 ngày',
-      tags: ['du-lịch', 'checklist'],
-      isPinned: true,
-      color: '#10B981',
-      updatedAt: 'Hôm qua, 18:20',
-    },
-    {
-      id: 'n3',
-      title: 'Ý tưởng xây dựng kiến trúc Micro-interactions',
-      content:
-        'Sử dụng CSS cubic-bezier(0.16, 1, 0.3, 1) cho chuyển động mượt mà. Đảm bảo tuân thủ tiêu chuẩn trợ năng WCAG 2.1 AA.',
-      tags: ['công-nghệ', 'thiết-kế'],
-      isPinned: false,
-      color: '#8B5CF6',
-      updatedAt: '12/10/2026',
-    },
-    {
-      id: 'n4',
-      title: 'Ghi chú cuộc họp thảo luận chiến lược quý 4',
-      content:
-        'Kế hoạch hành động quý 4: Hoàn thiện không gian làm việc cá nhân Flux và tối ưu hiệu suất công việc hàng ngày.',
-      tags: ['công-việc', 'bảo-mật'],
-      isPinned: false,
-      color: '#F59E0B',
-      updatedAt: '10/10/2026',
-    },
-  ]);
+  const [notes, setNotes] = useState<NoteItem[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [pagination, setPagination] = useState<PaginationMeta>({
+    page: 1,
+    limit: 24,
+    total: 0,
+    totalPages: 1,
+    hasNext: false,
+    hasPrev: false,
+  });
 
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
-  const [newTag, setNewTag] = useState('tài-chính');
+  const [newNoteTags, setNewNoteTags] = useState<string[]>(['tài-chính']);
+
+  const tagColorMap = React.useMemo(() => {
+    const map = new Map<string, string>();
+    availableTags.forEach((t) => {
+      if (t.color) map.set(t.name.toLowerCase(), t.color);
+    });
+    return map;
+  }, [availableTags]);
+
+  const getTagColor = (name: string) => {
+    return tagColorMap.get(name.toLowerCase()) || '#6366F1';
+  };
+
+  const getPreviewSnippet = (markdown: string): string => {
+    if (!markdown) return '';
+    return markdown
+      .replace(/<[^>]*>/g, '')
+      .replace(/^#+\s+/gm, '')
+      .replace(/(\*\*|__)(.*?)\1/g, '$2')
+      .replace(/(\*|_)(.*?)\1/g, '$2')
+      .replace(/`{1,3}(.*?)`{1,3}/g, '$1')
+      .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+      .replace(/^\s*[-*+]\s+/gm, '• ')
+      .trim();
+  };
+
+  const handleUpdateTagColor = async (tag: string, color: string) => {
+    setColorPickerTag(null);
+    try {
+      await apiClient.patch('/notes/tags/color', { tag, color });
+      toast.success(`Đã cập nhật màu cho thẻ #${tag}!`);
+      await fetchTags();
+      window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Không thể cập nhật màu thẻ.');
+    }
+  };
+
+  const fetchTags = async () => {
+    try {
+      const res = await apiClient.get('/notes/tags');
+      const tagList = res.data?.data || [];
+      setAvailableTags(tagList);
+    } catch {
+      // Degrade gracefully
+    }
+  };
+
+  const fetchNotes = async (page = 1) => {
+    try {
+      setIsLoading(true);
+      const res = await apiClient.get('/notes', {
+        params: {
+          page,
+          limit: 24,
+          q: searchQuery || undefined,
+          tag: selectedTag !== 'ALL' ? selectedTag : undefined,
+        },
+      });
+
+      const rawData = res.data?.data;
+      const noteList = Array.isArray(rawData) ? rawData : (rawData?.items || []);
+
+      setNotes(
+        noteList.map((n: any) => ({
+          id: n.id,
+          title: n.title,
+          content: n.content,
+          tags: (n.tags as string[]) || [],
+          isPinned: n.isPinned,
+          color: n.color || '#6366F1',
+          updatedAt: new Date(n.updatedAt).toLocaleDateString('vi-VN', {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+        }))
+      );
+
+      if (res.data?.pagination) {
+        setPagination(res.data.pagination);
+      } else if (rawData?.pagination) {
+        setPagination(rawData.pagination);
+      }
+    } catch {
+      // Fallback to empty list gracefully
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchNotes = async () => {
-      try {
-        const res = await apiClient.get('/notes');
-        if (Array.isArray(res.data.data)) {
-          setNotes(
-            res.data.data.map((n: any) => ({
-              id: n.id,
-              title: n.title,
-              content: n.content,
-              tags: (n.tags as string[]) || [],
-              isPinned: n.isPinned,
-              color: n.color || '#6366F1',
-              updatedAt: new Date(n.updatedAt).toLocaleDateString('vi-VN', {
-                hour: '2-digit',
-                minute: '2-digit',
-              }),
-            }))
-          );
-        }
-      } catch {
-        // Fallback to initial prototype notes seamlessly
-      }
-    };
+    fetchTags();
+  }, []);
 
-    fetchNotes();
+  useEffect(() => {
+    fetchNotes(1);
+  }, [searchQuery, selectedTag]);
+
+  useEffect(() => {
     const handleRefresh = () => {
-      fetchNotes();
+      fetchNotes(pagination.page);
+      fetchTags();
     };
     window.addEventListener('flux:refresh-data', handleRefresh);
     return () => window.removeEventListener('flux:refresh-data', handleRefresh);
-  }, []);
+  }, [pagination.page, searchQuery, selectedTag]);
 
   const togglePin = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -165,11 +216,7 @@ export const NotesPage: React.FC = () => {
     e.preventDefault();
     if (!newTitle.trim()) return;
 
-    const parsedTags = newTag
-      .split(',')
-      .map((t) => t.trim().replace(/^#/, ''))
-      .filter(Boolean);
-    const finalTags = parsedTags.length > 0 ? parsedTags : ['chung'];
+    const finalTags = newNoteTags.length > 0 ? newNoteTags : ['chung'];
 
     const tempId = `note-${Date.now()}`;
     const newNote: NoteItem = {
@@ -200,18 +247,14 @@ export const NotesPage: React.FC = () => {
       }
       setNewTitle('');
       setNewContent('');
+      setNewNoteTags(['tài-chính']);
+      await fetchTags();
+      await fetchNotes(1);
       window.dispatchEvent(new CustomEvent('flux:refresh-data'));
     } catch {
       // Degrade gracefully
     }
   };
-
-  const allTags = Array.from(new Set(notes.flatMap((n) => n.tags))).filter(Boolean);
-
-  const tagCounts = allTags.map((tag) => ({
-    name: tag,
-    count: notes.filter((n) => n.tags.includes(tag)).length,
-  }));
 
   const handleStartRenameTag = (tag: string) => {
     setEditingTag(tag);
@@ -228,35 +271,16 @@ export const NotesPage: React.FC = () => {
     setTagActionLoading(true);
     try {
       await apiClient.post('/notes/tags/rename', { oldTag, newTag: cleanNewTag });
-      setNotes((prev) =>
-        prev.map((n) => ({
-          ...n,
-          tags: Array.from(
-            new Set(n.tags.map((t) => (t.toLowerCase() === oldTag.toLowerCase() ? cleanNewTag : t)))
-          ),
-        }))
-      );
       if (selectedTag.toLowerCase() === oldTag.toLowerCase()) {
         setSelectedTag(cleanNewTag);
       }
       toast.success(`Đã đổi tên thẻ "#${oldTag}" thành "#${cleanNewTag}"!`);
       setEditingTag(null);
+      await fetchTags();
+      await fetchNotes(pagination.page);
       window.dispatchEvent(new CustomEvent('flux:refresh-data'));
-    } catch {
-      // Local fallback for offline/prototype
-      setNotes((prev) =>
-        prev.map((n) => ({
-          ...n,
-          tags: Array.from(
-            new Set(n.tags.map((t) => (t.toLowerCase() === oldTag.toLowerCase() ? cleanNewTag : t)))
-          ),
-        }))
-      );
-      if (selectedTag.toLowerCase() === oldTag.toLowerCase()) {
-        setSelectedTag(cleanNewTag);
-      }
-      toast.success(`Đã cập nhật tên thẻ "#${cleanNewTag}".`);
-      setEditingTag(null);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Không thể đổi tên thẻ.');
     } finally {
       setTagActionLoading(false);
     }
@@ -269,41 +293,22 @@ export const NotesPage: React.FC = () => {
     setTagActionLoading(true);
     try {
       await apiClient.post('/notes/tags/delete', { tag: tagToDelete });
-      setNotes((prev) =>
-        prev.map((n) => ({
-          ...n,
-          tags: n.tags.filter((t) => t.toLowerCase() !== tagToDelete.toLowerCase()),
-        }))
-      );
       if (selectedTag.toLowerCase() === tagToDelete.toLowerCase()) {
         setSelectedTag('ALL');
       }
       toast.success(`Đã xóa thẻ "#${tagToDelete}" khỏi toàn bộ ghi chú!`);
+      await fetchTags();
+      await fetchNotes(1);
       window.dispatchEvent(new CustomEvent('flux:refresh-data'));
-    } catch {
-      setNotes((prev) =>
-        prev.map((n) => ({
-          ...n,
-          tags: n.tags.filter((t) => t.toLowerCase() !== tagToDelete.toLowerCase()),
-        }))
-      );
-      if (selectedTag.toLowerCase() === tagToDelete.toLowerCase()) {
-        setSelectedTag('ALL');
-      }
-      toast.success(`Đã xóa thẻ "#${tagToDelete}".`);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Không thể xóa thẻ.');
     } finally {
       setTagActionLoading(false);
       setConfirmDeleteTag(null);
     }
   };
 
-  const filteredNotes = notes.filter((n) => {
-    const matchesQuery =
-      n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      n.content.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTag = selectedTag === 'ALL' || n.tags.includes(selectedTag);
-    return matchesQuery && matchesTag;
-  });
+  const filteredNotes = notes;
 
   return (
     <AppLayout>
@@ -379,40 +384,110 @@ export const NotesPage: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+          <div
+            ref={tagBarRef}
+            className="flex items-center gap-2 overflow-x-auto custom-scrollbar-x pb-2.5 pt-0.5 text-xs scroll-smooth max-w-full"
+          >
             <button
               onClick={() => setSelectedTag('ALL')}
-              className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 flex-shrink-0 ${
                 selectedTag === 'ALL'
                   ? 'bg-brand text-white border-brand font-bold'
-                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
+                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand/40'
               }`}
             >
-              Tất Cả ({notes.length})
-            </button>
-            {allTags.map((tag) => (
-              <button
-                key={tag}
-                onClick={() => setSelectedTag(tag)}
-                className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${
-                  selectedTag === tag
-                    ? 'bg-brand text-white border-brand font-bold'
-                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
+              <span>Tất Cả</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  selectedTag === 'ALL'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
                 }`}
               >
-                #{tag}
-              </button>
-            ))}
+                {pagination.total}
+              </span>
+            </button>
+            {availableTags.map((tag) => {
+              const isActive = selectedTag === tag.name;
+              const color = tag.color || '#6366F1';
+              return (
+                <button
+                  key={tag.name}
+                  onClick={() => setSelectedTag(isActive ? 'ALL' : tag.name)}
+                  className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 flex-shrink-0 ${
+                    isActive
+                      ? 'text-white font-bold shadow-xs'
+                      : 'text-slate-700 dark:text-slate-300 hover:scale-[1.02]'
+                  }`}
+                  style={{
+                    backgroundColor: isActive ? color : `${color}15`,
+                    borderColor: isActive ? color : `${color}35`,
+                  }}
+                >
+                  <span
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: isActive ? '#ffffff' : color }}
+                  />
+                  <span>#{tag.name}</span>
+                  <span
+                    className="text-[10px] px-1.5 py-0.2 rounded-full font-medium"
+                    style={{
+                      backgroundColor: isActive ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.06)',
+                      color: isActive ? '#ffffff' : 'inherit',
+                    }}
+                  >
+                    {tag.count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* Notes Grid Display */}
         {viewMode === 'grid' ? (
-          filteredNotes.length === 0 ? (
+          isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div
+                  key={i}
+                  className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 animate-pulse"
+                >
+                  <div className="space-y-2.5">
+                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-2/3" />
+                    <div className="h-3 bg-slate-100 dark:bg-slate-850 rounded w-full" />
+                    <div className="h-3 bg-slate-100 dark:bg-slate-850 rounded w-4/5" />
+                  </div>
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between">
+                    <div className="h-3.5 bg-slate-200 dark:bg-slate-800 rounded w-16" />
+                    <div className="h-3.5 bg-slate-100 dark:bg-slate-850 rounded w-14" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredNotes.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center space-y-2">
               <FileText className="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto" />
-              <h3 className="font-bold text-sm text-slate-700 dark:text-slate-300">Không tìm thấy ghi chú nào</h3>
-              <p className="text-xs text-slate-400">Thử tìm kiếm với từ khóa khác hoặc tạo ghi chú mới.</p>
+              <h3 className="font-bold text-sm text-slate-700 dark:text-slate-300">
+                {notes.length === 0 ? 'Chưa có ghi chú nào' : 'Không tìm thấy ghi chú nào'}
+              </h3>
+              <p className="text-xs text-slate-400">
+                {notes.length === 0
+                  ? 'Ghi lại những ý tưởng, tài liệu học tập hoặc kế hoạch đầu tiên của bạn!'
+                  : 'Thử tìm kiếm với từ khóa khác hoặc xóa bộ lọc thẻ.'}
+              </p>
+              {notes.length === 0 && (
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold shadow-sm transition-all cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Tạo Ghi Chú Đầu Tiên</span>
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -429,8 +504,11 @@ export const NotesPage: React.FC = () => {
                       </h3>
                       <div className="flex items-center gap-1">
                         <button
+                          type="button"
                           onClick={(e) => togglePin(note.id, e)}
-                          className={`p-1 rounded-lg transition-colors cursor-pointer ${
+                          aria-label={note.isPinned ? `Bỏ ghim ghi chú: ${note.title}` : `Ghim ghi chú: ${note.title}`}
+                          aria-pressed={note.isPinned}
+                          className={`p-1.5 rounded-lg transition-colors cursor-pointer focus-ring ${
                             note.isPinned ? 'text-brand bg-brand/10' : 'text-slate-300 hover:text-slate-500'
                           }`}
                           title={note.isPinned ? 'Bỏ ghim' : 'Ghim ghi chú'}
@@ -438,26 +516,39 @@ export const NotesPage: React.FC = () => {
                           <Pin className="w-3.5 h-3.5 fill-current" />
                         </button>
                         <button
+                          type="button"
                           onClick={(e) => handleDeleteNote(note.id, e)}
-                          className="p-1 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                          aria-label={`Xóa ghi chú: ${note.title}`}
+                          className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer focus-ring"
                           title="Xóa ghi chú"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed font-mono whitespace-pre-wrap">
-                      {note.content}
+                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed">
+                      {getPreviewSnippet(note.content)}
                     </p>
                   </div>
 
                   <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
                     <div className="flex items-center gap-1 flex-wrap">
-                      {note.tags.map((t) => (
-                        <span key={t} className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-300">
-                          #{t}
-                        </span>
-                      ))}
+                      {note.tags.map((t) => {
+                        const color = getTagColor(t);
+                        return (
+                          <span
+                            key={t}
+                            className="px-2 py-0.5 rounded-md text-[10px] font-semibold border"
+                            style={{
+                              backgroundColor: `${color}15`,
+                              borderColor: `${color}35`,
+                              color: color,
+                            }}
+                          >
+                            #{t}
+                          </span>
+                        );
+                      })}
                     </div>
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" /> {note.updatedAt}
@@ -468,11 +559,47 @@ export const NotesPage: React.FC = () => {
             </div>
           )
         ) : (
-          filteredNotes.length === 0 ? (
+          isLoading ? (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-sm space-y-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4 animate-pulse"
+                >
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="w-5 h-5 rounded-md bg-slate-200 dark:bg-slate-800 flex-shrink-0" />
+                    <div className="space-y-1.5 flex-1">
+                      <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3" />
+                      <div className="h-3 bg-slate-100 dark:bg-slate-850 rounded w-1/2" />
+                    </div>
+                  </div>
+                  <div className="h-4 w-16 bg-slate-200 dark:bg-slate-800 rounded" />
+                </div>
+              ))}
+            </div>
+          ) : filteredNotes.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center space-y-2">
               <FileText className="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto" />
-              <h3 className="font-bold text-sm text-slate-700 dark:text-slate-300">Không tìm thấy ghi chú nào</h3>
-              <p className="text-xs text-slate-400">Thử tìm kiếm với từ khóa khác hoặc tạo ghi chú mới.</p>
+              <h3 className="font-bold text-sm text-slate-700 dark:text-slate-300">
+                {notes.length === 0 ? 'Chưa có ghi chú nào' : 'Không tìm thấy ghi chú nào'}
+              </h3>
+              <p className="text-xs text-slate-400">
+                {notes.length === 0
+                  ? 'Ghi lại những ý tưởng, tài liệu học tập hoặc kế hoạch đầu tiên của bạn!'
+                  : 'Thử tìm kiếm với từ khóa khác hoặc tạo ghi chú mới.'}
+              </p>
+              {notes.length === 0 && (
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold shadow-sm transition-all cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Tạo Ghi Chú Đầu Tiên</span>
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-sm space-y-2">
@@ -488,23 +615,47 @@ export const NotesPage: React.FC = () => {
                       <div className="font-bold text-xs text-slate-900 dark:text-slate-100 line-clamp-1">
                         {note.title}
                       </div>
-                      <div className="text-[11px] text-slate-400 line-clamp-1">{note.content.replace(/#/g, '')}</div>
+                      <div className="text-[11px] text-slate-400 line-clamp-1">
+                        {getPreviewSnippet(note.content)}
+                      </div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3 text-xs text-slate-400 flex-shrink-0">
-                    <span className="hidden sm:inline">{note.tags.map((t) => `#${t}`).join(' ')}</span>
+                    <div className="hidden sm:flex items-center gap-1">
+                      {note.tags.map((t) => {
+                        const color = getTagColor(t);
+                        return (
+                          <span
+                            key={t}
+                            className="px-1.5 py-0.5 rounded text-[10px] font-semibold border"
+                            style={{
+                              backgroundColor: `${color}15`,
+                              borderColor: `${color}35`,
+                              color: color,
+                            }}
+                          >
+                            #{t}
+                          </span>
+                        );
+                      })}
+                    </div>
                     <span>{note.updatedAt}</span>
                     <button
+                      type="button"
                       onClick={(e) => togglePin(note.id, e)}
-                      className={`p-1 rounded-lg ${note.isPinned ? 'text-brand' : 'text-slate-300'}`}
+                      aria-label={note.isPinned ? `Bỏ ghim ghi chú: ${note.title}` : `Ghim ghi chú: ${note.title}`}
+                      aria-pressed={note.isPinned}
+                      className={`p-1.5 rounded-lg transition-colors cursor-pointer focus-ring ${note.isPinned ? 'text-brand' : 'text-slate-300'}`}
                       title="Ghim"
                     >
                       <Pin className="w-3.5 h-3.5 fill-current" />
                     </button>
                     <button
+                      type="button"
                       onClick={(e) => handleDeleteNote(note.id, e)}
-                      className="p-1 text-slate-300 hover:text-rose-500 rounded"
+                      aria-label={`Xóa ghi chú: ${note.title}`}
+                      className="p-1.5 text-slate-300 hover:text-rose-500 rounded-lg transition-colors cursor-pointer focus-ring"
                       title="Xóa"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -516,33 +667,63 @@ export const NotesPage: React.FC = () => {
           )
         )}
 
+        {/* Notes Pagination Control (T2.1) */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+          <PaginationControl
+            pagination={pagination}
+            onPageChange={(p) => fetchNotes(p)}
+            isLoading={isLoading}
+          />
+        </div>
+
         {/* Note View / Detail Modal */}
-        {activeNote && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm modal-backdrop-animate">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl modal-dialog-animate space-y-4">
+        <Modal
+          isOpen={!!activeNote}
+          onClose={() => setActiveNote(null)}
+          ariaLabelledBy="note-detail-title"
+          maxWidth="lg"
+        >
+          {activeNote && (
+            <div className="space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center">
+                  <div className="h-8 w-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center font-bold">
                     <FileText className="w-4 h-4" />
                   </div>
-                  <h3 className="font-bold text-base line-clamp-1">{activeNote.title}</h3>
+                  <h3 id="note-detail-title" className="font-bold text-base line-clamp-1">{activeNote.title}</h3>
                 </div>
-                <button onClick={() => setActiveNote(null)} className="p-1 text-slate-400 hover:text-slate-600">
+                <button
+                  type="button"
+                  onClick={() => setActiveNote(null)}
+                  aria-label="Đóng xem chi tiết ghi chú"
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 font-mono text-xs whitespace-pre-wrap leading-relaxed max-h-80 overflow-y-auto">
-                {activeNote.content}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 text-xs leading-relaxed max-h-96 overflow-y-auto custom-scrollbar-y">
+                <MarkdownViewer content={activeNote.content} />
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800 gap-3 text-xs text-slate-400">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  {activeNote.tags.map((t) => (
-                    <span key={t} className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                      #{t}
-                    </span>
-                  ))}
+                  {activeNote.tags.map((t) => {
+                    const color = getTagColor(t);
+                    return (
+                      <span
+                        key={t}
+                        className="px-2 py-0.5 rounded-md text-[11px] font-semibold border"
+                        style={{
+                          backgroundColor: `${color}15`,
+                          borderColor: `${color}35`,
+                          color: color,
+                        }}
+                      >
+                        #{t}
+                      </span>
+                    );
+                  })}
                 </div>
                 <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
                   <span>Cập nhật: {activeNote.updatedAt}</span>
@@ -556,190 +737,237 @@ export const NotesPage: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </Modal>
 
         {/* Add Note Modal */}
-        {isAddModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm modal-backdrop-animate">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl modal-dialog-animate space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center">
-                    <FileText className="w-4 h-4" />
-                  </div>
-                  <h3 className="font-bold text-base">Soạn Thảo Ghi Chú Mới</h3>
-                </div>
-                <button onClick={() => setIsAddModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-600">
-                  <X className="w-5 h-5" />
-                </button>
+        <Modal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          ariaLabelledBy="add-note-title"
+          maxWidth="lg"
+        >
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center font-bold">
+                <FileText className="w-4 h-4" />
               </div>
-
-              <form onSubmit={handleCreateNote} className="space-y-4 text-xs">
-                <div>
-                  <label className="font-semibold block mb-1">Tiêu đề ghi chú</label>
-                  <input
-                    type="text"
-                    required
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    placeholder="VD: Kế hoạch tuần tới..."
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-semibold block mb-1">Nhãn Tag</label>
-                  <input
-                    type="text"
-                    value={newTag}
-                    onChange={(e) => setNewTag(e.target.value)}
-                    placeholder="VD: tài-chính, công-việc"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-semibold block mb-1">Nội dung (Markdown)</label>
-                  <textarea
-                    rows={6}
-                    required
-                    value={newContent}
-                    onChange={(e) => setNewContent(e.target.value)}
-                    placeholder="# Tiêu đề\n- Gạch đầu dòng\n- Nhiệm vụ..."
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-mono"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all cursor-pointer"
-                >
-                  Lưu Ghi Chú Vào CSDL
-                </button>
-              </form>
+              <h3 id="add-note-title" className="font-bold text-base">Soạn Thảo Ghi Chú Mới</h3>
             </div>
+            <button
+              type="button"
+              onClick={() => setIsAddModalOpen(false)}
+              aria-label="Đóng soạn thảo ghi chú"
+              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-        )}
+
+          <form onSubmit={handleCreateNote} className="space-y-4 text-xs">
+            <div>
+              <label className="font-semibold block mb-1">Tiêu đề ghi chú</label>
+              <input
+                type="text"
+                required
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder="VD: Kế hoạch tuần tới..."
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand font-medium text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="font-semibold block mb-1">Thẻ phân loại (Tags)</label>
+              <TagSelect
+                availableTags={availableTags}
+                selectedTags={newNoteTags}
+                onChange={setNewNoteTags}
+                placeholder="Chọn hoặc nhập thẻ mới..."
+              />
+            </div>
+
+            <div>
+              <label className="font-semibold block mb-1">Nội dung ghi chú (Markdown)</label>
+              <MarkdownEditor
+                value={newContent}
+                onChange={setNewContent}
+                placeholder="Nhập nội dung ghi chú (hỗ trợ tiêu đề, danh sách, bảng, task list...)"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all cursor-pointer"
+            >
+              Lưu Ghi Chú Vào CSDL
+            </button>
+          </form>
+        </Modal>
 
         {/* Tag Manager Modal */}
-        {isTagManagerOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm modal-backdrop-animate">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl modal-dialog-animate space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center">
-                    <Tag className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-base">Quản Lý Thẻ Phân Loại</h3>
-                    <p className="text-[11px] text-slate-400">Đổi tên hoặc xóa thẻ trên toàn bộ ghi chú</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    setIsTagManagerOpen(false);
-                    setEditingTag(null);
-                  }}
-                  className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+        <Modal
+          isOpen={isTagManagerOpen}
+          onClose={() => {
+            setIsTagManagerOpen(false);
+            setEditingTag(null);
+            setColorPickerTag(null);
+          }}
+          ariaLabelledBy="tag-manager-title"
+          maxWidth="lg"
+        >
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center font-bold">
+                <Tag className="w-4 h-4" />
               </div>
-
-              {tagCounts.length === 0 ? (
-                <div className="py-8 text-center text-slate-400 text-xs">
-                  Chưa có thẻ phân loại nào trong ghi chú.
-                </div>
-              ) : (
-                <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
-                  {tagCounts.map(({ name, count }) => {
-                    const isEditing = editingTag === name;
-                    return (
-                      <div
-                        key={name}
-                        className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800/80 gap-3 text-xs"
-                      >
-                        {isEditing ? (
-                          <div className="flex items-center gap-2 flex-1">
-                            <input
-                              type="text"
-                              value={renameValue}
-                              onChange={(e) => setRenameValue(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleSaveRenameTag(name);
-                                if (e.key === 'Escape') setEditingTag(null);
-                              }}
-                              autoFocus
-                              className="flex-1 px-3 py-1.5 rounded-xl border border-brand bg-white dark:bg-slate-900 text-xs focus:outline-none"
-                            />
-                            <button
-                              onClick={() => handleSaveRenameTag(name)}
-                              disabled={tagActionLoading}
-                              className="p-1.5 rounded-lg bg-brand text-white hover:bg-brand-hover cursor-pointer"
-                              title="Lưu tên mới"
-                            >
-                              <Check className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => setEditingTag(null)}
-                              className="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 cursor-pointer"
-                              title="Hủy"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="flex items-center gap-2 min-w-0">
-                              <span className="font-semibold text-brand bg-brand/10 dark:bg-brand/20 px-2.5 py-1 rounded-lg truncate">
-                                #{name}
-                              </span>
-                              <span className="text-[11px] text-slate-400 flex-shrink-0">
-                                ({count} ghi chú)
-                              </span>
-                            </div>
-
-                            <div className="flex items-center gap-1.5 flex-shrink-0">
-                              <button
-                                onClick={() => handleStartRenameTag(name)}
-                                disabled={tagActionLoading}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-brand hover:bg-brand/10 transition-colors cursor-pointer"
-                                title="Đổi tên thẻ"
-                              >
-                                <Edit3 className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                onClick={() => setConfirmDeleteTag(name)}
-                                disabled={tagActionLoading}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
-                                title="Xóa thẻ khỏi ghi chú"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-                <button
-                  onClick={() => {
-                    setIsTagManagerOpen(false);
-                    setEditingTag(null);
-                  }}
-                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs cursor-pointer"
-                >
-                  Đóng
-                </button>
+              <div>
+                <h3 id="tag-manager-title" className="font-bold text-base">Quản Lý Thẻ Phân Loại</h3>
+                <p className="text-[11px] text-slate-400">Đổi tên, chỉnh màu sắc hoặc xóa thẻ trên toàn bộ ghi chú</p>
               </div>
             </div>
+            <button
+              type="button"
+              onClick={() => {
+                setIsTagManagerOpen(false);
+                setEditingTag(null);
+                setColorPickerTag(null);
+              }}
+              aria-label="Đóng quản lý thẻ"
+              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-        )}
+
+          {availableTags.length === 0 ? (
+            <div className="py-8 text-center text-slate-400 text-xs">
+              Chưa có thẻ phân loại nào trong ghi chú.
+            </div>
+          ) : (
+            <div className="max-h-72 overflow-y-auto space-y-2 pr-1 custom-scrollbar-y">
+              {availableTags.map(({ name, count, color: tagCol }) => {
+                const isEditing = editingTag === name;
+                const color = tagCol || getTagColor(name);
+                return (
+                  <div
+                    key={name}
+                    className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800/80 gap-3 text-xs"
+                  >
+                    {isEditing ? (
+                      <div className="flex items-center gap-2 flex-1">
+                        <input
+                          type="text"
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveRenameTag(name);
+                            if (e.key === 'Escape') setEditingTag(null);
+                          }}
+                          autoFocus
+                          className="flex-1 px-3 py-1.5 rounded-xl border border-brand bg-white dark:bg-slate-900 text-xs focus:outline-none"
+                        />
+                        <button
+                          onClick={() => handleSaveRenameTag(name)}
+                          disabled={tagActionLoading}
+                          className="p-1.5 rounded-lg bg-brand text-white hover:bg-brand-hover cursor-pointer"
+                          title="Lưu tên mới"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setEditingTag(null)}
+                          className="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 cursor-pointer"
+                          title="Hủy"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-2 min-w-0">
+                          {/* Color Swatch Button */}
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => setColorPickerTag(colorPickerTag === name ? null : name)}
+                              className="w-5 h-5 rounded-full border border-black/10 dark:border-white/20 shadow-xs cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
+                              style={{ backgroundColor: color }}
+                              title="Đổi màu thẻ"
+                            />
+                            {colorPickerTag === name && (
+                              <div className="absolute left-0 top-full mt-1.5 z-50">
+                                <ColorPickerPopover
+                                  currentColor={color}
+                                  tagName={name}
+                                  onSelectColor={(c) => handleUpdateTagColor(name, c)}
+                                  onClose={() => setColorPickerTag(null)}
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          <span
+                            className="font-semibold px-2.5 py-1 rounded-lg border truncate"
+                            style={{
+                              backgroundColor: `${color}15`,
+                              borderColor: `${color}35`,
+                              color: color,
+                            }}
+                          >
+                            #{name}
+                          </span>
+                          <span className="text-[11px] text-slate-400 flex-shrink-0">
+                            ({count} ghi chú)
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setColorPickerTag(colorPickerTag === name ? null : name)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-brand hover:bg-brand/10 transition-colors cursor-pointer"
+                            title="Đổi màu thẻ"
+                          >
+                            <div className="w-3.5 h-3.5 rounded-full border border-current" style={{ backgroundColor: color }} />
+                          </button>
+                          <button
+                            onClick={() => handleStartRenameTag(name)}
+                            disabled={tagActionLoading}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-brand hover:bg-brand/10 transition-colors cursor-pointer"
+                            title="Đổi tên thẻ"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setConfirmDeleteTag(name)}
+                            disabled={tagActionLoading}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                            title="Xóa thẻ khỏi ghi chú"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+            <button
+              onClick={() => {
+                setIsTagManagerOpen(false);
+                setEditingTag(null);
+              }}
+              className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs cursor-pointer"
+            >
+              Đóng
+            </button>
+          </div>
+        </Modal>
 
         {/* Modern Delete Confirmation Dialog for Tags */}
         <ConfirmModal
