@@ -6,14 +6,19 @@ import {
   searchNoteSchema,
   renameTagSchema,
   deleteTagSchema,
+  updateNoteTagColorSchema,
 } from './notes.schema';
 
 export class NotesController {
   async getNotes(req: Request, res: Response, next: NextFunction) {
     try {
       const filter = searchNoteSchema.parse(req.query);
-      const notes = await notesService.getNotes(req.user!.userId, filter);
-      res.status(200).json({ status: 'success', data: notes });
+      const result = await notesService.getNotes(req.user!.userId, filter);
+      res.status(200).json({
+        status: 'success',
+        data: result.items,
+        pagination: result.pagination,
+      });
     } catch (error) {
       next(error);
     }
@@ -102,6 +107,16 @@ export class NotesController {
     try {
       const validated = deleteTagSchema.parse(req.body);
       const result = await notesService.deleteTag(req.user!.userId, validated);
+      res.status(200).json({ status: 'success', data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateTagColor(req: Request, res: Response, next: NextFunction) {
+    try {
+      const validated = updateNoteTagColorSchema.parse(req.body);
+      const result = await notesService.updateTagColor(req.user!.userId, validated);
       res.status(200).json({ status: 'success', data: result });
     } catch (error) {
       next(error);

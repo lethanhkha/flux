@@ -2,13 +2,16 @@ import createDOMPurify from 'dompurify';
 import { JSDOM } from 'jsdom';
 import { prisma } from '../../config/prisma';
 import { AppError } from '../../middlewares/error.middleware';
+import { cacheService } from '../../services/cache.service';
 import {
   CreateNoteInput,
   UpdateNoteInput,
   SearchNoteInput,
   RenameTagInput,
   DeleteTagInput,
+  UpdateNoteTagColorInput,
 } from './notes.schema';
+import { getDefaultTagColor } from '../../utils/tagColors';
 
 const window = new JSDOM('').window;
 const DOMPurify = createDOMPurify(window as any);
@@ -29,7 +32,7 @@ export class NotesService {
   }
 
   /**
-   * 1. Get notes with search and tag filtering
+   * 1. Get notes with search, tag filtering, and pagination (T2.1)
    */
   async getNotes(userId: string, filter?: SearchNoteInput) {
     const where: any = { userId };
@@ -41,21 +44,59 @@ export class NotesService {
       ];
     }
 
-    const notes = await prisma.note.findMany({
-      where,
-      orderBy: [{ isPinned: 'desc' }, { updatedAt: 'desc' }],
-    });
-
-    // Tag filtering on JSON array
     if (filter?.tag) {
-      const searchTag = filter.tag.toLowerCase();
-      return notes.filter((n) => {
-        const tags = (n.tags as string[]) || [];
-        return tags.some((t) => t.toLowerCase() === searchTag);
-      });
+      const cleanTag = filter.tag.toLowerCase().trim().replace(/^#/, '');
+      where.tags = {
+        array_contains: cleanTag,
+      };
     }
 
-    return notes;
+    const limit = Math.min(Math.max(filter?.limit ? Number(filter.limit) : 24, 1), 1000);
+    const page = filter?.page ? Math.max(Number(filter.page), 1) : 1;
+    const skip =
+      filter?.offset !== undefined
+        ? Math.max(Number(filter.offset), 0)
+        : (page - 1) * limit;
+    const currentPage =
+      filter?.offset !== undefined ? Math.floor(skip / limit) + 1 : page;
+
+    const cacheKey = `cache:notes:${userId}:${filter?.q || ''}:${filter?.tag || ''}:${currentPage}:${limit}`;
+
+    return cacheService.remember(cacheKey, 60, async () => {
+      const [total, notes] = await Promise.all([
+        prisma.note.count({ where }),
+        prisma.note.findMany({
+          where,
+          orderBy: [{ isPinned: 'desc' }, { updatedAt: 'desc' }],
+          take: limit,
+          skip,
+        }),
+      ]);
+
+      const totalPages = Math.ceil(total / limit) || 1;
+
+      return {
+        items: notes,
+        pagination: {
+          page: currentPage,
+          limit,
+          total,
+          totalPages,
+          hasNext: currentPage < totalPages,
+          hasPrev: currentPage > 1,
+        },
+      };
+    });
+  }
+
+  /**
+   * Invalidate notes and dashboard caches for user
+   */
+  async invalidateUserNotesCache(userId: string) {
+    await Promise.all([
+      cacheService.del(`cache:dashboard:${userId}`),
+      cacheService.delPattern(`cache:notes:${userId}*`),
+    ]);
   }
 
   /**
@@ -81,7 +122,7 @@ export class NotesService {
     const cleanTitle = DOMPurify.sanitize(input.title).trim();
     const cleanContent = this.sanitizeContent(input.content);
 
-    return prisma.note.create({
+    const note = await prisma.note.create({
       data: {
         userId,
         title: cleanTitle,
@@ -91,6 +132,9 @@ export class NotesService {
         isPinned: input.isPinned,
       },
     });
+
+    await this.invalidateUserNotesCache(userId);
+    return note;
   }
 
   /**
@@ -112,10 +156,13 @@ export class NotesService {
     if (input.tags !== undefined) data.tags = input.tags;
     if (input.isPinned !== undefined) data.isPinned = input.isPinned;
 
-    return prisma.note.update({
+    const updated = await prisma.note.update({
       where: { id: noteId },
       data,
     });
+
+    await this.invalidateUserNotesCache(userId);
+    return updated;
   }
 
   /**
@@ -130,10 +177,13 @@ export class NotesService {
       throw new AppError('Không tìm thấy ghi chú.', 404);
     }
 
-    return prisma.note.update({
+    const updated = await prisma.note.update({
       where: { id: noteId },
       data: { isPinned: !note.isPinned },
     });
+
+    await this.invalidateUserNotesCache(userId);
+    return updated;
   }
 
   /**
@@ -149,6 +199,7 @@ export class NotesService {
     }
 
     await prisma.note.delete({ where: { id: noteId } });
+    await this.invalidateUserNotesCache(userId);
     return { message: 'Đã xóa ghi chú thành công.' };
   }
 
@@ -164,13 +215,23 @@ export class NotesService {
   }
 
   /**
-   * 8. Get all unique tags with count
+   * 8. Get all unique tags with count and color
    */
   async getTags(userId: string) {
-    const notes = await prisma.note.findMany({
-      where: { userId },
-      select: { tags: true },
-    });
+    const [notes, tagRecords] = await Promise.all([
+      prisma.note.findMany({
+        where: { userId },
+        select: { tags: true },
+      }),
+      prisma.tag.findMany({
+        where: { userId, type: 'NOTE' },
+      }),
+    ]);
+
+    const colorMap = new Map<string, string>();
+    for (const record of tagRecords) {
+      colorMap.set(record.name.toLowerCase().trim(), record.color);
+    }
 
     const tagCounts: Record<string, number> = {};
     for (const n of notes) {
@@ -183,51 +244,49 @@ export class NotesService {
     }
 
     return Object.entries(tagCounts)
-      .map(([name, count]) => ({ name, count }))
+      .map(([name, count]) => ({
+        name,
+        count,
+        color: colorMap.get(name) || getDefaultTagColor(name),
+      }))
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
   }
 
   /**
-   * 9. Rename tag across all notes of user
+   * 9. Update tag color
    */
-  async renameTag(userId: string, input: RenameTagInput) {
-    const { oldTag, newTag } = input;
-    const notes = await prisma.note.findMany({
-      where: { userId },
-      select: { id: true, tags: true },
+  async updateTagColor(userId: string, input: UpdateNoteTagColorInput) {
+    const cleanTag = input.tag.toLowerCase().trim().replace(/^#/, '');
+    const tagRecord = await prisma.tag.upsert({
+      where: {
+        userId_type_name: {
+          userId,
+          type: 'NOTE',
+          name: cleanTag,
+        },
+      },
+      create: {
+        userId,
+        type: 'NOTE',
+        name: cleanTag,
+        color: input.color,
+      },
+      update: {
+        color: input.color,
+      },
     });
 
-    const notesToUpdate = notes.filter((n) => {
-      const tags = (n.tags as string[]) || [];
-      return tags.some((t) => t.toLowerCase().trim() === oldTag);
-    });
-
-    if (notesToUpdate.length === 0) {
-      return { updatedCount: 0, oldTag, newTag };
-    }
-
-    const updates = notesToUpdate.map((n) => {
-      const tags = (n.tags as string[]) || [];
-      const updatedTags = Array.from(
-        new Set(
-          tags.map((t) => (t.toLowerCase().trim() === oldTag ? newTag : t))
-        )
-      );
-      return prisma.note.update({
-        where: { id: n.id },
-        data: { tags: updatedTags },
-      });
-    });
-
-    await prisma.$transaction(updates);
-    return { updatedCount: updates.length, oldTag, newTag };
+    await this.invalidateUserNotesCache(userId);
+    return tagRecord;
   }
 
   /**
-   * 10. Delete tag across all notes of user
+   * 10. Rename tag across all notes of user
    */
-  async deleteTag(userId: string, input: DeleteTagInput) {
-    const { tag } = input;
+  async renameTag(userId: string, input: RenameTagInput) {
+    const cleanOld = input.oldTag.toLowerCase().trim().replace(/^#/, '');
+    const cleanNew = input.newTag.toLowerCase().trim().replace(/^#/, '');
+
     const notes = await prisma.note.findMany({
       where: { userId },
       select: { id: true, tags: true },
@@ -235,24 +294,87 @@ export class NotesService {
 
     const notesToUpdate = notes.filter((n) => {
       const tags = (n.tags as string[]) || [];
-      return tags.some((t) => t.toLowerCase().trim() === tag);
+      return tags.some((t) => t.toLowerCase().trim() === cleanOld);
     });
 
-    if (notesToUpdate.length === 0) {
-      return { updatedCount: 0, deletedTag: tag };
+    if (notesToUpdate.length > 0) {
+      const updates = notesToUpdate.map((n) => {
+        const tags = (n.tags as string[]) || [];
+        const updatedTags = Array.from(
+          new Set(
+            tags.map((t) => (t.toLowerCase().trim() === cleanOld ? cleanNew : t))
+          )
+        );
+        return prisma.note.update({
+          where: { id: n.id },
+          data: { tags: updatedTags },
+        });
+      });
+      await prisma.$transaction(updates);
     }
 
-    const updates = notesToUpdate.map((n) => {
-      const tags = (n.tags as string[]) || [];
-      const updatedTags = tags.filter((t) => t.toLowerCase().trim() !== tag);
-      return prisma.note.update({
-        where: { id: n.id },
-        data: { tags: updatedTags },
-      });
+    // Sync in Tag table
+    const existingTag = await prisma.tag.findUnique({
+      where: {
+        userId_type_name: { userId, type: 'NOTE', name: cleanOld },
+      },
     });
 
-    await prisma.$transaction(updates);
-    return { updatedCount: updates.length, deletedTag: tag };
+    if (existingTag) {
+      await prisma.tag.delete({ where: { id: existingTag.id } });
+      await prisma.tag.upsert({
+        where: {
+          userId_type_name: { userId, type: 'NOTE', name: cleanNew },
+        },
+        create: {
+          userId,
+          type: 'NOTE',
+          name: cleanNew,
+          color: existingTag.color,
+        },
+        update: {
+          color: existingTag.color,
+        },
+      });
+    }
+
+    await this.invalidateUserNotesCache(userId);
+    return { updatedCount: notesToUpdate.length, oldTag: cleanOld, newTag: cleanNew };
+  }
+
+  /**
+   * 11. Delete tag across all notes of user
+   */
+  async deleteTag(userId: string, input: DeleteTagInput) {
+    const cleanTag = input.tag.toLowerCase().trim().replace(/^#/, '');
+    const notes = await prisma.note.findMany({
+      where: { userId },
+      select: { id: true, tags: true },
+    });
+
+    const notesToUpdate = notes.filter((n) => {
+      const tags = (n.tags as string[]) || [];
+      return tags.some((t) => t.toLowerCase().trim() === cleanTag);
+    });
+
+    if (notesToUpdate.length > 0) {
+      const updates = notesToUpdate.map((n) => {
+        const tags = (n.tags as string[]) || [];
+        const updatedTags = tags.filter((t) => t.toLowerCase().trim() !== cleanTag);
+        return prisma.note.update({
+          where: { id: n.id },
+          data: { tags: updatedTags },
+        });
+      });
+      await prisma.$transaction(updates);
+    }
+
+    await prisma.tag.deleteMany({
+      where: { userId, type: 'NOTE', name: cleanTag },
+    });
+
+    await this.invalidateUserNotesCache(userId);
+    return { updatedCount: notesToUpdate.length, deletedTag: cleanTag };
   }
 }
 

@@ -17,6 +17,9 @@ export const updateNoteSchema = createNoteSchema.partial();
 export const searchNoteSchema = z.object({
   q: z.string().optional(),
   tag: z.string().optional(),
+  page: z.coerce.number().min(1).optional(),
+  limit: z.coerce.number().min(1).max(1000).optional(),
+  offset: z.coerce.number().min(0).optional(),
 });
 
 export const renameTagSchema = z.object({
@@ -28,8 +31,14 @@ export const deleteTagSchema = z.object({
   tag: z.string().trim().min(1, 'Tên thẻ cần xóa không được để trống').toLowerCase(),
 });
 
+export const updateNoteTagColorSchema = z.object({
+  tag: z.string().trim().min(1, 'Tên thẻ không được để trống').toLowerCase(),
+  color: z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'Mã màu không hợp lệ'),
+});
+
 export type CreateNoteInput = z.infer<typeof createNoteSchema>;
 export type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
 export type SearchNoteInput = z.infer<typeof searchNoteSchema>;
 export type RenameTagInput = z.infer<typeof renameTagSchema>;
 export type DeleteTagInput = z.infer<typeof deleteTagSchema>;
+export type UpdateNoteTagColorInput = z.infer<typeof updateNoteTagColorSchema>;

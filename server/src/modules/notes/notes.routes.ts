@@ -10,6 +10,7 @@ router.use(authenticate);
 router.get('/', notesController.getNotes);
 router.post('/', notesController.createNote);
 router.get('/tags', notesController.getTags);
+router.patch('/tags/color', notesController.updateTagColor);
 router.post('/tags/rename', notesController.renameTag);
 router.post('/tags/delete', notesController.deleteTag);
 router.get('/pinned', notesController.getPinnedNotes);
