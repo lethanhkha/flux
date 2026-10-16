@@ -53,15 +53,27 @@ export class FinanceController {
     }
   }
 
+  async getFinanceOverview(req: Request, res: Response, next: NextFunction) {
+    try {
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
+      const overview = await financeService.getFinanceOverview(req.user!.userId, page, limit);
+      res.status(200).json({ status: 'success', data: overview });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getTransactions(req: Request, res: Response, next: NextFunction) {
     try {
-      const { walletId, type, category, limit, offset } = req.query;
+      const { walletId, type, category, limit, offset, page } = req.query;
       const result = await financeService.getTransactions(req.user!.userId, {
         walletId: walletId as string,
         type: type as any,
         category: category as string,
         limit: limit ? parseInt(limit as string, 10) : undefined,
         offset: offset ? parseInt(offset as string, 10) : undefined,
+        page: page ? parseInt(page as string, 10) : undefined,
       });
       res.status(200).json({ status: 'success', data: result });
     } catch (error) {

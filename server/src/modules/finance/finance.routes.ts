@@ -7,6 +7,9 @@ const router = Router();
 // Protect all finance routes with JWT authentication
 router.use(authenticate);
 
+// Consolidated overview endpoint (T2.3)
+router.get('/overview', financeController.getFinanceOverview);
+
 // Wallet endpoints
 router.get('/wallets', financeController.getWallets);
 router.post('/wallets', financeController.createWallet);
