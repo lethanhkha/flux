@@ -51,11 +51,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = useCallback(async () => {
     try {
-      await apiClient.post('/auth/logout');
+      const fallbackRefreshToken = localStorage.getItem('flux_refresh_token');
+      await apiClient.post('/auth/logout', {
+        refreshToken: fallbackRefreshToken || undefined,
+      });
     } catch {
       // Ignore network errors on logout
     } finally {
       localStorage.removeItem('flux_has_session');
+      localStorage.removeItem('flux_refresh_token');
       setAccessToken(null);
       setUser(null);
     }
@@ -76,13 +80,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     registerLogoutCallback(() => {
       localStorage.removeItem('flux_has_session');
+      localStorage.removeItem('flux_refresh_token');
       setUser(null);
     });
 
     if (hasInitializedAuth.current) return;
     hasInitializedAuth.current = true;
 
-    const hasSessionHint = localStorage.getItem('flux_has_session') === 'true';
+    const hasSessionHint =
+      localStorage.getItem('flux_has_session') === 'true' ||
+      !!localStorage.getItem('flux_refresh_token');
+
     if (!hasSessionHint) {
       setIsLoading(false);
       return;
@@ -90,14 +98,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const initAuth = async () => {
       try {
-        const res = await apiClient.post('/auth/refresh');
+        const fallbackRefreshToken = localStorage.getItem('flux_refresh_token');
+        const res = await apiClient.post('/auth/refresh', {
+          refreshToken: fallbackRefreshToken || undefined,
+        });
         const token = res.data.data.accessToken;
+        const newRefreshToken = res.data.data.refreshToken;
         setAccessToken(token);
         setUser(res.data.data.user);
         localStorage.setItem('flux_has_session', 'true');
+        if (newRefreshToken) {
+          localStorage.setItem('flux_refresh_token', newRefreshToken);
+        }
       } catch {
         // Active session cookie expired or revoked
         localStorage.removeItem('flux_has_session');
+        localStorage.removeItem('flux_refresh_token');
         setAccessToken(null);
         setUser(null);
       } finally {
@@ -129,6 +145,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     localStorage.setItem('flux_has_session', 'true');
+    if (data.refreshToken) {
+      localStorage.setItem('flux_refresh_token', data.refreshToken);
+    }
     setAccessToken(data.accessToken);
     setUser(data.user);
     return data;
@@ -143,6 +162,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const data = res.data.data;
     localStorage.setItem('flux_has_session', 'true');
+    if (data.refreshToken) {
+      localStorage.setItem('flux_refresh_token', data.refreshToken);
+    }
     setAccessToken(data.accessToken);
     setUser(data.user);
     return data;
@@ -171,6 +193,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const data = res.data.data;
     if (data.accessToken) {
       localStorage.setItem('flux_has_session', 'true');
+      if (data.refreshToken) {
+        localStorage.setItem('flux_refresh_token', data.refreshToken);
+      }
       setAccessToken(data.accessToken);
       setUser(data.user);
     }

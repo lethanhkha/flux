@@ -81,13 +81,18 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
+        const fallbackRefreshToken = localStorage.getItem('flux_refresh_token');
         const { data } = await axios.post(
           `${API_BASE_URL}/auth/refresh`,
-          {},
+          { refreshToken: fallbackRefreshToken || undefined },
           { withCredentials: true }
         );
 
         const newAccessToken = data.data.accessToken;
+        const newRefreshToken = data.data.refreshToken;
+        if (newRefreshToken) {
+          localStorage.setItem('flux_refresh_token', newRefreshToken);
+        }
         setAccessToken(newAccessToken);
         processQueue(null, newAccessToken);
 
@@ -96,6 +101,7 @@ apiClient.interceptors.response.use(
       } catch (refreshErr) {
         processQueue(refreshErr, null);
         setAccessToken(null);
+        localStorage.removeItem('flux_refresh_token');
         if (logoutCallback) {
           logoutCallback();
         }
