@@ -42,6 +42,20 @@ export const SettingsPage: React.FC = () => {
 
   const [copiedSecret, setCopiedSecret] = useState(false);
 
+  // Keyboard navigation: Escape key to close modals
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (is2FAModalOpen) setIs2FAModalOpen(false);
+        if (isDisable2FAModalOpen) setIsDisable2FAModalOpen(false);
+      }
+    };
+    if (is2FAModalOpen || isDisable2FAModalOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [is2FAModalOpen, isDisable2FAModalOpen]);
+
   // Setup 2FA Flow
   const handleOpen2FASetup = async () => {
     try {
@@ -228,7 +242,7 @@ export const SettingsPage: React.FC = () => {
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-mono"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-mono focus:outline-none focus:ring-2 focus:ring-brand transition-all"
                 />
               </div>
 
@@ -240,7 +254,7 @@ export const SettingsPage: React.FC = () => {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Mật khẩu mới..."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-mono"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-mono focus:outline-none focus:ring-2 focus:ring-brand transition-all"
                 />
               </div>
 
@@ -252,7 +266,7 @@ export const SettingsPage: React.FC = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Xác nhận lại..."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-mono"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-mono focus:outline-none focus:ring-2 focus:ring-brand transition-all"
                 />
               </div>
 
@@ -325,16 +339,30 @@ export const SettingsPage: React.FC = () => {
 
         {/* 2FA Setup Modal */}
         {is2FAModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm modal-backdrop-animate">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl modal-dialog-animate space-y-5">
+          <div
+            onClick={() => setIs2FAModalOpen(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-2fa-title"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm modal-backdrop-animate"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl modal-dialog-animate space-y-5"
+            >
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center">
                     <QrCode className="w-4 h-4" />
                   </div>
-                  <h3 className="font-bold text-base">Cấu Hình Xác Thực 2 Bước (2FA)</h3>
+                  <h3 id="modal-2fa-title" className="font-bold text-base">Cấu Hình Xác Thực 2 Bước (2FA)</h3>
                 </div>
-                <button onClick={() => setIs2FAModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-600">
+                <button
+                  type="button"
+                  onClick={() => setIs2FAModalOpen(false)}
+                  aria-label="Đóng"
+                  className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg focus-ring"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -424,18 +452,29 @@ export const SettingsPage: React.FC = () => {
 
         {/* Disable 2FA Modal */}
         {isDisable2FAModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm modal-backdrop-animate">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl modal-dialog-animate space-y-4">
+          <div
+            onClick={() => setIsDisable2FAModalOpen(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-disable-2fa-title"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm modal-backdrop-animate"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl modal-dialog-animate space-y-4"
+            >
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
                     <Shield className="w-4 h-4" />
                   </div>
-                  <h3 className="font-bold text-base">Tắt Xác Thực 2FA</h3>
+                  <h3 id="modal-disable-2fa-title" className="font-bold text-base">Tắt Xác Thực 2FA</h3>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setIsDisable2FAModalOpen(false)}
-                  className="p-1 text-slate-400 hover:text-slate-600"
+                  aria-label="Đóng"
+                  className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg focus-ring"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -454,7 +493,7 @@ export const SettingsPage: React.FC = () => {
                     value={disablePassword}
                     onChange={(e) => setDisablePassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-mono text-sm"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 transition-all"
                   />
                 </div>
 

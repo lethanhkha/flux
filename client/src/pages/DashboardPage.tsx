@@ -216,7 +216,8 @@ export const DashboardPage: React.FC = () => {
                         type="checkbox"
                         checked={task.completed}
                         onChange={() => {}}
-                        className="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand checkbox-pop cursor-pointer"
+                        aria-label={`Đánh dấu hoàn thành: ${task.title}`}
+                        className="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand checkbox-pop cursor-pointer focus-ring"
                       />
                       <span
                         className={`flex-1 line-clamp-1 transition-all ${
