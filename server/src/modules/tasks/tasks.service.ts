@@ -1,12 +1,21 @@
 import { prisma } from '../../config/prisma';
 import { AppError } from '../../middlewares/error.middleware';
-import { CreateTaskInput, UpdateTaskInput, TaskFilterInput } from './tasks.schema';
+import { cacheService } from '../../services/cache.service';
+import {
+  CreateTaskInput,
+  UpdateTaskInput,
+  TaskFilterInput,
+  RenameTaskTagInput,
+  DeleteTaskTagInput,
+  UpdateTaskTagColorInput,
+} from './tasks.schema';
+import { getDefaultTagColor } from '../../utils/tagColors';
 
 export class TasksService {
   /**
-   * 1. Get tasks with intelligent filtering
+   * 1. Get tasks with intelligent filtering & pagination (T2.1)
    */
-  async getTasks(userId: string, filterInput?: TaskFilterInput) {
+  async getTasks(userId: string, filterInput?: Partial<TaskFilterInput>) {
     const where: any = { userId };
     const now = new Date();
 
@@ -28,6 +37,9 @@ export class TasksService {
     } else if (filterInput?.filter === 'overdue') {
       where.dueDate = { lt: now };
       where.status = { not: 'DONE' };
+    } else if (filterInput?.filter === 'urgent') {
+      where.priority = 'URGENT';
+      where.status = { not: 'DONE' };
     } else if (filterInput?.filter === 'done') {
       where.status = 'DONE';
     }
@@ -38,17 +50,59 @@ export class TasksService {
       };
     }
 
-    return prisma.task.findMany({
-      where,
-      orderBy: [{ status: 'asc' }, { dueDate: 'asc' }, { priority: 'desc' }],
+    const limit = Math.min(Math.max(filterInput?.limit ? Number(filterInput.limit) : 20, 1), 1000);
+    const page = filterInput?.page ? Math.max(Number(filterInput.page), 1) : 1;
+    const skip =
+      filterInput?.offset !== undefined
+        ? Math.max(Number(filterInput.offset), 0)
+        : (page - 1) * limit;
+    const currentPage =
+      filterInput?.offset !== undefined ? Math.floor(skip / limit) + 1 : page;
+
+    const cacheKey = `cache:tasks:${userId}:${filterInput?.filter || 'all'}:${filterInput?.tag || ''}:${currentPage}:${limit}`;
+
+    return cacheService.remember(cacheKey, 60, async () => {
+      const [total, items] = await Promise.all([
+        prisma.task.count({ where }),
+        prisma.task.findMany({
+          where,
+          orderBy: [{ status: 'asc' }, { dueDate: 'asc' }, { priority: 'desc' }],
+          take: limit,
+          skip,
+        }),
+      ]);
+
+      const computedTotalPages = Math.ceil(total / limit) || 1;
+
+      return {
+        items,
+        pagination: {
+          page: currentPage,
+          limit,
+          total,
+          totalPages: computedTotalPages,
+          hasNext: currentPage < computedTotalPages,
+          hasPrev: currentPage > 1,
+        },
+      };
     });
+  }
+
+  /**
+   * Invalidate tasks and dashboard caches for user
+   */
+  async invalidateUserTasksCache(userId: string) {
+    await Promise.all([
+      cacheService.del(`cache:dashboard:${userId}`),
+      cacheService.delPattern(`cache:tasks:${userId}*`),
+    ]);
   }
 
   /**
    * 2. Create task
    */
   async createTask(userId: string, input: CreateTaskInput) {
-    return prisma.task.create({
+    const task = await prisma.task.create({
       data: {
         userId,
         title: input.title,
@@ -61,6 +115,9 @@ export class TasksService {
         tags: input.tags || [],
       },
     });
+
+    await this.invalidateUserTasksCache(userId);
+    return task;
   }
 
   /**
@@ -86,10 +143,13 @@ export class TasksService {
       data.completedAt = null;
     }
 
-    return prisma.task.update({
+    const updated = await prisma.task.update({
       where: { id: taskId },
       data,
     });
+
+    await this.invalidateUserTasksCache(userId);
+    return updated;
   }
 
   /**
@@ -143,6 +203,8 @@ export class TasksService {
       });
     }
 
+    await this.invalidateUserTasksCache(userId);
+
     return {
       task: updatedTask,
       nextRecurringTask,
@@ -162,6 +224,7 @@ export class TasksService {
     }
 
     await prisma.task.delete({ where: { id: taskId } });
+    await this.invalidateUserTasksCache(userId);
     return { message: 'Đã xóa công việc thành công.' };
   }
 
@@ -170,9 +233,6 @@ export class TasksService {
    * Priority: Overdue -> Today -> High Priority
    */
   async getTopPriorityTasks(userId: string, limit = 5) {
-    const now = new Date();
-    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-
     return prisma.task.findMany({
       where: {
         userId,
@@ -184,6 +244,172 @@ export class TasksService {
       ],
       take: limit,
     });
+  }
+
+  /**
+   * 7. Get all unique task tags with task count and color
+   */
+  async getTags(userId: string) {
+    const [tasks, tagRecords] = await Promise.all([
+      prisma.task.findMany({
+        where: { userId },
+        select: { tags: true },
+      }),
+      prisma.tag.findMany({
+        where: { userId, type: 'TASK' },
+      }),
+    ]);
+
+    const colorMap = new Map<string, string>();
+    for (const record of tagRecords) {
+      colorMap.set(record.name.toLowerCase().trim(), record.color);
+    }
+
+    const tagCounts: Record<string, number> = {};
+    for (const t of tasks) {
+      const tags = (t.tags as string[]) || [];
+      for (const tag of tags) {
+        if (!tag) continue;
+        const normalized = tag.toLowerCase().trim();
+        tagCounts[normalized] = (tagCounts[normalized] || 0) + 1;
+      }
+    }
+
+    return Object.entries(tagCounts)
+      .map(([name, count]) => ({
+        name,
+        count,
+        color: colorMap.get(name) || getDefaultTagColor(name),
+      }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  }
+
+  /**
+   * 8. Update task tag color
+   */
+  async updateTagColor(userId: string, input: UpdateTaskTagColorInput) {
+    const cleanTag = input.tag.toLowerCase().trim().replace(/^#/, '');
+    const tagRecord = await prisma.tag.upsert({
+      where: {
+        userId_type_name: {
+          userId,
+          type: 'TASK',
+          name: cleanTag,
+        },
+      },
+      create: {
+        userId,
+        type: 'TASK',
+        name: cleanTag,
+        color: input.color,
+      },
+      update: {
+        color: input.color,
+      },
+    });
+
+    await this.invalidateUserTasksCache(userId);
+    return tagRecord;
+  }
+
+  /**
+   * 9. Rename task tag across all tasks of user
+   */
+  async renameTag(userId: string, input: RenameTaskTagInput) {
+    const { oldTag, newTag } = input;
+    const cleanOld = oldTag.toLowerCase().trim();
+    const cleanNew = newTag.toLowerCase().trim().replace(/^#/, '');
+
+    const tasks = await prisma.task.findMany({
+      where: { userId },
+      select: { id: true, tags: true },
+    });
+
+    const tasksToUpdate = tasks.filter((t) => {
+      const tags = (t.tags as string[]) || [];
+      return tags.some((tag) => tag.toLowerCase().trim() === cleanOld);
+    });
+
+    if (tasksToUpdate.length > 0) {
+      const updates = tasksToUpdate.map((t) => {
+        const tags = (t.tags as string[]) || [];
+        const updatedTags = Array.from(
+          new Set(
+            tags.map((tag) => (tag.toLowerCase().trim() === cleanOld ? cleanNew : tag))
+          )
+        );
+        return prisma.task.update({
+          where: { id: t.id },
+          data: { tags: updatedTags },
+        });
+      });
+      await prisma.$transaction(updates);
+    }
+
+    // Sync in Tag table
+    const existingTag = await prisma.tag.findUnique({
+      where: {
+        userId_type_name: { userId, type: 'TASK', name: cleanOld },
+      },
+    });
+
+    if (existingTag) {
+      await prisma.tag.delete({ where: { id: existingTag.id } });
+      await prisma.tag.upsert({
+        where: {
+          userId_type_name: { userId, type: 'TASK', name: cleanNew },
+        },
+        create: {
+          userId,
+          type: 'TASK',
+          name: cleanNew,
+          color: existingTag.color,
+        },
+        update: {
+          color: existingTag.color,
+        },
+      });
+    }
+
+    await this.invalidateUserTasksCache(userId);
+    return { updatedCount: tasksToUpdate.length, oldTag: cleanOld, newTag: cleanNew };
+  }
+
+  /**
+   * 10. Delete task tag across all tasks of user
+   */
+  async deleteTag(userId: string, input: DeleteTaskTagInput) {
+    const { tag } = input;
+    const cleanTag = tag.toLowerCase().trim();
+
+    const tasks = await prisma.task.findMany({
+      where: { userId },
+      select: { id: true, tags: true },
+    });
+
+    const tasksToUpdate = tasks.filter((t) => {
+      const tags = (t.tags as string[]) || [];
+      return tags.some((tg) => tg.toLowerCase().trim() === cleanTag);
+    });
+
+    if (tasksToUpdate.length > 0) {
+      const updates = tasksToUpdate.map((t) => {
+        const tags = (t.tags as string[]) || [];
+        const updatedTags = tags.filter((tg) => tg.toLowerCase().trim() !== cleanTag);
+        return prisma.task.update({
+          where: { id: t.id },
+          data: { tags: updatedTags },
+        });
+      });
+      await prisma.$transaction(updates);
+    }
+
+    await prisma.tag.deleteMany({
+      where: { userId, type: 'TASK', name: cleanTag },
+    });
+
+    await this.invalidateUserTasksCache(userId);
+    return { updatedCount: tasksToUpdate.length, tag: cleanTag };
   }
 }
 

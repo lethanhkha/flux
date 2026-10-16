@@ -20,10 +20,30 @@ export const updateTaskSchema = createTaskSchema.partial();
 export const taskFilterSchema = z.object({
   status: z.enum(['TODO', 'IN_PROGRESS', 'DONE']).optional(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
-  filter: z.enum(['all', 'today', 'overdue', 'done', 'next7days']).default('all'),
+  filter: z.enum(['all', 'today', 'overdue', 'urgent', 'done', 'next7days']).optional().default('all'),
   tag: z.string().optional(),
+  page: z.coerce.number().min(1).optional(),
+  limit: z.coerce.number().min(1).max(1000).optional(),
+  offset: z.coerce.number().min(0).optional(),
+});
+
+export const renameTaskTagSchema = z.object({
+  oldTag: z.string().min(1, 'Thẻ cũ không được để trống').trim(),
+  newTag: z.string().min(1, 'Thẻ mới không được để trống').trim(),
+});
+
+export const deleteTaskTagSchema = z.object({
+  tag: z.string().min(1, 'Thẻ cần xóa không được để trống').trim(),
+});
+
+export const updateTaskTagColorSchema = z.object({
+  tag: z.string().min(1, 'Tên thẻ không được để trống').trim(),
+  color: z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'Mã màu không hợp lệ'),
 });
 
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
 export type TaskFilterInput = z.infer<typeof taskFilterSchema>;
+export type RenameTaskTagInput = z.infer<typeof renameTaskTagSchema>;
+export type DeleteTaskTagInput = z.infer<typeof deleteTaskTagSchema>;
+export type UpdateTaskTagColorInput = z.infer<typeof updateTaskTagColorSchema>;
