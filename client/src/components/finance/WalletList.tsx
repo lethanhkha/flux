@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wallet, Plus } from 'lucide-react';
+import { Wallet, Plus, Star } from 'lucide-react';
 import { WalletItem } from './types';
 import { formatCurrency } from '../../lib/utils';
 
@@ -7,12 +7,14 @@ interface WalletListProps {
   wallets: WalletItem[];
   isLoading?: boolean;
   onOpenAddWallet?: () => void;
+  onSetDefaultWallet?: (walletId: string) => void;
 }
 
 export const WalletList: React.FC<WalletListProps> = ({
   wallets,
   isLoading = false,
   onOpenAddWallet,
+  onSetDefaultWallet,
 }) => {
   return (
     <div className="space-y-3">
@@ -75,18 +77,44 @@ export const WalletList: React.FC<WalletListProps> = ({
                 key={w.id}
                 className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover-lift space-y-3"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <div
-                      className="h-9 w-9 rounded-xl flex items-center justify-center text-white"
+                      className="h-9 w-9 rounded-xl flex items-center justify-center text-white flex-shrink-0"
                       style={{ backgroundColor: w.color }}
                     >
                       <Icon className="w-5 h-5" />
                     </div>
-                    <div>
-                      <div className="font-bold text-xs line-clamp-1">{w.name}</div>
+                    <div className="min-w-0">
+                      <div className="font-bold text-xs line-clamp-1 text-slate-800 dark:text-slate-100" title={w.name}>
+                        {w.name}
+                      </div>
                       <div className="text-[10px] text-slate-500">{w.type}</div>
                     </div>
+                  </div>
+
+                  <div className="flex-shrink-0">
+                    {w.isDefault ? (
+                      <span
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 shadow-2xs"
+                        title="Đây là ví mặc định khi thêm giao dịch"
+                      >
+                        <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                        <span>Mặc định</span>
+                      </span>
+                    ) : (
+                      onSetDefaultWallet && (
+                        <button
+                          type="button"
+                          onClick={() => onSetDefaultWallet(w.id)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-500/10 border border-slate-200 dark:border-slate-800 hover:border-amber-500/25 transition-all cursor-pointer"
+                          title="Đặt ví này làm mặc định khi tạo giao dịch"
+                        >
+                          <Star className="w-3 h-3" />
+                          <span>Đặt mặc định</span>
+                        </button>
+                      )
+                    )}
                   </div>
                 </div>
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800">

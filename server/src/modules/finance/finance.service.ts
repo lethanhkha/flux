@@ -25,12 +25,12 @@ export class FinanceService {
   }
 
   /**
-   * 1. Get all wallets for user
+   * 1. Get all wallets for user (ordered by isDefault desc, then createdAt asc)
    */
   async getWallets(userId: string) {
     return prisma.wallet.findMany({
       where: { userId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
     });
   }
 
@@ -40,16 +40,29 @@ export class FinanceService {
   async createWallet(userId: string, input: CreateWalletInput) {
     const initialDecimal = new Decimal(input.initialBalance);
 
-    const wallet = await prisma.wallet.create({
-      data: {
-        userId,
-        name: input.name,
-        currency: input.currency,
-        initialBalance: initialDecimal.toNumber(),
-        currentBalance: initialDecimal.toNumber(),
-        icon: input.icon,
-        color: input.color,
-      },
+    const wallet = await prisma.$transaction(async (tx) => {
+      const existingWalletsCount = await tx.wallet.count({ where: { userId } });
+      const shouldBeDefault = input.isDefault || existingWalletsCount === 0;
+
+      if (shouldBeDefault) {
+        await tx.wallet.updateMany({
+          where: { userId },
+          data: { isDefault: false },
+        });
+      }
+
+      return tx.wallet.create({
+        data: {
+          userId,
+          name: input.name,
+          currency: input.currency,
+          initialBalance: initialDecimal.toNumber(),
+          currentBalance: initialDecimal.toNumber(),
+          icon: input.icon,
+          color: input.color,
+          isDefault: shouldBeDefault,
+        },
+      });
     });
 
     await this.invalidateUserFinanceCache(userId);
@@ -68,9 +81,46 @@ export class FinanceService {
       throw new AppError('Không tìm thấy ví hoặc bạn không có quyền truy cập.', 404);
     }
 
-    const updated = await prisma.wallet.update({
-      where: { id: walletId },
-      data: input,
+    const updated = await prisma.$transaction(async (tx) => {
+      if (input.isDefault) {
+        await tx.wallet.updateMany({
+          where: { userId },
+          data: { isDefault: false },
+        });
+      }
+
+      return tx.wallet.update({
+        where: { id: walletId },
+        data: input,
+      });
+    });
+
+    await this.invalidateUserFinanceCache(userId);
+    return updated;
+  }
+
+  /**
+   * 3b. Set a wallet as default
+   */
+  async setDefaultWallet(userId: string, walletId: string) {
+    const wallet = await prisma.wallet.findFirst({
+      where: { id: walletId, userId },
+    });
+
+    if (!wallet) {
+      throw new AppError('Không tìm thấy ví hoặc bạn không có quyền truy cập.', 404);
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      await tx.wallet.updateMany({
+        where: { userId },
+        data: { isDefault: false },
+      });
+
+      return tx.wallet.update({
+        where: { id: walletId },
+        data: { isDefault: true },
+      });
     });
 
     await this.invalidateUserFinanceCache(userId);
@@ -94,7 +144,23 @@ export class FinanceService {
       throw new AppError('Ví này đang chứa lịch sử giao dịch. Không thể xóa.', 400);
     }
 
-    await prisma.wallet.delete({ where: { id: walletId } });
+    await prisma.$transaction(async (tx) => {
+      await tx.wallet.delete({ where: { id: walletId } });
+
+      if (wallet.isDefault) {
+        const nextWallet = await tx.wallet.findFirst({
+          where: { userId },
+          orderBy: { createdAt: 'asc' },
+        });
+        if (nextWallet) {
+          await tx.wallet.update({
+            where: { id: nextWallet.id },
+            data: { isDefault: true },
+          });
+        }
+      }
+    });
+
     await this.invalidateUserFinanceCache(userId);
     return { message: 'Đã xóa ví thành công.' };
   }
@@ -548,49 +614,13 @@ export class FinanceService {
   }
 
   /**
-   * 9. Default categories list
-   */
-  getDefaultCategories() {
-    return [
-      { name: 'Ăn uống & Cafe', type: 'EXPENSE', icon: 'Utensils', color: '#F97316' },
-      { name: 'Mua sắm & Tiêu dùng', type: 'EXPENSE', icon: 'ShoppingBag', color: '#EC4899' },
-      { name: 'Di chuyển & Xăng xe', type: 'EXPENSE', icon: 'Car', color: '#3B82F6' },
-      { name: 'Tiền nhà & Hóa đơn', type: 'EXPENSE', icon: 'Home', color: '#EF4444' },
-      { name: 'Giải trí & Du lịch', type: 'EXPENSE', icon: 'Compass', color: '#8B5CF6' },
-      { name: 'Lương & Thưởng', type: 'INCOME', icon: 'Briefcase', color: '#10B981' },
-      { name: 'Lợi nhuận đầu tư', type: 'INCOME', icon: 'TrendingUp', color: '#06B6D4' },
-      { name: 'Kinh doanh & Dự án', type: 'INCOME', icon: 'DollarSign', color: '#6366F1' },
-      { name: 'Khác', type: 'EXPENSE', icon: 'MoreHorizontal', color: '#64748B' },
-    ];
-  }
-
-  /**
-   * 10. Get all categories for user (seeds defaults if user has none)
+   * 9. Get all categories for user
    */
   async getCategories(userId: string) {
-    let categories = await prisma.category.findMany({
+    return prisma.category.findMany({
       where: { userId },
       orderBy: { createdAt: 'asc' },
     });
-
-    if (categories.length === 0) {
-      const defaults = this.getDefaultCategories();
-      await prisma.category.createMany({
-        data: defaults.map((d) => ({
-          userId,
-          name: d.name,
-          type: d.type,
-          icon: d.icon,
-          color: d.color,
-        })),
-      });
-      categories = await prisma.category.findMany({
-        where: { userId },
-        orderBy: { createdAt: 'asc' },
-      });
-    }
-
-    return categories;
   }
 
   /**

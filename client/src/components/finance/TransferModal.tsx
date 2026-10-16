@@ -31,11 +31,13 @@ export const TransferModal: React.FC<TransferModalProps> = ({
 
   useEffect(() => {
     if (isOpen && wallets.length > 0) {
+      const defaultWallet = wallets.find((w) => w.isDefault) || wallets[0];
       if (!sourceWalletId || !wallets.some((w) => w.id === sourceWalletId)) {
-        setSourceWalletId(wallets[0].id);
+        setSourceWalletId(defaultWallet.id);
       }
       if (!destWalletId || !wallets.some((w) => w.id === destWalletId)) {
-        setDestWalletId(wallets.length > 1 ? wallets[1].id : wallets[0].id);
+        const otherWallet = wallets.find((w) => w.id !== defaultWallet.id) || wallets[0];
+        setDestWalletId(otherWallet.id);
       }
     }
   }, [isOpen, wallets]);
@@ -118,7 +120,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
             >
               {wallets.map((w) => (
                 <option key={w.id} value={w.id}>
-                  {w.name} ({formatCurrency(w.balance)})
+                  {w.name} {w.isDefault ? ' (Mặc định)' : ''} ({formatCurrency(w.balance)})
                 </option>
               ))}
             </select>
@@ -133,7 +135,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
             >
               {wallets.map((w) => (
                 <option key={w.id} value={w.id}>
-                  {w.name} ({formatCurrency(w.balance)})
+                  {w.name} {w.isDefault ? ' (Mặc định)' : ''} ({formatCurrency(w.balance)})
                 </option>
               ))}
             </select>

@@ -90,6 +90,7 @@ export const FinancePage: React.FC = () => {
             type: w.currency === 'VND' ? 'Tiền mặt / Số dư' : w.currency,
             color: w.color || '#6366F1',
             icon: Wallet,
+            isDefault: Boolean(w.isDefault),
           }))
         );
       }
@@ -237,7 +238,35 @@ export const FinancePage: React.FC = () => {
   };
 
   const handleWalletCreated = (newWallet: WalletItem) => {
-    setWallets((prev) => [...prev, newWallet]);
+    setWallets((prev) => {
+      if (newWallet.isDefault) {
+        return [newWallet, ...prev.map((w) => ({ ...w, isDefault: false }))];
+      }
+      return [...prev, newWallet];
+    });
+  };
+
+  const handleSetDefaultWallet = async (walletId: string) => {
+    const target = wallets.find((w) => w.id === walletId);
+    if (!target) return;
+
+    // Optimistic UI update: target becomes default and is placed at the front
+    setWallets((prev) => {
+      const updated = prev.map((w) => ({
+        ...w,
+        isDefault: w.id === walletId,
+      }));
+      return [...updated].sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0));
+    });
+
+    try {
+      await apiClient.patch(`/finance/wallets/${walletId}/default`);
+      toast.success(`Đã đặt "${target.name}" làm ví mặc định!`);
+      window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể đặt ví mặc định.'));
+      fetchFinanceData(txPagination.page);
+    }
   };
 
   const handleTransactionCreated = (
@@ -371,6 +400,7 @@ export const FinancePage: React.FC = () => {
           wallets={wallets}
           isLoading={isLoading}
           onOpenAddWallet={() => setIsAddWalletModalOpen(true)}
+          onSetDefaultWallet={handleSetDefaultWallet}
         />
 
         {/* Transactions Section */}

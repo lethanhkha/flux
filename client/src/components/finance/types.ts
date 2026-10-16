@@ -5,6 +5,7 @@ export interface WalletItem {
   type: string;
   color: string;
   icon: any;
+  isDefault?: boolean;
 }
 
 export interface TransactionItem {

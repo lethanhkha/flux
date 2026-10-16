@@ -141,6 +141,7 @@ export class AuthService {
           currentBalance: 0,
           icon: 'wallet',
           color: '#6366F1',
+          isDefault: true,
         },
       });
 
@@ -770,6 +771,7 @@ export class AuthService {
             currentBalance: 0,
             icon: 'wallet',
             color: '#6366F1',
+            isDefault: true,
           },
         });
 

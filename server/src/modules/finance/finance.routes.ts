@@ -13,6 +13,7 @@ router.get('/overview', financeController.getFinanceOverview);
 // Wallet endpoints
 router.get('/wallets', financeController.getWallets);
 router.post('/wallets', financeController.createWallet);
+router.patch('/wallets/:id/default', financeController.setDefaultWallet);
 router.patch('/wallets/:id', financeController.updateWallet);
 router.delete('/wallets/:id', financeController.deleteWallet);
 

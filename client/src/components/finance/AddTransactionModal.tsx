@@ -30,18 +30,21 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   const [txType, setTxType] = useState<'EXPENSE' | 'INCOME'>('EXPENSE');
   const [txWalletId, setTxWalletId] = useState('');
   const [txAmount, setTxAmount] = useState('100000');
-  const [txCategory, setTxCategory] = useState('Ăn uống & Cafe');
+  const [txCategory, setTxCategory] = useState('');
   const [txNote, setTxNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       if (wallets.length > 0 && (!txWalletId || !wallets.some((w) => w.id === txWalletId))) {
-        setTxWalletId(wallets[0].id);
+        const defaultWallet = wallets.find((w) => w.isDefault) || wallets[0];
+        setTxWalletId(defaultWallet.id);
       }
-      const validCats = categories.filter((c) => c.type === txType || c.type === 'EXPENSE');
+      const validCats = categories.filter((c) => c.type === txType);
       if (validCats.length > 0 && !validCats.some((c) => c.name === txCategory)) {
         setTxCategory(validCats[0].name);
+      } else if (validCats.length === 0) {
+        setTxCategory('');
       }
     }
   }, [isOpen, wallets, categories, txType]);
@@ -68,10 +71,15 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
       return;
     }
 
-    const selectedWalletId = txWalletId || wallets[0]?.id;
+    const selectedWalletId = txWalletId || (wallets.find((w) => w.isDefault)?.id || wallets[0]?.id);
     const targetWallet = wallets.find((w) => w.id === selectedWalletId);
     if (!targetWallet) {
       toast.error('Vui lòng chọn ví thực hiện giao dịch.');
+      return;
+    }
+
+    if (!txCategory.trim()) {
+      toast.error('Vui lòng chọn hoặc tạo danh mục trước khi ghi nhận giao dịch.');
       return;
     }
 
@@ -126,7 +134,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   };
 
   const filteredCategories = categories.filter(
-    (c) => c.type === txType || c.type === 'EXPENSE'
+    (c) => c.type === txType
   );
 
   return (
@@ -186,13 +194,13 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               Chọn Ví
             </label>
             <select
-              value={txWalletId || (wallets[0]?.id || '')}
+              value={txWalletId || (wallets.find((w) => w.isDefault)?.id || wallets[0]?.id || '')}
               onChange={(e) => setTxWalletId(e.target.value)}
               className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
             >
               {wallets.map((w) => (
                 <option key={w.id} value={w.id}>
-                  {w.name} ({formatCurrency(w.balance)})
+                  {w.name} {w.isDefault ? ' (Mặc định)' : ''} ({formatCurrency(w.balance)})
                 </option>
               ))}
             </select>
@@ -224,17 +232,30 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 + Quản lý danh mục
               </button>
             </div>
-            <select
-              value={txCategory}
-              onChange={(e) => setTxCategory(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
-            >
-              {filteredCategories.map((c) => (
-                <option key={c.id} value={c.name}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+            {filteredCategories.length === 0 ? (
+              <div className="p-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs flex items-center justify-between">
+                <span className="text-slate-500">Chưa có danh mục cho khoản này.</span>
+                <button
+                  type="button"
+                  onClick={onOpenCategoryModal}
+                  className="font-bold text-brand hover:underline cursor-pointer"
+                >
+                  + Tạo danh mục ngay
+                </button>
+              </div>
+            ) : (
+              <select
+                value={txCategory}
+                onChange={(e) => setTxCategory(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
+              >
+                {filteredCategories.map((c) => (
+                  <option key={c.id} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           <div>

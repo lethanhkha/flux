@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Wallet, X } from 'lucide-react';
+import { Wallet, X, Star } from 'lucide-react';
 import { WalletItem } from './types';
 import { apiClient } from '../../api/client';
 import { toast } from 'sonner';
@@ -30,6 +30,7 @@ export const AddWalletModal: React.FC<AddWalletModalProps> = ({
   const [newWalletType, setNewWalletType] = useState('Ví điện tử');
   const [newWalletBalance, setNewWalletBalance] = useState('0');
   const [newWalletColor, setNewWalletColor] = useState('#6366F1');
+  const [newWalletIsDefault, setNewWalletIsDefault] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Keyboard accessibility: Close on Escape key
@@ -67,6 +68,7 @@ export const AddWalletModal: React.FC<AddWalletModalProps> = ({
         initialBalance: initBal,
         color: newWalletColor,
         icon: 'wallet',
+        isDefault: newWalletIsDefault,
       });
 
       const created = res.data.data;
@@ -77,12 +79,14 @@ export const AddWalletModal: React.FC<AddWalletModalProps> = ({
         type: newWalletType,
         color: created.color || newWalletColor,
         icon: Wallet,
+        isDefault: created.isDefault ?? newWalletIsDefault,
       };
 
       onWalletCreated(newWallet);
       onClose();
       setNewWalletName('');
       setNewWalletBalance('0');
+      setNewWalletIsDefault(false);
       toast.success(`Đã tạo ví "${created.name}" thành công!`);
       window.dispatchEvent(new CustomEvent('flux:refresh-data'));
     } catch {
@@ -94,6 +98,7 @@ export const AddWalletModal: React.FC<AddWalletModalProps> = ({
         type: newWalletType,
         color: newWalletColor,
         icon: Wallet,
+        isDefault: newWalletIsDefault,
       };
       onWalletCreated(fallbackWallet);
       onClose();
@@ -195,6 +200,21 @@ export const AddWalletModal: React.FC<AddWalletModalProps> = ({
                 />
               ))}
             </div>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+            <label className="flex items-center gap-2 cursor-pointer font-semibold text-slate-700 dark:text-slate-300 select-none">
+              <input
+                type="checkbox"
+                checked={newWalletIsDefault}
+                onChange={(e) => setNewWalletIsDefault(e.target.checked)}
+                className="w-4 h-4 rounded text-brand focus:ring-brand cursor-pointer"
+              />
+              <span className="flex items-center gap-1.5 text-xs">
+                <Star className="w-3.5 h-3.5 text-amber-500" />
+                <span>Đặt làm ví mặc định khi tạo giao dịch</span>
+              </span>
+            </label>
           </div>
 
           <button

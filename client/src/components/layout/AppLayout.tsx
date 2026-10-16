@@ -55,12 +55,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   };
 
   // Available wallets for quick transaction
-  const [wallets, setWallets] = useState<Array<{ id: string; name: string; currency: string; currentBalance: number }>>([]);
+  const [wallets, setWallets] = useState<Array<{ id: string; name: string; currency: string; currentBalance: number; isDefault?: boolean }>>([]);
 
   // Quick Action form fields
   const [txType, setTxType] = useState<'EXPENSE' | 'INCOME'>('EXPENSE');
   const [txAmount, setTxAmount] = useState('');
-  const [txCategory, setTxCategory] = useState('Ăn uống & Cafe');
+  const [txCategory, setTxCategory] = useState('');
   const [txNote, setTxNote] = useState('');
   const [txWalletId, setTxWalletId] = useState('');
 
@@ -80,8 +80,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         .then((res) => {
           if (res.data.data?.length > 0) {
             setWallets(res.data.data);
-            if (!txWalletId) {
-              setTxWalletId(res.data.data[0].id);
+            if (!txWalletId || !res.data.data.some((w: any) => w.id === txWalletId)) {
+              const defaultWallet = res.data.data.find((w: any) => w.isDefault) || res.data.data[0];
+              setTxWalletId(defaultWallet.id);
             }
           }
         })
@@ -345,7 +346,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     return;
                   }
 
-                  const activeWalletId = txWalletId || wallets[0]?.id;
+                  const defaultWallet = wallets.find((w) => w.isDefault) || wallets[0];
+                  const activeWalletId = txWalletId || defaultWallet?.id;
                   if (!activeWalletId) {
                     toast.error('Chưa có thông tin ví để ghi nhận giao dịch.');
                     return;
@@ -364,6 +366,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     setIsQuickActionOpen(false);
                     setTxAmount('');
                     setTxNote('');
+                    setTxCategory('');
                     window.dispatchEvent(new CustomEvent('flux:refresh-data'));
                   } catch (err: any) {
                     toast.error(getErrorMessage(err, 'Không thể tạo giao dịch.'));
@@ -411,7 +414,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     >
                       {wallets.map((w) => (
                         <option key={w.id} value={w.id}>
-                          {w.name} ({new Intl.NumberFormat('vi-VN').format(Number(w.currentBalance))} {w.currency})
+                          {w.name} {w.isDefault ? ' (Mặc định)' : ''} ({new Intl.NumberFormat('vi-VN').format(Number(w.currentBalance))} {w.currency})
                         </option>
                       ))}
                     </select>

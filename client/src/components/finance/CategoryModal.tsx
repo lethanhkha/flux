@@ -244,7 +244,12 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
           </div>
 
           <div className="max-h-64 overflow-y-auto space-y-2 pr-1">
-            {categories.map((cat) => {
+            {categories.length === 0 ? (
+              <div className="py-6 text-center text-slate-400 text-xs border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+                Chưa có danh mục nào. Hãy tạo danh mục đầu tiên ở biểu mẫu phía trên!
+              </div>
+            ) : (
+              categories.map((cat) => {
               const isEditing = editingCategoryId === cat.id;
               const txCount = transactions.filter((tx) => tx.category === cat.name).length;
 
@@ -338,7 +343,8 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                   )}
                 </div>
               );
-            })}
+            })
+          )}
           </div>
         </div>
 

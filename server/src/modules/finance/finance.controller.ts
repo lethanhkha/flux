@@ -44,6 +44,15 @@ export class FinanceController {
     }
   }
 
+  async setDefaultWallet(req: Request, res: Response, next: NextFunction) {
+    try {
+      const wallet = await financeService.setDefaultWallet(req.user!.userId, req.params.id);
+      res.status(200).json({ status: 'success', data: wallet });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async deleteWallet(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await financeService.deleteWallet(req.user!.userId, req.params.id);

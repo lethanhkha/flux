@@ -6,12 +6,14 @@ export const createWalletSchema = z.object({
   initialBalance: z.number().default(0),
   icon: z.string().default('wallet'),
   color: z.string().default('#6366F1'),
+  isDefault: z.boolean().optional().default(false),
 });
 
 export const updateWalletSchema = z.object({
   name: z.string().min(1).max(100).trim().optional(),
   color: z.string().optional(),
   icon: z.string().optional(),
+  isDefault: z.boolean().optional(),
 });
 
 export const createTransactionSchema = z

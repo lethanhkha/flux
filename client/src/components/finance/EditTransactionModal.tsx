@@ -204,7 +204,7 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
                 >
                   {wallets.map((w) => (
                     <option key={w.id} value={w.id}>
-                      {w.name}
+                      {w.name} {w.isDefault ? ' (Mặc định)' : ''}
                     </option>
                   ))}
                 </select>
@@ -220,7 +220,7 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
                 >
                   {wallets.map((w) => (
                     <option key={w.id} value={w.id}>
-                      {w.name}
+                      {w.name} {w.isDefault ? ' (Mặc định)' : ''}
                     </option>
                   ))}
                 </select>
@@ -238,7 +238,7 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
               >
                 {wallets.map((w) => (
                   <option key={w.id} value={w.id}>
-                    {w.name} ({formatCurrency(w.balance)})
+                    {w.name} {w.isDefault ? ' (Mặc định)' : ''} ({formatCurrency(w.balance)})
                   </option>
                 ))}
               </select>

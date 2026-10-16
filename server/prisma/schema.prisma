@@ -40,6 +40,7 @@ model Wallet {
   currentBalance Decimal       @default(0.00) @db.Decimal(15, 2)
   icon           String        @default("wallet") @db.VarChar(50)
   color          String        @default("#6366F1") @db.VarChar(20)
+  isDefault      Boolean       @default(false)
   createdAt      DateTime      @default(now()) @db.Timestamptz(6)
   updatedAt      DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
   transfersIn    Transaction[] @relation("DestinationWallet")
