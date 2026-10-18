@@ -190,13 +190,15 @@ export const DashboardPage: React.FC = () => {
                   <InfoTooltip content="Tổng các khoản chi thực tế phát sinh trong tháng hiện tại (từ ngày 01 đến cuối tháng)." />
                 </div>
               </div>
-              <Link
-                to="/finance"
-                className="text-xs text-brand font-semibold flex items-center gap-1 pt-1 hover:underline"
-              >
-                <span>Quản lý dòng tiền chi tiết</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
+              <Tooltip content="Chuyển đến trang Quản lý tài chính, xem số dư các ví và lịch sử giao dịch">
+                <Link
+                  to="/finance"
+                  className="text-xs text-brand font-semibold flex items-center gap-1 pt-1 hover:underline"
+                >
+                  <span>Quản lý dòng tiền chi tiết</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </Tooltip>
             </div>
           </div>
 
@@ -302,9 +304,11 @@ export const DashboardPage: React.FC = () => {
                   return 'Theo sát tiến độ công việc';
                 })()}
               </span>
-              <Link to="/tasks" className="text-brand font-semibold hover:underline">
-                Xem tất cả
-              </Link>
+              <Tooltip content="Chuyển đến trang Quản lý công việc để xem toàn bộ danh sách hoặc bảng Kanban">
+                <Link to="/tasks" className="text-brand font-semibold hover:underline">
+                  Xem tất cả
+                </Link>
+              </Tooltip>
             </div>
           </div>
 
@@ -315,6 +319,10 @@ export const DashboardPage: React.FC = () => {
                 <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-xs font-semibold">
                   <FileText className="h-4 w-4 text-brand" />
                   <span>Ghi chú đã ghim</span>
+                  <InfoTooltip
+                    content="Những ghi chú quan trọng được bạn ghim lại từ Kho Tri Thức để theo dõi nhanh trên Bảng điều khiển"
+                    ariaLabel="Thông tin ghi chú đã ghim"
+                  />
                 </div>
                 <span className="text-xs text-slate-500 font-medium">Markdown</span>
               </div>
@@ -323,26 +331,28 @@ export const DashboardPage: React.FC = () => {
                 <div className="mt-4 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-800 text-center space-y-1.5">
                   <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Chưa có ghi chú nào được ghim 📌</p>
                   <p className="text-[11px] text-slate-400">Ghim các ghi chú quan trọng để xem nhanh tại đây.</p>
-                  <Link to="/notes" className="inline-block pt-1 text-xs font-bold text-brand hover:underline">
-                    + Mở kho tri thức
-                  </Link>
+                  <Tooltip content="Chuyển đến kho tri thức để tạo hoặc ghim ghi chú">
+                    <Link to="/notes" className="inline-block pt-1 text-xs font-bold text-brand hover:underline">
+                      + Mở kho tri thức
+                    </Link>
+                  </Tooltip>
                 </div>
               ) : (
                 <div className="mt-4 space-y-2.5">
                   {pinnedNotes.map((note) => (
-                    <Link
-                      key={note.id}
-                      to={`/notes?id=${note.id}`}
-                      className="block p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 hover:border-brand/40 hover:bg-slate-100/70 dark:hover:bg-slate-800/90 transition-all cursor-pointer group"
-                      title="Bấm để xem chi tiết ghi chú này"
-                    >
-                      <div className="font-bold text-xs line-clamp-1 text-slate-800 dark:text-slate-200 group-hover:text-brand transition-colors">
-                        {note.title}
-                      </div>
-                      <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">
-                        {note.snippet}
-                      </p>
-                    </Link>
+                    <Tooltip key={note.id} content="Mở và xem toàn văn nội dung ghi chú này trong kho tri thức">
+                      <Link
+                        to={`/notes?id=${note.id}`}
+                        className="block p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 hover:border-brand/40 hover:bg-slate-100/70 dark:hover:bg-slate-800/90 transition-all cursor-pointer group"
+                      >
+                        <div className="font-bold text-xs line-clamp-1 text-slate-800 dark:text-slate-200 group-hover:text-brand transition-colors">
+                          {note.title}
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">
+                          {note.snippet}
+                        </p>
+                      </Link>
+                    </Tooltip>
                   ))}
                 </div>
               )}
@@ -350,9 +360,11 @@ export const DashboardPage: React.FC = () => {
 
             <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
               <span>{pinnedNotes.length} ghi chú ghim</span>
-              <Link to="/notes" className="text-brand font-semibold hover:underline">
-                + Mở kho tri thức
-              </Link>
+              <Tooltip content="Chuyển đến trang Quản lý ghi chú & tài liệu">
+                <Link to="/notes" className="text-brand font-semibold hover:underline">
+                  + Mở kho tri thức
+                </Link>
+              </Tooltip>
             </div>
           </div>
         </div>

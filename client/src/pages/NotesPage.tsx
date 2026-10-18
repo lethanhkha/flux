@@ -25,6 +25,7 @@ import { TagSelect } from '../components/notes/TagSelect';
 import { MarkdownEditor } from '../components/notes/MarkdownEditor';
 import { MarkdownViewer } from '../components/notes/MarkdownViewer';
 import { EditNoteModal } from '../components/notes/EditNoteModal';
+import { Tooltip, InfoTooltip } from '../components/common/Tooltip';
 import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
 import { toast } from 'sonner';
 
@@ -388,9 +389,15 @@ export const NotesPage: React.FC = () => {
               <Sparkles className="w-3.5 h-3.5" />
               <span>Ý Tưởng & Tư Duy Không Giới Hạn</span>
             </div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-              Trạm Ý Tưởng & Kho Tri Thức
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                Trạm Ý Tưởng & Kho Tri Thức
+              </h1>
+              <InfoTooltip
+                content="Kho lưu trữ tài liệu cá nhân hỗ trợ định dạng Markdown, gắn thẻ nhãn màu sắc và ghim nhanh lên bảng điều khiển"
+                ariaLabel="Thông tin kho tri thức"
+              />
+            </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Hội tụ tư duy sáng tạo, tài liệu markdown cá nhân và tổ chức nhãn thông minh
             </p>
@@ -398,44 +405,49 @@ export const NotesPage: React.FC = () => {
 
           <div className="flex items-center gap-3">
             <div className="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer ${
-                  viewMode === 'grid' ? 'bg-white dark:bg-slate-900 text-brand shadow-sm font-bold' : 'text-slate-500'
-                }`}
-                title="Dạng lưới thẻ"
-              >
-                <LayoutGrid className="w-4 h-4" />
-                <span>Lưới</span>
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer ${
-                  viewMode === 'list' ? 'bg-white dark:bg-slate-900 text-brand shadow-sm font-bold' : 'text-slate-500'
-                }`}
-                title="Dạng danh sách"
-              >
-                <List className="w-4 h-4" />
-                <span>Danh Sách</span>
-              </button>
+              <Tooltip content="Chế độ hiển thị dạng lưới thẻ trực quan">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer ${
+                    viewMode === 'grid' ? 'bg-white dark:bg-slate-900 text-brand shadow-sm font-bold' : 'text-slate-500'
+                  }`}
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                  <span>Lưới</span>
+                </button>
+              </Tooltip>
+              <Tooltip content="Chế độ hiển thị danh sách thu gọn">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer ${
+                    viewMode === 'list' ? 'bg-white dark:bg-slate-900 text-brand shadow-sm font-bold' : 'text-slate-500'
+                  }`}
+                >
+                  <List className="w-4 h-4" />
+                  <span>Danh Sách</span>
+                </button>
+              </Tooltip>
             </div>
 
-            <button
-              onClick={() => setIsTagManagerOpen(true)}
-              className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
-              title="Quản lý thẻ phân loại"
-            >
-              <Tag className="w-3.5 h-3.5 text-brand" />
-              <span>Quản Lý Thẻ</span>
-            </button>
+            <Tooltip content="Quản lý danh sách thẻ, đổi tên hoặc tùy chỉnh màu sắc thẻ ghi chú">
+              <button
+                onClick={() => setIsTagManagerOpen(true)}
+                className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Tag className="w-3.5 h-3.5 text-brand" />
+                <span>Quản Lý Thẻ</span>
+              </button>
+            </Tooltip>
 
-            <button
-              onClick={() => setIsAddModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/20 transition-all flex items-center gap-1.5 cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Ghi Chú Mới</span>
-            </button>
+            <Tooltip content="Tạo tài liệu ghi chú mới với trình soạn thảo Markdown đa năng">
+              <button
+                onClick={() => setIsAddModalOpen(true)}
+                className="px-4 py-2 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/20 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Ghi Chú Mới</span>
+              </button>
+            </Tooltip>
           </div>
         </div>
 
@@ -571,36 +583,39 @@ export const NotesPage: React.FC = () => {
                         {note.title}
                       </h3>
                       <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={(e) => togglePin(note.id, e)}
-                          aria-label={note.isPinned ? `Bỏ ghim ghi chú: ${note.title}` : `Ghim ghi chú: ${note.title}`}
-                          aria-pressed={note.isPinned}
-                          className={`p-1.5 rounded-lg transition-colors cursor-pointer focus-ring ${
-                            note.isPinned ? 'text-brand bg-brand/10' : 'text-slate-300 hover:text-slate-500'
-                          }`}
-                          title={note.isPinned ? 'Bỏ ghim' : 'Ghim ghi chú'}
-                        >
-                          <Pin className="w-3.5 h-3.5 fill-current" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => handleOpenEditNote(note, e)}
-                          aria-label={`Chỉnh sửa ghi chú: ${note.title}`}
-                          className="p-1.5 rounded-lg text-slate-300 hover:text-brand hover:bg-brand/10 transition-colors cursor-pointer focus-ring"
-                          title="Chỉnh sửa ghi chú"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => handleDeleteNote(note.id, e)}
-                          aria-label={`Xóa ghi chú: ${note.title}`}
-                          className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer focus-ring"
-                          title="Xóa ghi chú"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        <Tooltip content={note.isPinned ? 'Bỏ ghim khỏi đầu danh sách' : 'Ghim ghi chú lên đầu trang và bảng điều khiển'}>
+                          <button
+                            type="button"
+                            onClick={(e) => togglePin(note.id, e)}
+                            aria-label={note.isPinned ? `Bỏ ghim ghi chú: ${note.title}` : `Ghim ghi chú: ${note.title}`}
+                            aria-pressed={note.isPinned}
+                            className={`p-1.5 rounded-lg transition-colors cursor-pointer focus-ring ${
+                              note.isPinned ? 'text-brand bg-brand/10' : 'text-slate-300 hover:text-slate-500'
+                            }`}
+                          >
+                            <Pin className="w-3.5 h-3.5 fill-current" />
+                          </button>
+                        </Tooltip>
+                        <Tooltip content="Chỉnh sửa nội dung ghi chú">
+                          <button
+                            type="button"
+                            onClick={(e) => handleOpenEditNote(note, e)}
+                            aria-label={`Chỉnh sửa ghi chú: ${note.title}`}
+                            className="p-1.5 rounded-lg text-slate-300 hover:text-brand hover:bg-brand/10 transition-colors cursor-pointer focus-ring"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                        </Tooltip>
+                        <Tooltip content="Xóa ghi chú này">
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteNote(note.id, e)}
+                            aria-label={`Xóa ghi chú: ${note.title}`}
+                            className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer focus-ring"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </Tooltip>
                       </div>
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed">
@@ -718,34 +733,37 @@ export const NotesPage: React.FC = () => {
                       })}
                     </div>
                     <span>{note.updatedAt}</span>
-                    <button
-                      type="button"
-                      onClick={(e) => togglePin(note.id, e)}
-                      aria-label={note.isPinned ? `Bỏ ghim ghi chú: ${note.title}` : `Ghim ghi chú: ${note.title}`}
-                      aria-pressed={note.isPinned}
-                      className={`p-1.5 rounded-lg transition-colors cursor-pointer focus-ring ${note.isPinned ? 'text-brand' : 'text-slate-300'}`}
-                      title="Ghim"
-                    >
-                      <Pin className="w-3.5 h-3.5 fill-current" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => handleOpenEditNote(note, e)}
-                      aria-label={`Chỉnh sửa ghi chú: ${note.title}`}
-                      className="p-1.5 text-slate-300 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors cursor-pointer focus-ring"
-                      title="Chỉnh sửa ghi chú"
-                    >
-                      <Edit3 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => handleDeleteNote(note.id, e)}
-                      aria-label={`Xóa ghi chú: ${note.title}`}
-                      className="p-1.5 text-slate-300 hover:text-rose-500 rounded-lg transition-colors cursor-pointer focus-ring"
-                      title="Xóa"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <Tooltip content={note.isPinned ? 'Bỏ ghim khỏi đầu danh sách' : 'Ghim ghi chú lên đầu trang và bảng điều khiển'}>
+                      <button
+                        type="button"
+                        onClick={(e) => togglePin(note.id, e)}
+                        aria-label={note.isPinned ? `Bỏ ghim ghi chú: ${note.title}` : `Ghim ghi chú: ${note.title}`}
+                        aria-pressed={note.isPinned}
+                        className={`p-1.5 rounded-lg transition-colors cursor-pointer focus-ring ${note.isPinned ? 'text-brand' : 'text-slate-300'}`}
+                      >
+                        <Pin className="w-3.5 h-3.5 fill-current" />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="Chỉnh sửa nội dung ghi chú">
+                      <button
+                        type="button"
+                        onClick={(e) => handleOpenEditNote(note, e)}
+                        aria-label={`Chỉnh sửa ghi chú: ${note.title}`}
+                        className="p-1.5 text-slate-300 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors cursor-pointer focus-ring"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="Xóa ghi chú này">
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteNote(note.id, e)}
+                        aria-label={`Xóa ghi chú: ${note.title}`}
+                        className="p-1.5 text-slate-300 hover:text-rose-500 rounded-lg transition-colors cursor-pointer focus-ring"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
               ))}

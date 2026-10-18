@@ -4,6 +4,7 @@ import { WalletItem } from './types';
 import { formatCurrency } from '../../lib/utils';
 import { toast } from 'sonner';
 import { Modal } from '../common/Modal';
+import { InfoTooltip } from '../common/Tooltip';
 
 interface TransferModalProps {
   isOpen: boolean;
@@ -98,7 +99,10 @@ export const TransferModal: React.FC<TransferModalProps> = ({
             <div className="h-8 w-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center">
               <ArrowRightLeft className="w-4 h-4" />
             </div>
-            <h3 id="transfer-modal-title" className="font-bold text-base">Chuyển Tiền Giữa Các Ví</h3>
+            <div className="flex items-center gap-2">
+              <h3 id="transfer-modal-title" className="font-bold text-base">Chuyển Tiền Giữa Các Ví</h3>
+              <InfoTooltip content="Chuyển tiền nội bộ chỉ trừ tiền ví nguồn và cộng tiền ví đích, không làm thay đổi tổng tài sản." />
+            </div>
           </div>
           <button
             type="button"
@@ -112,7 +116,10 @@ export const TransferModal: React.FC<TransferModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           <div>
-            <label className="font-semibold block mb-1">Ví nguồn (Trừ tiền)</label>
+            <div className="flex items-center gap-1.5 mb-1">
+              <label className="font-semibold block">Ví nguồn (Trừ tiền)</label>
+              <InfoTooltip content="Số tiền chuyển sẽ được trừ khỏi số dư của ví này." />
+            </div>
             <select
               value={sourceWalletId}
               onChange={(e) => setSourceWalletId(e.target.value)}
@@ -127,7 +134,10 @@ export const TransferModal: React.FC<TransferModalProps> = ({
           </div>
 
           <div>
-            <label className="font-semibold block mb-1">Ví đích (Cộng tiền)</label>
+            <div className="flex items-center gap-1.5 mb-1">
+              <label className="font-semibold block">Ví đích (Cộng tiền)</label>
+              <InfoTooltip content="Số tiền chuyển sẽ được cộng vào số dư của ví này." />
+            </div>
             <select
               value={destWalletId}
               onChange={(e) => setDestWalletId(e.target.value)}

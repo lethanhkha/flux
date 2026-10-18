@@ -16,6 +16,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'sonner';
 import { QuickActionModal } from './QuickActionModal';
+import { Tooltip } from '../common/Tooltip';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -118,26 +119,29 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
           <div className="flex items-center gap-3">
             {/* Quick Action Trigger Button */}
-            <button
-              type="button"
-              onClick={() => setIsQuickActionOpen(true)}
-              aria-label="Thao tác nhanh (Giao dịch, Công việc, Ghi chú)"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold shadow-sm shadow-brand/25 transition-all hover:scale-105 active:scale-95 cursor-pointer focus-ring"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Thêm Nhanh</span>
-            </button>
+            <Tooltip content="Thao tác nhanh: Thêm giao dịch, tạo công việc hoặc ghi chú mới">
+              <button
+                type="button"
+                onClick={() => setIsQuickActionOpen(true)}
+                aria-label="Thao tác nhanh (Giao dịch, Công việc, Ghi chú)"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold shadow-sm shadow-brand/25 transition-all hover:scale-105 active:scale-95 cursor-pointer focus-ring"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Thêm Nhanh</span>
+              </button>
+            </Tooltip>
 
             {/* Theme Toggle */}
-            <button
-              type="button"
-              onClick={toggleTheme}
-              aria-label={darkMode ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
-              className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-card hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer focus-ring"
-              title={darkMode ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
-            >
-              {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
-            </button>
+            <Tooltip content={darkMode ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}>
+              <button
+                type="button"
+                onClick={toggleTheme}
+                aria-label={darkMode ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
+                className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-card hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer focus-ring"
+              >
+                {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+              </button>
+            </Tooltip>
 
             <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1 hidden sm:block" />
 
@@ -150,15 +154,16 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 <div className="text-xs font-bold leading-tight line-clamp-1">{user?.fullName || 'Tài khoản'}</div>
                 <div className="text-[10px] text-slate-500 line-clamp-1">{user?.email || ''}</div>
               </div>
-              <button
-                type="button"
-                onClick={handleLogout}
-                aria-label="Đăng xuất"
-                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer focus-ring"
-                title="Đăng xuất"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
+              <Tooltip content="Đăng xuất khỏi tài khoản">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  aria-label="Đăng xuất"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer focus-ring"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </Tooltip>
             </div>
           </div>
         </div>
@@ -206,15 +211,16 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
       {/* 5b. Smooth Scroll to Top Floating Button */}
       {showScrollTop && (
-        <button
-          type="button"
-          onClick={scrollToTop}
-          aria-label="Cuộn lên đầu trang"
-          title="Cuộn lên đầu trang mượt mà"
-          className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] md:bottom-8 right-5 md:right-8 z-40 p-2.5 rounded-2xl bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-800/80 shadow-lg backdrop-blur-md hover:bg-brand hover:text-white dark:hover:bg-brand dark:hover:text-white hover:scale-105 active:scale-95 transition-all focus-ring cursor-pointer hover-lift"
-        >
-          <ArrowUp className="w-5 h-5" />
-        </button>
+        <Tooltip content="Cuộn nhanh lên đầu trang">
+          <button
+            type="button"
+            onClick={scrollToTop}
+            aria-label="Cuộn lên đầu trang"
+            className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] md:bottom-8 right-5 md:right-8 z-40 p-2.5 rounded-2xl bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-800/80 shadow-lg backdrop-blur-md hover:bg-brand hover:text-white dark:hover:bg-brand dark:hover:text-white hover:scale-105 active:scale-95 transition-all focus-ring cursor-pointer hover-lift"
+          >
+            <ArrowUp className="w-5 h-5" />
+          </button>
+        </Tooltip>
       )}
 
       {/* 6. Quick Action Modal Dialog */}

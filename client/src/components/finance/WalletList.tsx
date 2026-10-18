@@ -2,6 +2,7 @@ import React from 'react';
 import { Wallet, Plus, Star } from 'lucide-react';
 import { WalletItem } from './types';
 import { formatCurrency } from '../../lib/utils';
+import { Tooltip, InfoTooltip } from '../common/Tooltip';
 
 interface WalletListProps {
   wallets: WalletItem[];
@@ -19,9 +20,12 @@ export const WalletList: React.FC<WalletListProps> = ({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="font-bold text-sm text-slate-700 dark:text-slate-300">
-          Danh Sách Ví Tiền ({isLoading ? '...' : wallets.length})
-        </h2>
+        <div className="flex items-center gap-2">
+          <h2 className="font-bold text-sm text-slate-700 dark:text-slate-300">
+            Danh Sách Ví Tiền ({isLoading ? '...' : wallets.length})
+          </h2>
+          <InfoTooltip content="Mỗi ví đại diện cho một tài khoản ngân hàng, ví tiền mặt hoặc thẻ để theo dõi số dư độc lập." />
+        </div>
       </div>
 
       {isLoading ? (
@@ -95,24 +99,24 @@ export const WalletList: React.FC<WalletListProps> = ({
 
                   <div className="flex-shrink-0">
                     {w.isDefault ? (
-                      <span
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 shadow-2xs"
-                        title="Đây là ví mặc định khi thêm giao dịch"
-                      >
-                        <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
-                        <span>Mặc định</span>
-                      </span>
+                      <Tooltip content="Ví mặc định được hệ thống chọn sẵn khi bạn ghi nhận giao dịch mới.">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 shadow-2xs cursor-help">
+                          <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                          <span>Mặc định</span>
+                        </span>
+                      </Tooltip>
                     ) : (
                       onSetDefaultWallet && (
-                        <button
-                          type="button"
-                          onClick={() => onSetDefaultWallet(w.id)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-500/10 border border-slate-200 dark:border-slate-800 hover:border-amber-500/25 transition-all cursor-pointer"
-                          title="Đặt ví này làm mặc định khi tạo giao dịch"
-                        >
-                          <Star className="w-3 h-3" />
-                          <span>Đặt mặc định</span>
-                        </button>
+                        <Tooltip content="Đặt ví này làm ví ưu tiên chọn sẵn khi thêm giao dịch.">
+                          <button
+                            type="button"
+                            onClick={() => onSetDefaultWallet(w.id)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-500/10 border border-slate-200 dark:border-slate-800 hover:border-amber-500/25 transition-all cursor-pointer"
+                          >
+                            <Star className="w-3 h-3" />
+                            <span>Đặt mặc định</span>
+                          </button>
+                        </Tooltip>
                       )
                     )}
                   </div>

@@ -78,6 +78,7 @@ export interface InfoTooltipProps {
   position?: 'top' | 'bottom' | 'left' | 'right';
   className?: string;
   icon?: 'info' | 'help';
+  ariaLabel?: string;
 }
 
 export const InfoTooltip: React.FC<InfoTooltipProps> = ({
@@ -85,6 +86,7 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({
   position = 'top',
   className = '',
   icon = 'help',
+  ariaLabel = 'Thông tin giải thích',
 }) => {
   const IconComponent = icon === 'info' ? Info : HelpCircle;
   return (
@@ -92,7 +94,7 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({
       <button
         type="button"
         tabIndex={0}
-        aria-label="Thông tin giải thích"
+        aria-label={ariaLabel}
         className="p-0.5 text-slate-400 hover:text-brand dark:hover:text-brand focus:text-brand transition-colors cursor-help inline-flex items-center justify-center rounded-full"
       >
         <IconComponent className="w-3.5 h-3.5" />
