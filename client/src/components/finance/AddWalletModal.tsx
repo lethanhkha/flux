@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Wallet, X, Star } from 'lucide-react';
 import { WalletItem } from './types';
+import { resolveWalletTypeAndIcon, WALLET_TYPE_OPTIONS } from './walletUtils';
 import { apiClient } from '../../api/client';
 import { toast } from 'sonner';
 import { Modal } from '../common/Modal';
@@ -27,7 +28,7 @@ export const AddWalletModal: React.FC<AddWalletModalProps> = ({
   onWalletCreated,
 }) => {
   const [newWalletName, setNewWalletName] = useState('');
-  const [newWalletType, setNewWalletType] = useState('Ví điện tử');
+  const [newWalletType, setNewWalletType] = useState('e-wallet');
   const [newWalletBalance, setNewWalletBalance] = useState('0');
   const [newWalletColor, setNewWalletColor] = useState('#6366F1');
   const [newWalletIsDefault, setNewWalletIsDefault] = useState(false);
@@ -67,42 +68,46 @@ export const AddWalletModal: React.FC<AddWalletModalProps> = ({
         currency: 'VND',
         initialBalance: initBal,
         color: newWalletColor,
-        icon: 'wallet',
+        icon: newWalletType,
         isDefault: newWalletIsDefault,
       });
 
       const created = res.data.data;
+      const { type, icon } = resolveWalletTypeAndIcon(created.icon || newWalletType, created.name);
       const newWallet: WalletItem = {
         id: created.id,
         name: created.name,
         balance: parseFloat(created.currentBalance),
-        type: newWalletType,
+        type,
         color: created.color || newWalletColor,
-        icon: Wallet,
+        icon,
         isDefault: created.isDefault ?? newWalletIsDefault,
       };
 
       onWalletCreated(newWallet);
       onClose();
       setNewWalletName('');
+      setNewWalletType('e-wallet');
       setNewWalletBalance('0');
       setNewWalletIsDefault(false);
       toast.success(`Đã tạo ví "${created.name}" thành công!`);
       window.dispatchEvent(new CustomEvent('flux:refresh-data'));
     } catch {
       // Fallback
+      const { type, icon } = resolveWalletTypeAndIcon(newWalletType, newWalletName.trim());
       const fallbackWallet: WalletItem = {
         id: `w-${Date.now()}`,
         name: newWalletName.trim(),
         balance: initBal,
-        type: newWalletType,
+        type,
         color: newWalletColor,
-        icon: Wallet,
+        icon,
         isDefault: newWalletIsDefault,
       };
       onWalletCreated(fallbackWallet);
       onClose();
       setNewWalletName('');
+      setNewWalletType('e-wallet');
       setNewWalletBalance('0');
       toast.success(`Đã tạo ví "${fallbackWallet.name}" thành công!`);
     } finally {
@@ -160,11 +165,11 @@ export const AddWalletModal: React.FC<AddWalletModalProps> = ({
                 onChange={(e) => setNewWalletType(e.target.value)}
                 className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
               >
-                <option value="Ví điện tử">Ví điện tử</option>
-                <option value="Tài khoản ngân hàng">Tài khoản ngân hàng</option>
-                <option value="Tiền mặt">Tiền mặt</option>
-                <option value="Tiết kiệm có kỳ hạn">Sổ tiết kiệm</option>
-                <option value="Quỹ đầu tư">Quỹ đầu tư</option>
+                {WALLET_TYPE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
             </div>
 

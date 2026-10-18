@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet } from 'lucide-react';
 import { apiClient, getErrorMessage } from '../api/client';
 import { AppLayout } from '../components/layout/AppLayout';
 import { ConfirmModal } from '../components/common/ConfirmModal';
@@ -19,6 +18,7 @@ import {
   AddTransactionModal,
   EditTransactionModal,
   CategoryModal,
+  resolveWalletTypeAndIcon,
 } from '../components/finance';
 import { PaginationMeta } from '../components/common/PaginationControl';
 
@@ -83,15 +83,18 @@ export const FinancePage: React.FC = () => {
 
       if (Array.isArray(rawWallets)) {
         setWallets(
-          rawWallets.map((w: any) => ({
-            id: w.id,
-            name: w.name,
-            balance: parseFloat(w.currentBalance) || 0,
-            type: w.currency === 'VND' ? 'Tiền mặt / Số dư' : w.currency,
-            color: w.color || '#6366F1',
-            icon: Wallet,
-            isDefault: Boolean(w.isDefault),
-          }))
+          rawWallets.map((w: any) => {
+            const { type, icon } = resolveWalletTypeAndIcon(w.icon, w.name);
+            return {
+              id: w.id,
+              name: w.name,
+              balance: parseFloat(w.currentBalance) || 0,
+              type,
+              color: w.color || '#6366F1',
+              icon,
+              isDefault: Boolean(w.isDefault),
+            };
+          })
         );
       }
 

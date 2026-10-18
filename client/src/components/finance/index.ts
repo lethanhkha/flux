@@ -7,3 +7,4 @@ export * from './AddWalletModal';
 export * from './AddTransactionModal';
 export * from './EditTransactionModal';
 export * from './CategoryModal';
+export * from './walletUtils';
