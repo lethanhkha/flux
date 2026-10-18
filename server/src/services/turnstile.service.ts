@@ -34,6 +34,22 @@ class TurnstileService {
       };
     }
 
+    // Chế độ phát triển hoặc khi sử dụng Dummy Testing Key:
+    // Cho phép các token dự phòng vượt qua mà không cần gọi Cloudflare API
+    const isTestSecret = env.CLOUDFLARE_TURNSTILE_SECRET_KEY.startsWith('1x000000');
+    if (
+      (env.NODE_ENV === 'development' || isTestSecret) &&
+      (token === 'cf-mock-bypass-token' ||
+        token === 'cf-fallback-token' ||
+        token === 'cf-auto-token')
+    ) {
+      return {
+        success: true,
+        hostname: 'localhost',
+        action: 'dev-bypass',
+      };
+    }
+
     try {
       const formData = new URLSearchParams();
       formData.append('secret', env.CLOUDFLARE_TURNSTILE_SECRET_KEY);

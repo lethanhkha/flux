@@ -98,6 +98,7 @@ export const TaskTagModal: React.FC<TaskTagModalProps> = ({
         disableClose={isSubmitting}
         ariaLabelledBy="task-tag-modal-title"
         maxWidth="lg"
+        className="relative"
       >
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2">
@@ -184,25 +185,13 @@ export const TaskTagModal: React.FC<TaskTagModalProps> = ({
                     <>
                       <div className="flex items-center gap-2 min-w-0">
                         {/* Color Picker Swatch */}
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() => setColorPickerTag(colorPickerTag === item.name ? null : item.name)}
-                            className="w-5 h-5 rounded-full border border-black/10 dark:border-white/20 shadow-xs cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
-                            style={{ backgroundColor: item.color || '#6366F1' }}
-                            title="Đổi màu thẻ"
-                          />
-                          {colorPickerTag === item.name && (
-                            <div className="absolute left-0 top-full mt-1.5 z-50">
-                              <ColorPickerPopover
-                                currentColor={item.color || '#6366F1'}
-                                tagName={item.name}
-                                onSelectColor={(color) => handleSelectColor(item.name, color)}
-                                onClose={() => setColorPickerTag(null)}
-                              />
-                            </div>
-                          )}
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setColorPickerTag(item.name)}
+                          className="w-5 h-5 rounded-full border border-black/10 dark:border-white/20 shadow-xs cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
+                          style={{ backgroundColor: item.color || '#6366F1' }}
+                          title="Đổi màu thẻ"
+                        />
 
                         {/* Tag Badge */}
                         <span
@@ -223,7 +212,7 @@ export const TaskTagModal: React.FC<TaskTagModalProps> = ({
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
-                          onClick={() => setColorPickerTag(colorPickerTag === item.name ? null : item.name)}
+                          onClick={() => setColorPickerTag(item.name)}
                           className="p-1.5 rounded-lg text-slate-400 hover:text-brand hover:bg-brand/10 transition-colors cursor-pointer"
                           title="Đổi màu thẻ"
                         >
@@ -263,6 +252,24 @@ export const TaskTagModal: React.FC<TaskTagModalProps> = ({
             Đóng
           </button>
         </div>
+
+        {/* Color Picker Overlay: Đè lên form quản lý thẻ thay vì chen ngang vào danh sách */}
+        {colorPickerTag && (
+          <div
+            className="absolute inset-0 z-50 bg-slate-950/50 backdrop-blur-xs rounded-3xl flex items-center justify-center p-4 animate-in fade-in duration-150 cursor-pointer"
+            onClick={() => setColorPickerTag(null)}
+          >
+            <div onClick={(e) => e.stopPropagation()} className="cursor-default">
+              <ColorPickerPopover
+                currentColor={tags.find((t) => t.name === colorPickerTag)?.color || '#6366F1'}
+                tagName={colorPickerTag}
+                onSelectColor={(color) => handleSelectColor(colorPickerTag, color)}
+                onClose={() => setColorPickerTag(null)}
+                className="relative mt-0 shadow-2xl"
+              />
+            </div>
+          </div>
+        )}
       </Modal>
 
       {/* Confirm Delete Tag Modal */}

@@ -175,6 +175,7 @@ export const AddWalletModal: React.FC<AddWalletModalProps> = ({
               <input
                 type="number"
                 min="0"
+                step="any"
                 value={newWalletBalance}
                 onChange={(e) => setNewWalletBalance(e.target.value)}
                 placeholder="0"

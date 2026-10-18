@@ -24,6 +24,8 @@ import { TaskTagModal, TaskTagItem } from '../components/tasks/TaskTagModal';
 import { TagSelect } from '../components/notes/TagSelect';
 import { EditTaskModal } from '../components/tasks/EditTaskModal';
 import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
+import { Tooltip, InfoTooltip } from '../components/common/Tooltip';
+import { getRemainingDaysInfo, PRIORITY_TOOLTIPS } from '../lib/taskUtils';
 
 interface TaskItem {
   id: string;
@@ -418,15 +420,40 @@ export const TasksPage: React.FC = () => {
   };
 
   const priorityBadge = (p: TaskItem['priority']) => {
+    const tip = PRIORITY_TOOLTIPS[p];
     switch (p) {
       case 'URGENT':
-        return <span className="text-[10px] px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-500 font-bold">Khẩn cấp</span>;
+        return (
+          <Tooltip content={tip}>
+            <span className="text-[10px] px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-500 font-bold cursor-help hover:scale-105 transition-transform inline-flex items-center gap-1">
+              Khẩn cấp
+            </span>
+          </Tooltip>
+        );
       case 'HIGH':
-        return <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-500 font-bold">Ưu tiên cao</span>;
+        return (
+          <Tooltip content={tip}>
+            <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-500 font-bold cursor-help hover:scale-105 transition-transform inline-flex items-center gap-1">
+              Ưu tiên cao
+            </span>
+          </Tooltip>
+        );
       case 'MEDIUM':
-        return <span className="text-[10px] px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-500 font-bold">Trung bình</span>;
+        return (
+          <Tooltip content={tip}>
+            <span className="text-[10px] px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-500 font-bold cursor-help hover:scale-105 transition-transform inline-flex items-center gap-1">
+              Trung bình
+            </span>
+          </Tooltip>
+        );
       case 'LOW':
-        return <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-500/10 text-slate-500 font-bold">Thấp</span>;
+        return (
+          <Tooltip content={tip}>
+            <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-500/10 text-slate-500 font-bold cursor-help hover:scale-105 transition-transform inline-flex items-center gap-1">
+              Thấp
+            </span>
+          </Tooltip>
+        );
     }
   };
 
@@ -493,24 +520,41 @@ export const TasksPage: React.FC = () => {
             <span className="text-xs text-slate-400 font-semibold flex items-center gap-1 pl-1 flex-shrink-0 mr-1">
               Trạng thái:
             </span>
-            {(['ALL', 'TODAY', 'OVERDUE', 'URGENT', 'DONE'] as const).map((key) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setFilter(key)}
-                className={`px-3.5 py-1.5 rounded-xl border transition-all cursor-pointer flex-shrink-0 ${
-                  filter === key
-                    ? 'bg-brand text-white border-brand font-bold shadow-sm'
-                    : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand/40'
-                }`}
-              >
-                {key === 'ALL' && `Tất cả (${pagination.total})`}
-                {key === 'TODAY' && 'Hôm nay'}
-                {key === 'OVERDUE' && 'Quá hạn'}
-                {key === 'URGENT' && 'Khẩn cấp'}
-                {key === 'DONE' && 'Đã hoàn thành'}
-              </button>
-            ))}
+            {(['ALL', 'TODAY', 'OVERDUE', 'URGENT', 'DONE'] as const).map((key) => {
+              const btn = (
+                <button
+                  type="button"
+                  onClick={() => setFilter(key)}
+                  className={`px-3.5 py-1.5 rounded-xl border transition-all cursor-pointer flex-shrink-0 ${
+                    filter === key
+                      ? 'bg-brand text-white border-brand font-bold shadow-sm'
+                      : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand/40'
+                  }`}
+                >
+                  {key === 'ALL' && `Tất cả (${pagination.total})`}
+                  {key === 'TODAY' && 'Hôm nay'}
+                  {key === 'OVERDUE' && 'Quá hạn'}
+                  {key === 'URGENT' && 'Khẩn cấp'}
+                  {key === 'DONE' && 'Đã hoàn thành'}
+                </button>
+              );
+
+              if (key === 'URGENT') {
+                return (
+                  <Tooltip key={key} content={PRIORITY_TOOLTIPS.URGENT}>
+                    {btn}
+                  </Tooltip>
+                );
+              }
+              if (key === 'OVERDUE') {
+                return (
+                  <Tooltip key={key} content="Công việc có hạn chót trước ngày hôm nay mà chưa được hoàn tất.">
+                    {btn}
+                  </Tooltip>
+                );
+              }
+              return <React.Fragment key={key}>{btn}</React.Fragment>;
+            })}
           </div>
 
           {/* Bar 2: Quick Tags Filter Bar with smooth mouse-wheel horizontal scroll */}
@@ -778,15 +822,23 @@ export const TasksPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="flex items-center gap-2.5 flex-shrink-0">
                     {priorityBadge(t.priority)}
 
-                    {t.dueDate && (
-                      <div className="text-[11px] text-slate-400 hidden sm:flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{t.dueDate}</span>
-                      </div>
-                    )}
+                    {/* Deadline Countdown Badge */}
+                    {t.rawDueDate && (() => {
+                      const remaining = getRemainingDaysInfo(t.rawDueDate, t.status);
+                      return (
+                        <Tooltip content={`Hạn chót: ${remaining.formattedDue}`}>
+                          <span
+                            className={`text-[10px] px-2 py-0.5 rounded-md border font-medium flex items-center gap-1 transition-all ${remaining.colorClasses}`}
+                          >
+                            <Clock className="w-3 h-3 flex-shrink-0" />
+                            <span>{remaining.label}</span>
+                          </span>
+                        </Tooltip>
+                      );
+                    })()}
 
                     <div className="flex items-center gap-1">
                       <button
@@ -900,9 +952,19 @@ export const TasksPage: React.FC = () => {
                             <div className="flex items-center justify-between">
                               {priorityBadge(t.priority)}
                               <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                                  <Clock className="w-3 h-3" /> {t.dueDate}
-                                </span>
+                                {t.rawDueDate && (() => {
+                                  const remaining = getRemainingDaysInfo(t.rawDueDate, t.status);
+                                  return (
+                                    <Tooltip content={`Hạn chót: ${remaining.formattedDue}`}>
+                                      <span
+                                        className={`text-[10px] px-1.5 py-0.5 rounded border font-medium flex items-center gap-1 ${remaining.colorClasses}`}
+                                      >
+                                        <Clock className="w-2.5 h-2.5 flex-shrink-0" />
+                                        <span>{remaining.shortLabel}</span>
+                                      </span>
+                                    </Tooltip>
+                                  );
+                                })()}
                                 <button
                                   type="button"
                                   onClick={(e) => handleOpenEditTask(t, e)}
@@ -1053,7 +1115,10 @@ export const TasksPage: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="font-semibold block mb-1">Độ ưu tiên</label>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <label className="font-semibold">Độ ưu tiên</label>
+                  <InfoTooltip content={PRIORITY_TOOLTIPS[newTaskPriority] || PRIORITY_TOOLTIPS.URGENT} />
+                </div>
                 <select
                   value={newTaskPriority}
                   onChange={(e) => setNewTaskPriority(e.target.value as any)}
@@ -1064,6 +1129,9 @@ export const TasksPage: React.FC = () => {
                   <option value="MEDIUM">Trung bình</option>
                   <option value="LOW">Thấp</option>
                 </select>
+                <p className="text-[10px] text-slate-400 mt-1 leading-tight line-clamp-2">
+                  {PRIORITY_TOOLTIPS[newTaskPriority]}
+                </p>
               </div>
               <div>
                 <label className="font-semibold block mb-1">Hạn chót</label>
@@ -1085,7 +1153,10 @@ export const TasksPage: React.FC = () => {
                   onChange={(e) => setNewTaskIsRecurring(e.target.checked)}
                   className="w-4 h-4 rounded text-brand focus:ring-brand cursor-pointer"
                 />
-                <span>Lặp lại định kỳ (Recurring Engine)</span>
+                <span className="flex items-center gap-1.5">
+                  <span>Lặp lại định kỳ (Recurring Engine)</span>
+                  <InfoTooltip content="Tự động tạo mới công việc cho chu kỳ tiếp theo ngay sau khi bạn đánh dấu hoàn thành." />
+                </span>
               </label>
               {newTaskIsRecurring && (
                 <div className="grid grid-cols-3 gap-1.5 pt-1">

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import {
   FileText,
@@ -38,6 +39,9 @@ interface NoteItem {
 }
 
 export const NotesPage: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const noteIdFromUrl = searchParams.get('id') || searchParams.get('noteId') || searchParams.get('viewNoteId');
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('ALL');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -45,6 +49,17 @@ export const NotesPage: React.FC = () => {
   const [activeNote, setActiveNote] = useState<NoteItem | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<NoteItem | null>(null);
+
+  const handleCloseViewModal = () => {
+    setActiveNote(null);
+    if (searchParams.has('id') || searchParams.has('noteId') || searchParams.has('viewNoteId')) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('id');
+      nextParams.delete('noteId');
+      nextParams.delete('viewNoteId');
+      setSearchParams(nextParams, { replace: true });
+    }
+  };
 
   // Tag Manager modal state
   const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
@@ -177,6 +192,50 @@ export const NotesPage: React.FC = () => {
     return () => window.removeEventListener('flux:refresh-data', handleRefresh);
   }, [pagination.page, searchQuery, selectedTag]);
 
+  // Tự động mở xem chi tiết ghi chú nếu có tham số trên URL (ví dụ chuyển hướng từ Dashboard ghim)
+  useEffect(() => {
+    if (!noteIdFromUrl) return;
+    if (activeNote && activeNote.id === noteIdFromUrl) return;
+
+    // 1. Kiểm tra ghi chú đã có trong danh sách hiện tại
+    const found = notes.find((n) => n.id === noteIdFromUrl);
+    if (found) {
+      setActiveNote(found);
+      return;
+    }
+
+    // 2. Tải trực tiếp ghi chú từ API nếu chưa có ở trang hiện tại
+    let isCancelled = false;
+    const fetchTargetNote = async () => {
+      try {
+        const res = await apiClient.get(`/notes/${noteIdFromUrl}`);
+        const n = res.data?.data;
+        if (n && !isCancelled) {
+          setActiveNote({
+            id: n.id,
+            title: n.title,
+            content: n.content,
+            tags: (n.tags as string[]) || [],
+            isPinned: n.isPinned,
+            color: n.color || '#6366F1',
+            updatedAt: new Date(n.updatedAt).toLocaleDateString('vi-VN', {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+          });
+        }
+      } catch {
+        // Bỏ qua nếu ID không hợp lệ hoặc ghi chú đã bị xóa
+      }
+    };
+
+    fetchTargetNote();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [noteIdFromUrl, notes, activeNote]);
+
   const togglePin = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     // Optimistic UI update
@@ -203,7 +262,7 @@ export const NotesPage: React.FC = () => {
     e?.stopPropagation();
     const noteToDelete = notes.find((n) => n.id === id);
     setNotes((prev) => prev.filter((n) => n.id !== id));
-    setActiveNote(null);
+    handleCloseViewModal();
     toast.success('Đã xóa ghi chú thành công.');
 
     try {
@@ -706,7 +765,7 @@ export const NotesPage: React.FC = () => {
         {/* Note View / Detail Modal */}
         <Modal
           isOpen={!!activeNote}
-          onClose={() => setActiveNote(null)}
+          onClose={handleCloseViewModal}
           ariaLabelledBy="note-detail-title"
           maxWidth="lg"
         >
@@ -721,7 +780,7 @@ export const NotesPage: React.FC = () => {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setActiveNote(null)}
+                  onClick={handleCloseViewModal}
                   aria-label="Đóng xem chi tiết ghi chú"
                   className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 >
@@ -759,7 +818,7 @@ export const NotesPage: React.FC = () => {
                       type="button"
                       onClick={() => {
                         const noteToEdit = activeNote;
-                        setActiveNote(null);
+                        handleCloseViewModal();
                         handleOpenEditNote(noteToEdit);
                       }}
                       className="px-3 py-1.5 rounded-xl bg-brand/10 hover:bg-brand text-brand hover:text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
@@ -858,6 +917,7 @@ export const NotesPage: React.FC = () => {
           }}
           ariaLabelledBy="tag-manager-title"
           maxWidth="lg"
+          className="relative"
         >
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-2">
@@ -930,25 +990,13 @@ export const NotesPage: React.FC = () => {
                       <>
                         <div className="flex items-center gap-2 min-w-0">
                           {/* Color Swatch Button */}
-                          <div className="relative">
-                            <button
-                              type="button"
-                              onClick={() => setColorPickerTag(colorPickerTag === name ? null : name)}
-                              className="w-5 h-5 rounded-full border border-black/10 dark:border-white/20 shadow-xs cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
-                              style={{ backgroundColor: color }}
-                              title="Đổi màu thẻ"
-                            />
-                            {colorPickerTag === name && (
-                              <div className="absolute left-0 top-full mt-1.5 z-50">
-                                <ColorPickerPopover
-                                  currentColor={color}
-                                  tagName={name}
-                                  onSelectColor={(c) => handleUpdateTagColor(name, c)}
-                                  onClose={() => setColorPickerTag(null)}
-                                />
-                              </div>
-                            )}
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setColorPickerTag(name)}
+                            className="w-5 h-5 rounded-full border border-black/10 dark:border-white/20 shadow-xs cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
+                            style={{ backgroundColor: color }}
+                            title="Đổi màu thẻ"
+                          />
 
                           <span
                             className="font-semibold px-2.5 py-1 rounded-lg border truncate"
@@ -968,7 +1016,7 @@ export const NotesPage: React.FC = () => {
                         <div className="flex items-center gap-1.5 flex-shrink-0">
                           <button
                             type="button"
-                            onClick={() => setColorPickerTag(colorPickerTag === name ? null : name)}
+                            onClick={() => setColorPickerTag(name)}
                             className="p-1.5 rounded-lg text-slate-400 hover:text-brand hover:bg-brand/10 transition-colors cursor-pointer"
                             title="Đổi màu thẻ"
                           >
@@ -1004,12 +1052,34 @@ export const NotesPage: React.FC = () => {
               onClick={() => {
                 setIsTagManagerOpen(false);
                 setEditingTag(null);
+                setColorPickerTag(null);
               }}
               className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs cursor-pointer"
             >
               Đóng
             </button>
           </div>
+
+          {/* Color Picker Overlay: Đè lên form quản lý thẻ thay vì chen ngang vào danh sách */}
+          {colorPickerTag && (
+            <div
+              className="absolute inset-0 z-50 bg-slate-950/50 backdrop-blur-xs rounded-3xl flex items-center justify-center p-4 animate-in fade-in duration-150 cursor-pointer"
+              onClick={() => setColorPickerTag(null)}
+            >
+              <div onClick={(e) => e.stopPropagation()} className="cursor-default">
+                <ColorPickerPopover
+                  currentColor={availableTags.find((t) => t.name === colorPickerTag)?.color || getTagColor(colorPickerTag)}
+                  tagName={colorPickerTag}
+                  onSelectColor={(c) => {
+                    handleUpdateTagColor(colorPickerTag, c);
+                    setColorPickerTag(null);
+                  }}
+                  onClose={() => setColorPickerTag(null)}
+                  className="relative mt-0 shadow-2xl"
+                />
+              </div>
+            </div>
+          )}
         </Modal>
 
         {/* Modern Delete Confirmation Dialog for Tags */}

@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 import { Modal } from '../common/Modal';
 import { TagSelect } from '../notes/TagSelect';
 import { TaskTagItem } from './TaskTagModal';
+import { InfoTooltip } from '../common/Tooltip';
+import { PRIORITY_TOOLTIPS } from '../../lib/taskUtils';
 
 export interface TaskItemData {
   id: string;
@@ -198,9 +200,12 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
             </select>
           </div>
           <div>
-            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-              Độ ưu tiên
-            </label>
+            <div className="flex items-center gap-1.5 mb-1">
+              <label className="font-semibold text-slate-700 dark:text-slate-300">
+                Độ ưu tiên
+              </label>
+              <InfoTooltip content={PRIORITY_TOOLTIPS[editPriority] || PRIORITY_TOOLTIPS.URGENT} />
+            </div>
             <select
               value={editPriority}
               onChange={(e) => setEditPriority(e.target.value as any)}
@@ -211,6 +216,9 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
               <option value="MEDIUM">Trung bình</option>
               <option value="LOW">Thấp</option>
             </select>
+            <p className="text-[10px] text-slate-400 mt-1 leading-tight line-clamp-2">
+              {PRIORITY_TOOLTIPS[editPriority]}
+            </p>
           </div>
         </div>
 

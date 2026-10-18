@@ -17,6 +17,8 @@ import { AppLayout } from '../components/layout/AppLayout';
 import { formatCurrency } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
+import { Tooltip, InfoTooltip } from '../components/common/Tooltip';
+import { getRemainingDaysInfo, PRIORITY_TOOLTIPS } from '../lib/taskUtils';
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
@@ -28,7 +30,17 @@ export const DashboardPage: React.FC = () => {
     activeWalletsCount: 1,
   });
 
-  const [tasks, setTasks] = useState<Array<{ id: string; title: string; completed: boolean; urgent: boolean; due: string }>>([]);
+  const [tasks, setTasks] = useState<
+    Array<{
+      id: string;
+      title: string;
+      completed: boolean;
+      urgent: boolean;
+      priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+      rawDueDate?: string | null;
+      due: string;
+    }>
+  >([]);
   const [pinnedNotes, setPinnedNotes] = useState<Array<{ id: string; title: string; snippet: string }>>([]);
 
   useEffect(() => {
@@ -53,9 +65,11 @@ export const DashboardPage: React.FC = () => {
               title: t.title,
               completed: t.status === 'DONE',
               urgent: t.priority === 'URGENT' || t.priority === 'HIGH',
+              priority: t.priority || 'MEDIUM',
+              rawDueDate: t.dueDate || null,
               due: t.dueDate
                 ? new Date(t.dueDate).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
-                : 'Trong ngày',
+                : 'Không thời hạn',
             }))
           );
         }
@@ -144,9 +158,10 @@ export const DashboardPage: React.FC = () => {
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm flex flex-col justify-between hover-lift">
             <div>
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-xs font-semibold">
+                <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 text-xs font-semibold">
                   <Wallet className="h-4 w-4 text-brand" />
                   <span>Tổng số dư ví</span>
+                  <InfoTooltip content="Tổng số dư cộng dồn hiện có từ tất cả các ví đang hoạt động." />
                 </div>
                 <span className="text-xs px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-0.5">
                   <TrendingUp className="h-3 w-3" /> +12.5%
@@ -164,13 +179,15 @@ export const DashboardPage: React.FC = () => {
 
             <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
-                  <ArrowDownRight className="h-4 w-4" />
-                  <span>Thu: {formatCurrency(financeSummary.monthlyIncome)}</span>
+                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                  <ArrowDownRight className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">Thu: {formatCurrency(financeSummary.monthlyIncome)}</span>
+                  <InfoTooltip content="Tổng các khoản thu thực tế phát sinh trong tháng hiện tại (từ ngày 01 đến cuối tháng)." />
                 </div>
-                <div className="flex items-center gap-1.5 text-rose-500 font-semibold">
-                  <ArrowUpRight className="h-4 w-4" />
-                  <span>Chi: {formatCurrency(financeSummary.monthlyExpense)}</span>
+                <div className="flex items-center gap-1 text-rose-500 font-semibold">
+                  <ArrowUpRight className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">Chi: {formatCurrency(financeSummary.monthlyExpense)}</span>
+                  <InfoTooltip content="Tổng các khoản chi thực tế phát sinh trong tháng hiện tại (từ ngày 01 đến cuối tháng)." />
                 </div>
               </div>
               <Link
@@ -187,9 +204,10 @@ export const DashboardPage: React.FC = () => {
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm flex flex-col justify-between hover-lift">
             <div>
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-xs font-semibold">
+                <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 text-xs font-semibold">
                   <CheckCircle2 className="h-4 w-4 text-brand" />
-                  <span>Việc gấp trong ngày</span>
+                  <span>Công việc cần ưu tiên</span>
+                  <InfoTooltip content="Top 5 công việc quan trọng chưa hoàn thành, được ưu tiên theo mức độ khẩn cấp và hạn chót gần nhất để bạn tập trung xử lý." />
                 </div>
                 <span className="text-xs font-bold text-brand bg-brand/10 px-2 py-0.5 rounded-md">
                   {completedCount} / {tasks.length} xong
@@ -199,7 +217,7 @@ export const DashboardPage: React.FC = () => {
               {tasks.length === 0 ? (
                 <div className="mt-4 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-800 text-center space-y-1.5">
                   <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Không có việc khẩn cấp nào! 🎉</p>
-                  <p className="text-[11px] text-slate-400">Bạn đã hoàn tất mọi mục tiêu hoặc chưa có việc gấp hôm nay.</p>
+                  <p className="text-[11px] text-slate-400">Bạn đã hoàn tất mọi mục tiêu hoặc chưa có việc gấp cần làm.</p>
                   <Link to="/tasks" className="inline-block pt-1 text-xs font-bold text-brand hover:underline">
                     + Thêm việc mới
                   </Link>
@@ -215,24 +233,41 @@ export const DashboardPage: React.FC = () => {
                       <input
                         type="checkbox"
                         checked={task.completed}
-                        onChange={() => {}}
+                        onChange={() => { }}
                         aria-label={`Đánh dấu hoàn thành: ${task.title}`}
                         className="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand checkbox-pop cursor-pointer focus-ring"
                       />
                       <span
-                        className={`flex-1 line-clamp-1 transition-all ${
-                          task.completed
+                        className={`flex-1 line-clamp-1 transition-all ${task.completed
                             ? 'line-through text-slate-400 dark:text-slate-500'
                             : 'font-medium text-slate-800 dark:text-slate-200'
-                        }`}
+                          }`}
                       >
                         {task.title}
                       </span>
-                      {task.urgent && !task.completed && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-500 font-bold">
-                          Gấp
-                        </span>
-                      )}
+
+                      {/* Remaining days badge and urgent indicator */}
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {task.rawDueDate && (() => {
+                          const remaining = getRemainingDaysInfo(task.rawDueDate, task.completed ? 'DONE' : 'TODO');
+                          return (
+                            <Tooltip content={`Hạn chót: ${remaining.formattedDue}`}>
+                              <span
+                                className={`text-[10px] px-1.5 py-0.5 rounded border font-medium flex items-center gap-1 ${remaining.colorClasses}`}
+                              >
+                                <span>{remaining.shortLabel}</span>
+                              </span>
+                            </Tooltip>
+                          );
+                        })()}
+                        {task.urgent && !task.completed && (
+                          <Tooltip content={PRIORITY_TOOLTIPS[task.priority] || PRIORITY_TOOLTIPS.URGENT}>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-500 font-bold cursor-help">
+                              Gấp
+                            </span>
+                          </Tooltip>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -240,8 +275,32 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
-              <span className="flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5" /> {tasks.length > 0 ? 'Deadline: Trong ngày' : 'Chưa có deadline'}
+              <span className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                {(() => {
+                  if (tasks.length === 0) return 'Chưa có deadline';
+                  const dueTodayCount = tasks.filter((t) => {
+                    if (!t.rawDueDate || t.completed) return false;
+                    const remaining = getRemainingDaysInfo(t.rawDueDate);
+                    return remaining.days === 0;
+                  }).length;
+                  const overdueCount = tasks.filter((t) => {
+                    if (!t.rawDueDate || t.completed) return false;
+                    const remaining = getRemainingDaysInfo(t.rawDueDate);
+                    return remaining.isOverdue;
+                  }).length;
+
+                  if (overdueCount > 0 && dueTodayCount > 0) {
+                    return <span className="text-rose-500 font-semibold">{overdueCount} việc quá hạn • {dueTodayCount} việc hạn hôm nay</span>;
+                  }
+                  if (overdueCount > 0) {
+                    return <span className="text-rose-500 font-semibold">{overdueCount} việc quá hạn</span>;
+                  }
+                  if (dueTodayCount > 0) {
+                    return <span className="text-amber-600 dark:text-amber-400 font-semibold">{dueTodayCount} việc hạn hôm nay</span>;
+                  }
+                  return 'Theo sát tiến độ công việc';
+                })()}
               </span>
               <Link to="/tasks" className="text-brand font-semibold hover:underline">
                 Xem tất cả
@@ -273,10 +332,11 @@ export const DashboardPage: React.FC = () => {
                   {pinnedNotes.map((note) => (
                     <Link
                       key={note.id}
-                      to="/notes"
-                      className="block p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 hover:border-brand/40 transition-colors"
+                      to={`/notes?id=${note.id}`}
+                      className="block p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 hover:border-brand/40 hover:bg-slate-100/70 dark:hover:bg-slate-800/90 transition-all cursor-pointer group"
+                      title="Bấm để xem chi tiết ghi chú này"
                     >
-                      <div className="font-bold text-xs line-clamp-1 text-slate-800 dark:text-slate-200">
+                      <div className="font-bold text-xs line-clamp-1 text-slate-800 dark:text-slate-200 group-hover:text-brand transition-colors">
                         {note.title}
                       </div>
                       <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">

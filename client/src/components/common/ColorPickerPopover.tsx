@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Pipette, Check } from 'lucide-react';
+import { Pipette, Check, X } from 'lucide-react';
 
 export const PASTEL_PALETTE = [
   { name: 'Hoa đào', hex: '#F43F5E' },
@@ -21,6 +21,7 @@ interface ColorPickerPopoverProps {
   onSelectColor: (color: string) => void;
   onClose: () => void;
   tagName?: string;
+  className?: string;
 }
 
 export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
@@ -28,6 +29,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
   onSelectColor,
   onClose,
   tagName = 'the-mau',
+  className = '',
 }) => {
   const [hexInput, setHexInput] = useState(currentColor || '#6366F1');
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -58,25 +60,39 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
     }
   };
 
+  const containerClasses = className
+    ? `p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl w-72 space-y-3.5 animate-in fade-in zoom-in-95 duration-150 ${className}`
+    : "absolute z-50 mt-2 p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl w-64 space-y-3 animate-in fade-in zoom-in-95 duration-150";
+
   return (
     <div
       ref={popoverRef}
-      className="absolute z-50 mt-2 p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl w-64 space-y-3 animate-in fade-in zoom-in-95 duration-150"
+      className={containerClasses}
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-        <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Chọn Màu Thẻ</span>
-        {/* Preview badge */}
-        <span
-          className="text-[11px] font-semibold px-2 py-0.5 rounded-md border"
-          style={{
-            backgroundColor: `${hexInput}20`,
-            borderColor: `${hexInput}40`,
-            color: hexInput,
-          }}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Chọn Màu Thẻ</span>
+          {/* Preview badge */}
+          <span
+            className="text-[11px] font-semibold px-2 py-0.5 rounded-md border"
+            style={{
+              backgroundColor: `${hexInput}20`,
+              borderColor: `${hexInput}40`,
+              color: hexInput,
+            }}
+          >
+            #{tagName}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Đóng bảng màu"
+          className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
         >
-          #{tagName}
-        </span>
+          <X className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Pastel Swatches Grid (2 rows x 6 cols) */}

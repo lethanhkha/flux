@@ -1,0 +1,117 @@
+export interface RemainingDaysResult {
+  label: string;
+  shortLabel: string;
+  variant: 'overdue' | 'today' | 'tomorrow' | 'upcoming' | 'done' | 'none';
+  colorClasses: string;
+  isOverdue: boolean;
+  days: number | null;
+  formattedDue: string;
+}
+
+export const PRIORITY_TOOLTIPS = {
+  URGENT: 'Khẩn cấp: Deadline sát nút (trong ngày / dưới 24h) hoặc có rủi ro nghiêm trọng nếu bị chậm trễ. Cần ưu tiên xử lý ngay lập tức!',
+  HIGH: 'Ưu tiên cao: Công việc quan trọng cần hoàn thành sớm trong tuần, ảnh hưởng lớn đến tiến độ chung.',
+  MEDIUM: 'Trung bình: Công việc theo kế hoạch định kỳ, giải quyết theo tiến độ thông thường.',
+  LOW: 'Thấp: Công việc phụ hoặc có thể linh hoạt dời lại khi rảnh, không gây áp lực thời gian.',
+};
+
+/**
+ * Calculates accurate calendar days remaining until task deadline
+ */
+export function getRemainingDaysInfo(
+  rawDueDate?: string | null,
+  status?: string
+): RemainingDaysResult {
+  if (status === 'DONE') {
+    return {
+      label: 'Đã xong',
+      shortLabel: 'Đã xong',
+      variant: 'done',
+      colorClasses: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800',
+      isOverdue: false,
+      days: 0,
+      formattedDue: rawDueDate ? new Date(rawDueDate).toLocaleString('vi-VN') : 'Đã hoàn tất',
+    };
+  }
+
+  if (!rawDueDate) {
+    return {
+      label: 'Không thời hạn',
+      shortLabel: 'Không hạn',
+      variant: 'none',
+      colorClasses: 'text-slate-400 bg-slate-100 dark:bg-slate-800/60 border-slate-200 dark:border-slate-800',
+      isOverdue: false,
+      days: null,
+      formattedDue: 'Không có thời hạn',
+    };
+  }
+
+  const dueDate = new Date(rawDueDate);
+  if (isNaN(dueDate.getTime())) {
+    return {
+      label: 'Không hợp lệ',
+      shortLabel: 'Lỗi hạn',
+      variant: 'none',
+      colorClasses: 'text-slate-400 bg-slate-100 dark:bg-slate-800/60 border-slate-200 dark:border-slate-800',
+      isOverdue: false,
+      days: null,
+      formattedDue: 'Thời hạn không hợp lệ',
+    };
+  }
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dueDayOnly = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+
+  const diffTime = dueDayOnly.getTime() - today.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+  const timeString = dueDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  const dateString = dueDate.toLocaleDateString('vi-VN');
+
+  if (diffDays < 0) {
+    const overdueCount = Math.abs(diffDays);
+    return {
+      label: `Quá hạn ${overdueCount} ngày`,
+      shortLabel: `Trễ ${overdueCount}d`,
+      variant: 'overdue',
+      colorClasses: 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900 font-bold',
+      isOverdue: true,
+      days: diffDays,
+      formattedDue: `${timeString} ${dateString}`,
+    };
+  }
+
+  if (diffDays === 0) {
+    return {
+      label: `Hạn hôm nay (${timeString})`,
+      shortLabel: `Hôm nay ${timeString}`,
+      variant: 'today',
+      colorClasses: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900 font-bold',
+      isOverdue: false,
+      days: 0,
+      formattedDue: `${timeString} hôm nay`,
+    };
+  }
+
+  if (diffDays === 1) {
+    return {
+      label: `Còn 1 ngày (Ngày mai)`,
+      shortLabel: `Còn 1 ngày`,
+      variant: 'tomorrow',
+      colorClasses: 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-900 font-semibold',
+      isOverdue: false,
+      days: 1,
+      formattedDue: `${timeString} ngày mai (${dateString})`,
+    };
+  }
+
+  return {
+    label: `Còn ${diffDays} ngày`,
+    shortLabel: `Còn ${diffDays}d`,
+    variant: 'upcoming',
+    colorClasses: 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 border-sky-200 dark:border-sky-900',
+    isOverdue: false,
+    days: diffDays,
+    formattedDue: `${timeString} ngày ${dateString}`,
+  };
+}
