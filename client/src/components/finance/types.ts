@@ -32,8 +32,9 @@ export interface CategoryItem {
 
 export interface DeleteModalState {
   isOpen: boolean;
-  type: 'TRANSACTION' | 'CATEGORY' | null;
+  type: 'TRANSACTION' | 'CATEGORY' | 'WALLET' | null;
   targetTx?: TransactionItem;
   targetCategory?: CategoryItem;
+  targetWallet?: WalletItem;
   isLoading: boolean;
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wallet, Plus, Star } from 'lucide-react';
+import { Wallet, Plus, Star, Edit3, Trash2 } from 'lucide-react';
 import { WalletItem } from './types';
 import { formatCurrency } from '../../lib/utils';
 import { Tooltip, InfoTooltip } from '../common/Tooltip';
@@ -9,6 +9,8 @@ interface WalletListProps {
   isLoading?: boolean;
   onOpenAddWallet?: () => void;
   onSetDefaultWallet?: (walletId: string) => void;
+  onEditWallet?: (wallet: WalletItem) => void;
+  onDeleteWallet?: (wallet: WalletItem) => void;
 }
 
 export const WalletList: React.FC<WalletListProps> = ({
@@ -16,6 +18,8 @@ export const WalletList: React.FC<WalletListProps> = ({
   isLoading = false,
   onOpenAddWallet,
   onSetDefaultWallet,
+  onEditWallet,
+  onDeleteWallet,
 }) => {
   return (
     <div className="space-y-3">
@@ -121,9 +125,35 @@ export const WalletList: React.FC<WalletListProps> = ({
                     )}
                   </div>
                 </div>
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                   <div className="text-xl font-extrabold tabular-nums text-slate-900 dark:text-slate-100">
                     {formatCurrency(w.balance)}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {onEditWallet && (
+                      <Tooltip content="Chỉnh sửa thông tin ví">
+                        <button
+                          type="button"
+                          onClick={() => onEditWallet(w)}
+                          aria-label={`Chỉnh sửa ví: ${w.name}`}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-brand hover:bg-brand/10 transition-colors cursor-pointer focus-ring"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                      </Tooltip>
+                    )}
+                    {onDeleteWallet && (
+                      <Tooltip content="Xóa ví này">
+                        <button
+                          type="button"
+                          onClick={() => onDeleteWallet(w)}
+                          aria-label={`Xóa ví: ${w.name}`}
+                          className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer focus-ring"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </Tooltip>
+                    )}
                   </div>
                 </div>
               </div>

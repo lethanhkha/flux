@@ -87,6 +87,19 @@ export class FinanceService {
           where: { userId },
           data: { isDefault: false },
         });
+      } else if (input.isDefault === false && wallet.isDefault) {
+        const anotherWallet = await tx.wallet.findFirst({
+          where: { userId, id: { not: walletId } },
+          orderBy: { createdAt: 'asc' },
+        });
+        if (anotherWallet) {
+          await tx.wallet.update({
+            where: { id: anotherWallet.id },
+            data: { isDefault: true },
+          });
+        } else {
+          input.isDefault = true;
+        }
       }
 
       return tx.wallet.update({
@@ -128,20 +141,33 @@ export class FinanceService {
   }
 
   /**
-   * 4. Delete a wallet (only if no transactions attached)
+   * 4. Delete a wallet (only if no transactions attached and not the only wallet)
    */
   async deleteWallet(userId: string, walletId: string) {
     const wallet = await prisma.wallet.findFirst({
       where: { id: walletId, userId },
-      include: { _count: { select: { transactions: true } } },
+      include: {
+        _count: {
+          select: {
+            transactions: true,
+            transfersIn: true,
+          },
+        },
+      },
     });
 
     if (!wallet) {
       throw new AppError('Không tìm thấy ví.', 404);
     }
 
-    if (wallet._count.transactions > 0) {
-      throw new AppError('Ví này đang chứa lịch sử giao dịch. Không thể xóa.', 400);
+    const totalWallets = await prisma.wallet.count({ where: { userId } });
+    if (totalWallets <= 1) {
+      throw new AppError('Bạn không thể xóa ví duy nhất còn lại. Hệ thống yêu cầu ít nhất 1 ví hoạt động.', 400);
+    }
+
+    const totalTxs = (wallet._count.transactions || 0) + (wallet._count.transfersIn || 0);
+    if (totalTxs > 0) {
+      throw new AppError(`Ví này đang chứa ${totalTxs} giao dịch. Không thể xóa ví đang có lịch sử giao dịch.`, 400);
     }
 
     await prisma.$transaction(async (tx) => {

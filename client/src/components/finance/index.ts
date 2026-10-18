@@ -4,6 +4,7 @@ export * from './WalletList';
 export * from './TransactionList';
 export * from './TransferModal';
 export * from './AddWalletModal';
+export * from './EditWalletModal';
 export * from './AddTransactionModal';
 export * from './EditTransactionModal';
 export * from './CategoryModal';

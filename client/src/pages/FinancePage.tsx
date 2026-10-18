@@ -15,6 +15,7 @@ import {
   TransactionList,
   TransferModal,
   AddWalletModal,
+  EditWalletModal,
   AddTransactionModal,
   EditTransactionModal,
   CategoryModal,
@@ -30,6 +31,8 @@ export const FinancePage: React.FC = () => {
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isAddWalletModalOpen, setIsAddWalletModalOpen] = useState(false);
+  const [isEditWalletModalOpen, setIsEditWalletModalOpen] = useState(false);
+  const [editingWallet, setEditingWallet] = useState<WalletItem | null>(null);
   const [isAddTxModalOpen, setIsAddTxModalOpen] = useState(false);
   const [isEditTxModalOpen, setIsEditTxModalOpen] = useState(false);
   const [editingTx, setEditingTx] = useState<TransactionItem | null>(null);
@@ -323,6 +326,34 @@ export const FinancePage: React.FC = () => {
     });
   };
 
+  const handleOpenEditWallet = (wallet: WalletItem) => {
+    setEditingWallet(wallet);
+    setIsEditWalletModalOpen(true);
+  };
+
+  const handleWalletUpdated = (updatedWallet: WalletItem) => {
+    setWallets((prev) =>
+      prev.map((w) => {
+        if (w.id === updatedWallet.id) return updatedWallet;
+        if (updatedWallet.isDefault) return { ...w, isDefault: false };
+        return w;
+      })
+    );
+  };
+
+  const handleRequestDeleteWallet = (wallet: WalletItem) => {
+    if (wallets.length <= 1) {
+      toast.error('Bạn không thể xóa ví duy nhất còn lại. Hệ thống yêu cầu ít nhất 1 ví.');
+      return;
+    }
+    setDeleteModalState({
+      isOpen: true,
+      type: 'WALLET',
+      targetWallet: wallet,
+      isLoading: false,
+    });
+  };
+
   const handleConfirmDelete = async () => {
     if (deleteModalState.type === 'TRANSACTION' && deleteModalState.targetTx) {
       const tx = deleteModalState.targetTx;
@@ -350,6 +381,20 @@ export const FinancePage: React.FC = () => {
         window.dispatchEvent(new CustomEvent('flux:refresh-data'));
       } catch (err) {
         toast.error(getErrorMessage(err, 'Không thể xóa danh mục.'));
+        setDeleteModalState((prev) => ({ ...prev, isLoading: false }));
+      }
+    } else if (deleteModalState.type === 'WALLET' && deleteModalState.targetWallet) {
+      const wallet = deleteModalState.targetWallet;
+      setDeleteModalState((prev) => ({ ...prev, isLoading: true }));
+
+      try {
+        await apiClient.delete(`/finance/wallets/${wallet.id}`);
+        setWallets((prev) => prev.filter((w) => w.id !== wallet.id));
+        toast.success(`Đã xóa ví "${wallet.name}" thành công.`);
+        setDeleteModalState({ isOpen: false, type: null, isLoading: false });
+        window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+      } catch (err) {
+        toast.error(getErrorMessage(err, 'Không thể xóa ví.'));
         setDeleteModalState((prev) => ({ ...prev, isLoading: false }));
       }
     }
@@ -404,6 +449,8 @@ export const FinancePage: React.FC = () => {
           isLoading={isLoading}
           onOpenAddWallet={() => setIsAddWalletModalOpen(true)}
           onSetDefaultWallet={handleSetDefaultWallet}
+          onEditWallet={handleOpenEditWallet}
+          onDeleteWallet={handleRequestDeleteWallet}
         />
 
         {/* Transactions Section */}
@@ -437,6 +484,17 @@ export const FinancePage: React.FC = () => {
           isOpen={isAddWalletModalOpen}
           onClose={() => setIsAddWalletModalOpen(false)}
           onWalletCreated={handleWalletCreated}
+        />
+
+        {/* Edit Wallet Modal */}
+        <EditWalletModal
+          isOpen={isEditWalletModalOpen}
+          wallet={editingWallet}
+          onClose={() => {
+            setIsEditWalletModalOpen(false);
+            setEditingWallet(null);
+          }}
+          onWalletUpdated={handleWalletUpdated}
         />
 
         {/* Add Transaction Modal */}
@@ -492,11 +550,15 @@ export const FinancePage: React.FC = () => {
           title={
             deleteModalState.type === 'TRANSACTION'
               ? 'Xác Nhận Xóa Giao Dịch?'
+              : deleteModalState.type === 'WALLET'
+              ? 'Xác Nhận Xóa Ví Tiền?'
               : 'Xác Nhận Xóa Danh Mục?'
           }
           description={
             deleteModalState.type === 'TRANSACTION'
               ? 'Hành động này sẽ xóa vĩnh viễn giao dịch khỏi hệ thống. Số dư các ví liên quan sẽ tự động được hoàn trả chính xác.'
+              : deleteModalState.type === 'WALLET'
+              ? 'Hành động này sẽ xóa vĩnh viễn ví tiền khỏi hệ thống. Lưu ý: Chỉ có thể xóa ví chưa phát sinh giao dịch nào.'
               : 'Danh mục này sẽ bị xóa khỏi danh sách. Các giao dịch trước đây vẫn được bảo toàn dữ liệu.'
           }
           confirmText="Xác Nhận Xóa"
@@ -559,7 +621,38 @@ export const FinancePage: React.FC = () => {
                   {deleteModalState.targetCategory.type === 'INCOME' ? 'Khoản thu' : 'Khoản chi'}
                 </span>
               </div>
-            ) : null
+            ) : deleteModalState.type === 'WALLET' && deleteModalState.targetWallet ? (() => {
+              const { type: walletTypeLabel, icon: WalletIcon } = resolveWalletTypeAndIcon(
+                deleteModalState.targetWallet.icon,
+                deleteModalState.targetWallet.name
+              );
+              return (
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{
+                        backgroundColor: `${deleteModalState.targetWallet.color || '#3B82F6'}20`,
+                        color: deleteModalState.targetWallet.color || '#3B82F6',
+                      }}
+                    >
+                      <WalletIcon className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-bold text-slate-900 dark:text-slate-100 truncate">
+                        {deleteModalState.targetWallet.name}
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                        {walletTypeLabel} {deleteModalState.targetWallet.isDefault && '• Ví mặc định'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-sm font-extrabold text-slate-900 dark:text-slate-100 tabular-nums flex-shrink-0">
+                    {formatCurrency(deleteModalState.targetWallet.balance)}
+                  </div>
+                </div>
+              );
+            })() : null
           }
         />
       </div>
