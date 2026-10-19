@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import {
   Plus,
   Download,
@@ -8,13 +9,14 @@ import {
   ArrowRightLeft,
   Edit3,
   Trash2,
-  Receipt,
   RotateCcw,
 } from 'lucide-react';
 import { TransactionItem, CategoryItem } from './types';
 import { formatCurrency } from '../../lib/utils';
 import { PaginationControl, PaginationMeta } from '../common/PaginationControl';
 import { Tooltip, InfoTooltip } from '../common/Tooltip';
+import { EmptyTransactions, EmptySearch } from '../illustrations';
+import { staggerContainer, staggerItem } from '../../lib/motionTokens';
 
 interface TransactionListProps {
   transactions: TransactionItem[];
@@ -248,10 +250,8 @@ export const TransactionList: React.FC<TransactionListProps> = ({
             ))}
           </div>
         ) : transactions.length === 0 ? (
-          <div className="p-10 text-center bg-slate-50 dark:bg-slate-950/40 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-brand/10 text-brand flex items-center justify-center">
-              <Receipt className="w-6 h-6" />
-            </div>
+          <div className="p-10 text-center bg-slate-50 dark:bg-slate-950/40 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center space-y-4">
+            <EmptyTransactions width={170} height={135} />
             <div>
               <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200">
                 Chưa có giao dịch nào
@@ -263,7 +263,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
             <button
               type="button"
               onClick={onOpenAddTx}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold shadow-sm transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold shadow-sm transition-all cursor-pointer hover:scale-105 active:scale-95"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Thêm Giao Dịch Đầu Tiên</span>
@@ -271,6 +271,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
           </div>
         ) : filteredTransactions.length === 0 ? (
           <div className="p-8 text-center bg-slate-50 dark:bg-slate-950/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-400 space-y-3">
+            <EmptySearch width={130} height={100} />
             <p>Không tìm thấy giao dịch nào phù hợp với bộ lọc danh mục hoặc loại giao dịch.</p>
             <button
               type="button"
@@ -278,97 +279,107 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                 onFilterChange('ALL');
                 onSelectCategory('ALL');
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 font-semibold hover:border-brand/40 transition-colors cursor-pointer text-xs"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-brand font-semibold text-xs transition-colors cursor-pointer"
             >
-              <RotateCcw className="w-3.5 h-3.5 text-brand" />
+              <RotateCcw className="w-3.5 h-3.5" />
               <span>Đặt lại bộ lọc</span>
             </button>
           </div>
         ) : (
-          filteredTransactions.map((tx) => (
-            <div
-              key={tx.id}
-              className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4 hover:border-brand/40 transition-colors group"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div
-                  className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                    tx.type === 'INCOME'
-                      ? 'bg-emerald-500/10 text-emerald-600'
-                      : tx.type === 'EXPENSE'
-                      ? 'bg-rose-500/10 text-rose-500'
-                      : 'bg-brand/10 text-brand'
-                  }`}
-                >
-                  {tx.type === 'INCOME' && <ArrowDownRight className="w-5 h-5" />}
-                  {tx.type === 'EXPENSE' && <ArrowUpRight className="w-5 h-5" />}
-                  {tx.type === 'TRANSFER' && <ArrowRightLeft className="w-5 h-5" />}
-                </div>
-
-                <div className="min-w-0">
+          <motion.div
+            variants={staggerContainer}
+            initial="initial"
+            animate="animate"
+            className="space-y-2.5"
+          >
+            {filteredTransactions.map((tx) => (
+              <motion.div
+                key={tx.id}
+                variants={staggerItem}
+                layout
+                whileHover={{ y: -1 }}
+                className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4 hover:border-brand/40 transition-colors group"
+              >
+                <div className="flex items-center gap-3 min-w-0">
                   <div
-                    onClick={() =>
-                      onSelectCategory(
-                        selectedCategory === tx.category ? 'ALL' : tx.category
-                      )
-                    }
-                    className="font-bold text-xs text-slate-800 dark:text-slate-100 hover:text-brand transition-colors cursor-pointer truncate"
-                    title={`Lọc theo danh mục "${tx.category}"`}
-                  >
-                    {tx.category}
-                  </div>
-                  <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5 truncate">
-                    <span>{tx.date}</span>
-                    <span>•</span>
-                    <span className="truncate">
-                      {tx.type === 'TRANSFER' ? `${tx.wallet} → ${tx.destWallet}` : tx.wallet}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
-                <div className="text-right">
-                  <div
-                    className={`text-sm font-extrabold tabular-nums ${
+                    className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                       tx.type === 'INCOME'
-                        ? 'text-emerald-600 dark:text-emerald-400'
+                        ? 'bg-emerald-500/10 text-emerald-600'
                         : tx.type === 'EXPENSE'
-                        ? 'text-rose-500 dark:text-rose-400'
-                        : 'text-brand'
+                        ? 'bg-rose-500/10 text-rose-500'
+                        : 'bg-brand/10 text-brand'
                     }`}
                   >
-                    {tx.type === 'INCOME' ? `+${formatCurrency(tx.amount)}` : `-${formatCurrency(tx.amount)}`}
+                    {tx.type === 'INCOME' && <ArrowDownRight className="w-5 h-5" />}
+                    {tx.type === 'EXPENSE' && <ArrowUpRight className="w-5 h-5" />}
+                    {tx.type === 'TRANSFER' && <ArrowRightLeft className="w-5 h-5" />}
                   </div>
-                  <div className="text-[10px] text-slate-400 line-clamp-1 max-w-[140px] sm:max-w-[200px]">{tx.note}</div>
+
+                  <div className="min-w-0">
+                    <div
+                      onClick={() =>
+                        onSelectCategory(
+                          selectedCategory === tx.category ? 'ALL' : tx.category
+                        )
+                      }
+                      className="font-bold text-xs text-slate-800 dark:text-slate-100 hover:text-brand transition-colors cursor-pointer truncate"
+                      title={`Lọc theo danh mục "${tx.category}"`}
+                    >
+                      {tx.category}
+                    </div>
+                    <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5 truncate">
+                      <span>{tx.date}</span>
+                      <span>•</span>
+                      <span className="truncate">
+                        {tx.type === 'TRANSFER' ? `${tx.wallet} → ${tx.destWallet}` : tx.wallet}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Actions: Edit & Delete buttons */}
-                <div className="flex items-center gap-1 opacity-80 sm:opacity-40 group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100 transition-opacity">
-                  <Tooltip content="Chỉnh sửa giao dịch này">
-                    <button
-                      type="button"
-                      onClick={() => onOpenEditTx(tx)}
-                      aria-label={`Chỉnh sửa giao dịch ${tx.category}: ${formatCurrency(tx.amount)}`}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-brand hover:bg-brand/10 transition-colors cursor-pointer focus-ring"
+                <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+                  <div className="text-right">
+                    <div
+                      className={`text-sm font-extrabold tabular-nums ${
+                        tx.type === 'INCOME'
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : tx.type === 'EXPENSE'
+                          ? 'text-rose-500 dark:text-rose-400'
+                          : 'text-brand'
+                      }`}
                     >
-                      <Edit3 className="w-3.5 h-3.5" />
-                    </button>
-                  </Tooltip>
-                  <Tooltip content="Xóa giao dịch này">
-                    <button
-                      type="button"
-                      onClick={(e) => onRequestDeleteTx(tx, e)}
-                      aria-label={`Xóa giao dịch ${tx.category}: ${formatCurrency(tx.amount)}`}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer focus-ring"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </Tooltip>
+                      {tx.type === 'INCOME' ? `+${formatCurrency(tx.amount)}` : `-${formatCurrency(tx.amount)}`}
+                    </div>
+                    <div className="text-[10px] text-slate-400 line-clamp-1 max-w-[140px] sm:max-w-[200px]">{tx.note}</div>
+                  </div>
+
+                  {/* Actions: Edit & Delete buttons */}
+                  <div className="flex items-center gap-1 opacity-80 sm:opacity-40 group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100 transition-opacity">
+                    <Tooltip content="Chỉnh sửa giao dịch này">
+                      <button
+                        type="button"
+                        onClick={() => onOpenEditTx(tx)}
+                        aria-label={`Chỉnh sửa giao dịch ${tx.category}: ${formatCurrency(tx.amount)}`}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-brand hover:bg-brand/10 transition-colors cursor-pointer focus-ring"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="Xóa giao dịch này">
+                      <button
+                        type="button"
+                        onClick={(e) => onRequestDeleteTx(tx, e)}
+                        aria-label={`Xóa giao dịch ${tx.category}: ${formatCurrency(tx.amount)}`}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer focus-ring"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </Tooltip>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))
+              </motion.div>
+            ))}
+          </motion.div>
         )}
       </div>
 

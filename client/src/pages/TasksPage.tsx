@@ -16,13 +16,13 @@ import {
   AlignLeft,
   Edit3,
 } from 'lucide-react';
-import { AppLayout } from '../components/layout/AppLayout';
 import { toast } from 'sonner';
 import { PaginationControl, PaginationMeta } from '../components/common/PaginationControl';
 import { Modal } from '../components/common/Modal';
 import { TaskTagModal, TaskTagItem } from '../components/tasks/TaskTagModal';
 import { TagSelect } from '../components/notes/TagSelect';
 import { EditTaskModal } from '../components/tasks/EditTaskModal';
+import { EmptyTasks } from '../components/illustrations';
 import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
 import { Tooltip, InfoTooltip } from '../components/common/Tooltip';
 import { getRemainingDaysInfo, PRIORITY_TOOLTIPS } from '../lib/taskUtils';
@@ -458,8 +458,7 @@ export const TasksPage: React.FC = () => {
   };
 
   return (
-    <AppLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header Controls */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -699,8 +698,8 @@ export const TasksPage: React.FC = () => {
               ))}
             </div>
           ) : tasks.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center space-y-3">
-              <CheckSquare className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto" />
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-10 text-center space-y-4">
+              <EmptyTasks width={170} height={135} />
               <h3 className="font-bold text-sm text-slate-700 dark:text-slate-300">
                 {filter === 'ALL' && !selectedTag
                   ? 'Chưa có công việc nào trong danh sách'
@@ -1269,6 +1268,5 @@ export const TasksPage: React.FC = () => {
           }}
         />
       </div>
-    </AppLayout>
   );
 };

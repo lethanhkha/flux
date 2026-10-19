@@ -16,7 +16,6 @@ import {
   Check,
   Sparkles,
 } from 'lucide-react';
-import { AppLayout } from '../components/layout/AppLayout';
 import { ConfirmModal } from '../components/common/ConfirmModal';
 import { Modal } from '../components/common/Modal';
 import { PaginationControl, PaginationMeta } from '../components/common/PaginationControl';
@@ -27,6 +26,7 @@ import { MarkdownViewer } from '../components/notes/MarkdownViewer';
 import { EditNoteModal } from '../components/notes/EditNoteModal';
 import { Tooltip, InfoTooltip } from '../components/common/Tooltip';
 import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
+import { EmptyNotes, EmptySearch } from '../components/illustrations';
 import { toast } from 'sonner';
 
 interface NoteItem {
@@ -380,8 +380,7 @@ export const NotesPage: React.FC = () => {
   const filteredNotes = notes;
 
   return (
-    <AppLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header Controls */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -546,8 +545,12 @@ export const NotesPage: React.FC = () => {
               ))}
             </div>
           ) : filteredNotes.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center space-y-2">
-              <FileText className="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto" />
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-10 text-center space-y-4">
+              {notes.length === 0 ? (
+                <EmptyNotes width={170} height={135} />
+              ) : (
+                <EmptySearch width={130} height={100} />
+              )}
               <h3 className="font-bold text-sm text-slate-700 dark:text-slate-300">
                 {notes.length === 0 ? 'Chưa có ghi chú nào' : 'Không tìm thấy ghi chú nào'}
               </h3>
@@ -670,8 +673,12 @@ export const NotesPage: React.FC = () => {
               ))}
             </div>
           ) : filteredNotes.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center space-y-2">
-              <FileText className="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto" />
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-10 text-center space-y-4">
+              {notes.length === 0 ? (
+                <EmptyNotes width={170} height={135} />
+              ) : (
+                <EmptySearch width={130} height={100} />
+              )}
               <h3 className="font-bold text-sm text-slate-700 dark:text-slate-300">
                 {notes.length === 0 ? 'Chưa có ghi chú nào' : 'Không tìm thấy ghi chú nào'}
               </h3>
@@ -1142,6 +1149,5 @@ export const NotesPage: React.FC = () => {
           }}
         />
       </div>
-    </AppLayout>
   );
 };

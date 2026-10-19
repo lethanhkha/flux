@@ -58,6 +58,8 @@ uploads/
 # Design prototypes & mockups (internal preview only)
 designs/
 design-system/
+*.mp4
+flux-intro-video-40s.*
 
 # Local documentation & specifications (Private to local machine - not pushed to git)
 local_docs/

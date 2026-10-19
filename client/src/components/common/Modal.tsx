@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'motion/react';
+import { modalBackdropVariants, modalDialogVariants } from '../../lib/motionTokens';
 
 export interface ModalProps {
   isOpen: boolean;
@@ -28,7 +30,7 @@ export const Modal: React.FC<ModalProps> = ({
   disableClose = false,
   ariaLabelledBy,
 }) => {
-  // Lock body scroll when modal is active to prevent page scrolling underneath
+  // Lock body scroll when modal is active
   useEffect(() => {
     if (!isOpen) return;
 
@@ -49,25 +51,35 @@ export const Modal: React.FC<ModalProps> = ({
     };
   }, [isOpen, disableClose, onClose]);
 
-  if (!isOpen) return null;
-
   return createPortal(
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={ariaLabelledBy}
-      onClick={() => {
-        if (!disableClose) onClose();
-      }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm modal-backdrop-animate cursor-pointer"
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full p-6 shadow-2xl modal-dialog-animate space-y-5 cursor-default max-h-[calc(100vh-2rem)] overflow-y-auto ${maxWidthMap[maxWidth]} ${className}`}
-      >
-        {children}
-      </div>
-    </div>,
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={ariaLabelledBy}
+          variants={modalBackdropVariants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          onClick={() => {
+            if (!disableClose) onClose();
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm cursor-pointer"
+        >
+          <motion.div
+            variants={modalDialogVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            onClick={(e) => e.stopPropagation()}
+            className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full p-6 shadow-2xl space-y-5 cursor-default max-h-[calc(100vh-2rem)] overflow-y-auto ${maxWidthMap[maxWidth]} ${className}`}
+          >
+            {children}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
     document.body
   );
 };

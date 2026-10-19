@@ -11,7 +11,6 @@ import {
   Copy,
   Check,
 } from 'lucide-react';
-import { AppLayout } from '../components/layout/AppLayout';
 import { useAuth } from '../contexts/AuthContext';
 import { apiClient, getErrorMessage } from '../api/client';
 import { toast } from 'sonner';
@@ -129,8 +128,7 @@ export const SettingsPage: React.FC = () => {
   };
 
   return (
-    <AppLayout>
-      <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto">
         {/* Header */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm space-y-1.5">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/10 text-brand text-xs font-bold mb-1">
@@ -518,6 +516,5 @@ export const SettingsPage: React.FC = () => {
           </div>
         )}
       </div>
-    </AppLayout>
   );
 };

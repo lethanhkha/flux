@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient, getErrorMessage } from '../api/client';
-import { AppLayout } from '../components/layout/AppLayout';
 import { ConfirmModal } from '../components/common/ConfirmModal';
 import { formatCurrency } from '../lib/utils';
 import { toast } from 'sonner';
@@ -429,8 +428,7 @@ export const FinancePage: React.FC = () => {
   };
 
   return (
-    <AppLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header & Balance Banner */}
         <FinanceHeader
           totalBalance={totalBalance}
@@ -656,6 +654,5 @@ export const FinancePage: React.FC = () => {
           }
         />
       </div>
-    </AppLayout>
   );
 };

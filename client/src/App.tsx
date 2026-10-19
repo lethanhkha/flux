@@ -1,6 +1,7 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AuthProvider } from './contexts/AuthContext';
+import { PageTransition } from './components/motion/PageTransition';
 
 // Pages
 import { LandingPage } from './pages/LandingPage';
@@ -16,67 +17,49 @@ import { TasksPage } from './pages/TasksPage';
 import { NotesPage } from './pages/NotesPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { AppLayout } from './components/layout/AppLayout';
+
+function AnimatedRoutes() {
+  const location = useLocation();
+
+  return (
+    <Routes location={location}>
+      {/* Public & Auth Routes */}
+      <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
+      <Route path="/get-started" element={<PageTransition><LandingPage /></PageTransition>} />
+      <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
+      <Route path="/register" element={<PageTransition><RegisterPage /></PageTransition>} />
+      <Route path="/auth/callback" element={<PageTransition><AuthCallbackPage /></PageTransition>} />
+      <Route path="/two-factor-auth" element={<PageTransition><TwoFactorPage /></PageTransition>} />
+      <Route path="/verify-email" element={<PageTransition><VerifyEmailPage /></PageTransition>} />
+      <Route path="/forgot-password" element={<PageTransition><ForgotPasswordPage /></PageTransition>} />
+
+      {/* Core Productivity & Workspace Routes (Persistent AppLayout + Directional Tab Transitions) */}
+      <Route
+        element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/finance" element={<FinancePage />} />
+        <Route path="/tasks" element={<TasksPage />} />
+        <Route path="/notes" element={<NotesPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+      </Route>
+
+      {/* Catch-all redirect */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
 
 export function App() {
   return (
     <AuthProvider>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <Routes>
-          {/* Public & Auth Routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/get-started" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/auth/callback" element={<AuthCallbackPage />} />
-          <Route path="/two-factor-auth" element={<TwoFactorPage />} />
-          <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-
-          {/* Core Productivity & Workspace Routes (Guarded) */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/finance"
-            element={
-              <ProtectedRoute>
-                <FinancePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/tasks"
-            element={
-              <ProtectedRoute>
-                <TasksPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/notes"
-            element={
-              <ProtectedRoute>
-                <NotesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <SettingsPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Catch-all redirect */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <AnimatedRoutes />
         <Toaster richColors position="top-right" closeButton />
       </BrowserRouter>
     </AuthProvider>

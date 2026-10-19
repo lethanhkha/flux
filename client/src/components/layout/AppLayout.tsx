@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import {
-  Sparkles,
   Sun,
   Moon,
   LayoutDashboard,
@@ -17,15 +17,54 @@ import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'sonner';
 import { QuickActionModal } from './QuickActionModal';
 import { Tooltip } from '../common/Tooltip';
+import { FluxLogo } from '../brand/FluxLogo';
+import { tabDirectionVariants, TAB_ORDER } from '../../lib/motionTokens';
 
 interface AppLayoutProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
+
+const getTabBasePath = (pathname: string): string => {
+  const base = pathname.split('?')[0].replace(/\/+$/, '') || '/';
+  if (base.startsWith('/dashboard')) return '/dashboard';
+  if (base.startsWith('/finance')) return '/finance';
+  if (base.startsWith('/tasks')) return '/tasks';
+  if (base.startsWith('/notes')) return '/notes';
+  if (base.startsWith('/settings')) return '/settings';
+  return base;
+};
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Track navbar tab navigation direction:
+  // 1 = moving right (forward in navbar order, e.g. Dashboard -> Finance)
+  // -1 = moving left (backward in navbar order, e.g. Finance -> Dashboard)
+  // 0 = neutral (initial load or non-tab route)
+  const currentTab = getTabBasePath(location.pathname);
+  const prevTabRef = useRef(currentTab);
+  const directionRef = useRef(0);
+
+  if (prevTabRef.current !== currentTab) {
+    const prevIndex = TAB_ORDER[prevTabRef.current];
+    const currentIndex = TAB_ORDER[currentTab];
+
+    if (prevIndex !== undefined && currentIndex !== undefined) {
+      directionRef.current = currentIndex > prevIndex ? 1 : -1;
+    } else {
+      directionRef.current = 0;
+    }
+    prevTabRef.current = currentTab;
+  }
+
+  const direction = directionRef.current;
+
+  // Scroll to top on tab switch
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [currentTab]);
 
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     return (
@@ -85,13 +124,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#0B0F19]/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link to="/dashboard" className="flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-xl bg-brand flex items-center justify-center text-white shadow-sm shadow-brand/30 hover:scale-105 transition-transform">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-brand to-indigo-600 bg-clip-text text-transparent">
-                Flux
-              </span>
+            <Link to="/dashboard" className="flex items-center gap-2.5 group">
+              <FluxLogo variant="compact" size="sm" />
             </Link>
 
             {/* Desktop Navigation Links */}
@@ -169,9 +203,21 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         </div>
       </header>
 
-      {/* 3. Main Content View Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 page-enter">
-        {children}
+      {/* 3. Main Content View Area with Directional Tab Transitions */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 overflow-x-hidden">
+        <AnimatePresence mode="wait" custom={direction} initial={false}>
+          <motion.div
+            key={currentTab}
+            custom={direction}
+            variants={tabDirectionVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className="w-full"
+          >
+            {children || <Outlet />}
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       {/* 4. Mobile Bottom Navigation Bar (Thumb Zone with Safe-Area) */}

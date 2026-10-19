@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { apiClient } from '../api/client';
 import { Link } from 'react-router-dom';
 import {
@@ -13,12 +14,13 @@ import {
   Sparkles,
   ChevronRight,
 } from 'lucide-react';
-import { AppLayout } from '../components/layout/AppLayout';
 import { formatCurrency } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import { Tooltip, InfoTooltip } from '../components/common/Tooltip';
 import { getRemainingDaysInfo, PRIORITY_TOOLTIPS } from '../lib/taskUtils';
+import { EmptyNotes } from '../components/illustrations';
+import { staggerContainer, staggerItem, springs } from '../lib/motionTokens';
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
@@ -120,8 +122,7 @@ export const DashboardPage: React.FC = () => {
   const completedCount = tasks.filter((t) => t.completed).length;
 
   return (
-    <AppLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Welcome Banner */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm">
           <div>
@@ -153,9 +154,18 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* 3 Core Widgets Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <motion.div
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+        >
           {/* Widget 1: Personal Finance */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm flex flex-col justify-between hover-lift">
+          <motion.div
+            variants={staggerItem}
+            whileHover={{ y: -4, transition: springs.snappy }}
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm flex flex-col justify-between"
+          >
             <div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 text-xs font-semibold">
@@ -200,10 +210,14 @@ export const DashboardPage: React.FC = () => {
                 </Link>
               </Tooltip>
             </div>
-          </div>
+          </motion.div>
 
           {/* Widget 2: Priority Tasks */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm flex flex-col justify-between hover-lift">
+          <motion.div
+            variants={staggerItem}
+            whileHover={{ y: -4, transition: springs.snappy }}
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm flex flex-col justify-between"
+          >
             <div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 text-xs font-semibold">
@@ -310,10 +324,14 @@ export const DashboardPage: React.FC = () => {
                 </Link>
               </Tooltip>
             </div>
-          </div>
+          </motion.div>
 
           {/* Widget 3: Pinned Notes */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm flex flex-col justify-between hover-lift">
+          <motion.div
+            variants={staggerItem}
+            whileHover={{ y: -4, transition: springs.snappy }}
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm flex flex-col justify-between"
+          >
             <div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-xs font-semibold">
@@ -328,9 +346,10 @@ export const DashboardPage: React.FC = () => {
               </div>
 
               {pinnedNotes.length === 0 ? (
-                <div className="mt-4 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-800 text-center space-y-1.5">
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Chưa có ghi chú nào được ghim 📌</p>
-                  <p className="text-[11px] text-slate-400">Ghim các ghi chú quan trọng để xem nhanh tại đây.</p>
+                <div className="mt-4 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-800 text-center space-y-2">
+                  <EmptyNotes width={110} height={85} />
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Chưa có ghi chú nào được ghim</p>
+                  <p className="text-[11px] text-slate-400">Ghim các ghi chú quan trọng từ Kho Tri Thức để theo dõi nhanh.</p>
                   <Tooltip content="Chuyển đến kho tri thức để tạo hoặc ghim ghi chú">
                     <Link to="/notes" className="inline-block pt-1 text-xs font-bold text-brand hover:underline">
                       + Mở kho tri thức
@@ -366,8 +385,8 @@ export const DashboardPage: React.FC = () => {
                 </Link>
               </Tooltip>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Feature Highlights & Quick Action */}
         <div className="p-6 rounded-3xl bg-gradient-to-r from-brand/10 via-brand/5 to-transparent border border-brand/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -391,6 +410,5 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </AppLayout>
   );
 };
