@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+  <defs>
+    <linearGradient id="fav-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+
+    <linearGradient id="fav-top" x1="0%" y1="0%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="60%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#818CF8"/>
+    </linearGradient>
+
+    <linearGradient id="fav-mid" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1"/>
+      <stop offset="60%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#34D399"/>
+    </linearGradient>
+
+    <linearGradient id="fav-stem" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="50%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Squircle Base -->
+  <rect width="64" height="64" rx="16" fill="url(#fav-bg)" />
+  <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="15.25" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" />
+
+  <!-- "F" Flow Symbol -->
+  <!-- Vertical Stem -->
+  <path
+    d="M17 14 C17 11.79 18.79 10 21 10 H27 C29.21 10 31 11.79 31 14 V48 C31 52.42 27.42 56 23 56 C19.69 56 17 53.31 17 50 Z"
+    fill="url(#fav-stem)"
+  />
+
+  <!-- Top Arm -->
+  <path
+    d="M25 10 H47 C51.42 10 55 13.58 55 18 C55 22.42 51.42 26 47 26 H31 V16 C31 12.69 28.31 10 25 10 Z"
+    fill="url(#fav-top)"
+  />
+
+  <!-- Mid Arm -->
+  <path
+    d="M27 28 H41 C44.31 28 47 30.69 47 34 C47 37.31 44.31 40 41 40 H31 V32 C31 29.79 29.21 28 27 28 Z"
+    fill="url(#fav-mid)"
+  />
+
+  <!-- Crisp Highlights & Light Dots -->
+  <circle cx="47" cy="18" r="2" fill="#ffffff" />
+  <circle cx="41" cy="34" r="1.8" fill="#ffffff" />
+  <circle cx="23" cy="50" r="1.6" fill="#34D399" />
+</svg>

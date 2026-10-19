@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Sparkles, ShieldCheck, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getErrorMessage } from '../api/client';
 import { GoogleAuthButton } from '../components/auth/GoogleAuthButton';
 import { TurnstileWidget, TurnstileWidgetRef } from '../components/common/TurnstileWidget';
+import { FluxLogo } from '../components/brand/FluxLogo';
 import { toast } from 'sonner';
 
 export const LoginPage: React.FC = () => {
@@ -71,12 +72,7 @@ export const LoginPage: React.FC = () => {
       {/* Header */}
       <header className="py-6 px-4 max-w-7xl mx-auto w-full flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="h-9 w-9 rounded-xl bg-brand flex items-center justify-center text-white shadow-sm shadow-brand/30">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-brand to-indigo-600 bg-clip-text text-transparent">
-            Flux
-          </span>
+          <FluxLogo variant="compact" size="sm" />
         </Link>
         <div className="text-xs text-slate-500">
           Chưa có tài khoản?{' '}

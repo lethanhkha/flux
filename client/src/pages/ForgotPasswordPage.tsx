@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Sparkles, KeyRound, Mail, Lock, ArrowLeft, ArrowRight } from 'lucide-react';
+import { KeyRound, Mail, Lock, ArrowLeft, ArrowRight } from 'lucide-react';
 import { apiClient, getErrorMessage } from '../api/client';
 import { TurnstileWidget, TurnstileWidgetRef } from '../components/common/TurnstileWidget';
+import { FluxLogo } from '../components/brand/FluxLogo';
 import { toast } from 'sonner';
 
 export const ForgotPasswordPage: React.FC = () => {
@@ -69,12 +70,7 @@ export const ForgotPasswordPage: React.FC = () => {
       {/* Header */}
       <header className="py-6 px-4 max-w-7xl mx-auto w-full flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="h-9 w-9 rounded-xl bg-brand flex items-center justify-center text-white shadow-sm shadow-brand/30">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-brand to-indigo-600 bg-clip-text text-transparent">
-            Flux
-          </span>
+          <FluxLogo variant="compact" size="sm" />
         </Link>
         <Link to="/login" className="text-xs text-slate-500 hover:text-brand flex items-center gap-1 font-semibold">
           <ArrowLeft className="w-3.5 h-3.5" />

@@ -1,0 +1,27 @@
+{
+  "name": "Flux — Personal Productivity & Financial Workspace",
+  "short_name": "Flux",
+  "description": "Không gian làm việc cá nhân hợp nhất: Quản lý Tài chính thông minh, Làm chủ Công việc và Trạm Ý tưởng ghi chú Markdown.",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#6366F1",
+  "background_color": "#0B0F19",
+  "display": "standalone",
+  "start_url": "/"
+}

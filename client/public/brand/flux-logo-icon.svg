@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" fill="none">
+  <defs>
+    <!-- Top Ribbon: Sky to Indigo -->
+    <linearGradient id="flux-icon-top" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="50%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#818CF8"/>
+    </linearGradient>
+
+    <!-- Mid Ribbon: Indigo to Emerald -->
+    <linearGradient id="flux-icon-mid" x1="0%" y1="0%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#6366F1"/>
+      <stop offset="60%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#34D399"/>
+    </linearGradient>
+
+    <!-- Stem Curve: Sky to Emerald -->
+    <linearGradient id="flux-icon-stem" x1="20%" y1="0%" x2="30%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="45%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+
+    <filter id="flux-icon-shadow" x="-20%" y="-20%" width="140%" height="140%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#6366F1" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#flux-icon-shadow)">
+    <!-- Vertical Backbone Wave -->
+    <path
+      d="M18 10 C18 6.686 20.686 4 24 4 H34 C37.314 4 40 6.686 40 10 V78 C40 84.627 34.627 90 28 90 C22.477 90 18 85.523 18 80 Z"
+      fill="url(#flux-icon-stem)"
+    />
+
+    <!-- Top Dynamic Arm (Velocity Stream) -->
+    <path
+      d="M30 4 H74 C81.732 4 88 10.268 88 18 C88 24.627 82.627 30 76 30 H40 V14 C40 8.477 35.523 4 30 4 Z"
+      fill="url(#flux-icon-top)"
+    />
+    <!-- Specular highlight -->
+    <path
+      d="M38 6 H74 C80 6 85 11 86 17 C84 9 78 5 70 5 H38 Z"
+      fill="#ffffff"
+      opacity="0.45"
+    />
+
+    <!-- Middle Dynamic Arm (Liquidity & Growth Stream) -->
+    <path
+      d="M34 38 H64 C69.523 38 74 42.477 74 48 C74 53.523 69.523 58 64 58 H40 V44 C40 40.686 37.314 38 34 38 Z"
+      fill="url(#flux-icon-mid)"
+    />
+
+    <!-- Energy Particle accents -->
+    <circle cx="74" cy="18" r="3" fill="#ffffff" opacity="0.9" />
+    <circle cx="64" cy="48" r="2.5" fill="#ffffff" opacity="0.9" />
+    <circle cx="28" cy="80" r="2.5" fill="#34D399" opacity="0.9" />
+  </g>
+</svg>
