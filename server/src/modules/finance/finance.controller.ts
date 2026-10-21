@@ -8,6 +8,8 @@ import {
   transferMoneySchema,
   createCategorySchema,
   updateCategorySchema,
+  getTransactionsQuerySchema,
+  getFinanceSummaryQuerySchema,
 } from './finance.schema';
 
 export class FinanceController {
@@ -64,9 +66,33 @@ export class FinanceController {
 
   async getFinanceOverview(req: Request, res: Response, next: NextFunction) {
     try {
-      const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
-      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
-      const overview = await financeService.getFinanceOverview(req.user!.userId, page, limit);
+      const {
+        page,
+        limit,
+        month,
+        year,
+        startDate,
+        endDate,
+        allTime,
+        walletId,
+        category,
+        type,
+        search,
+      } = req.query;
+
+      const overview = await financeService.getFinanceOverview(req.user!.userId, {
+        page: page ? parseInt(page as string, 10) : 1,
+        limit: limit ? parseInt(limit as string, 10) : 20,
+        month: month ? parseInt(month as string, 10) : undefined,
+        year: year ? parseInt(year as string, 10) : undefined,
+        startDate: startDate as string,
+        endDate: endDate as string,
+        allTime: allTime === 'true',
+        walletId: walletId as string,
+        category: category as string,
+        type: type as any,
+        search: search as string,
+      });
       res.status(200).json({ status: 'success', data: overview });
     } catch (error) {
       next(error);
@@ -75,14 +101,10 @@ export class FinanceController {
 
   async getTransactions(req: Request, res: Response, next: NextFunction) {
     try {
-      const { walletId, type, category, limit, offset, page } = req.query;
+      const validated = getTransactionsQuerySchema.parse(req.query);
       const result = await financeService.getTransactions(req.user!.userId, {
-        walletId: walletId as string,
-        type: type as any,
-        category: category as string,
-        limit: limit ? parseInt(limit as string, 10) : undefined,
-        offset: offset ? parseInt(offset as string, 10) : undefined,
-        page: page ? parseInt(page as string, 10) : undefined,
+        ...validated,
+        allTime: req.query.allTime === 'true',
       });
       res.status(200).json({ status: 'success', data: result });
     } catch (error) {
@@ -138,7 +160,11 @@ export class FinanceController {
 
   async getSummary(req: Request, res: Response, next: NextFunction) {
     try {
-      const summary = await financeService.getFinanceSummary(req.user!.userId);
+      const validated = getFinanceSummaryQuerySchema.parse(req.query);
+      const summary = await financeService.getFinanceSummary(req.user!.userId, {
+        ...validated,
+        allTime: req.query.allTime === 'true',
+      });
       res.status(200).json({ status: 'success', data: summary });
     } catch (error) {
       next(error);

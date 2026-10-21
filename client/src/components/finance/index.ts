@@ -9,3 +9,5 @@ export * from './AddTransactionModal';
 export * from './EditTransactionModal';
 export * from './CategoryModal';
 export * from './walletUtils';
+export * from './PeriodSelector';
+export * from './FilterInsightCard';

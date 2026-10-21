@@ -9,6 +9,7 @@ interface FinanceHeaderProps {
   monthlyIncome?: number;
   monthlyExpense?: number;
   isLoading?: boolean;
+  periodLabel?: string;
   onOpenCategoryModal: () => void;
   onOpenTransferModal: () => void;
   onOpenAddWalletModal: () => void;
@@ -20,11 +21,16 @@ export const FinanceHeader: React.FC<FinanceHeaderProps> = ({
   monthlyIncome = 0,
   monthlyExpense = 0,
   isLoading = false,
+  periodLabel = 'tháng này',
   onOpenCategoryModal,
   onOpenTransferModal,
   onOpenAddWalletModal,
 }) => {
   const hasMonthlyActivity = monthlyIncome > 0 || monthlyExpense > 0;
+  const savingsRate =
+    monthlyIncome > 0 && netCashflow > 0
+      ? Math.round((netCashflow / monthlyIncome) * 100)
+      : 0;
 
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -52,23 +58,28 @@ export const FinanceHeader: React.FC<FinanceHeaderProps> = ({
           ) : !hasMonthlyActivity ? (
             <div className="flex items-center gap-1">
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold flex items-center gap-1">
-                <Minus className="w-3 h-3" /> 0 ₫ biến động tháng này
+                <Minus className="w-3 h-3" /> 0 ₫ biến động ({periodLabel})
               </span>
-              <InfoTooltip content="Chưa ghi nhận biến động thu chi nào trong tháng hiện tại." />
+              <InfoTooltip content={`Chưa ghi nhận biến động thu chi nào trong ${periodLabel}.`} />
             </div>
           ) : netCashflow >= 0 ? (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-                <TrendingUp className="w-3 h-3" /> +{formatCurrency(netCashflow)} thặng dư tháng này
+                <TrendingUp className="w-3 h-3" /> +{formatCurrency(netCashflow)} thặng dư ({periodLabel})
               </span>
-              <InfoTooltip content="Chênh lệch ròng dương giữa tổng Thu nhập và Chi tiêu trong tháng này (Thu > Chi)." />
+              {savingsRate > 0 && (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold">
+                  Tiết kiệm {savingsRate}%
+                </span>
+              )}
+              <InfoTooltip content={`Chênh lệch ròng dương giữa tổng Thu nhập (${formatCurrency(monthlyIncome)}) và Chi tiêu (${formatCurrency(monthlyExpense)}) trong ${periodLabel} (Thu > Chi).`} />
             </div>
           ) : (
             <div className="flex items-center gap-1">
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-500 dark:text-rose-400 font-bold flex items-center gap-1">
-                <TrendingDown className="w-3 h-3" /> -{formatCurrency(Math.abs(netCashflow))} thâm hụt tháng này
+                <TrendingDown className="w-3 h-3" /> -{formatCurrency(Math.abs(netCashflow))} thâm hụt ({periodLabel})
               </span>
-              <InfoTooltip content="Chênh lệch ròng âm giữa tổng Thu nhập và Chi tiêu trong tháng này (Chi > Thu)." />
+              <InfoTooltip content={`Chênh lệch ròng âm giữa tổng Thu nhập (${formatCurrency(monthlyIncome)}) và Chi tiêu (${formatCurrency(monthlyExpense)}) trong ${periodLabel} (Chi > Thu).`} />
             </div>
           )}
         </div>

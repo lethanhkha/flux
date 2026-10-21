@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { apiClient, getErrorMessage } from '../api/client';
 import { ConfirmModal } from '../components/common/ConfirmModal';
 import { formatCurrency } from '../lib/utils';
@@ -18,13 +18,25 @@ import {
   AddTransactionModal,
   EditTransactionModal,
   CategoryModal,
+  PeriodFilter,
+  FilterInsightStats,
+  PeriodSummary,
   resolveWalletTypeAndIcon,
 } from '../components/finance';
 import { PaginationMeta } from '../components/common/PaginationControl';
 
 export const FinancePage: React.FC = () => {
+  const now = new Date();
+  const [period, setPeriod] = useState<PeriodFilter>({
+    mode: 'MONTH',
+    month: now.getMonth() + 1,
+    year: now.getFullYear(),
+  });
+
   const [filter, setFilter] = useState<'ALL' | 'INCOME' | 'EXPENSE' | 'TRANSFER'>('ALL');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [selectedWalletId, setSelectedWalletId] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Modals visibility state
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
@@ -56,6 +68,21 @@ export const FinancePage: React.FC = () => {
     monthlyExpense: 0,
     netCashflow: 0,
   });
+
+  const [periodSummary, setPeriodSummary] = useState<PeriodSummary>({
+    income: 0,
+    expense: 0,
+    netCashflow: 0,
+  });
+
+  const [filteredStats, setFilteredStats] = useState<FilterInsightStats>({
+    totalAmount: 0,
+    count: 0,
+    averageAmount: 0,
+    maxAmount: 0,
+    percentageOfPeriodExpense: 0,
+  });
+
   const [txPagination, setTxPagination] = useState<PaginationMeta>({
     page: 1,
     limit: 20,
@@ -72,14 +99,114 @@ export const FinancePage: React.FC = () => {
     isLoading: false,
   });
 
-  // Consolidated Load: Single roundtrip (T2.3) replacing 4 separate calls
+  // Friendly human readable period label
+  const periodLabel = useMemo(() => {
+    if (period.mode === 'ALL') return 'toàn thời gian';
+    if (period.mode === 'RANGE') {
+      if (period.startDate && period.endDate) {
+        return `${period.startDate} → ${period.endDate}`;
+      }
+      return 'khoảng ngày tùy chọn';
+    }
+    return `Tháng ${period.month}/${period.year}`;
+  }, [period]);
+
+  // Fetch transactions with full server-side filters and DB-level stats
+  const fetchTransactions = async (
+    page = 1,
+    currentPeriod = period,
+    currentFilter = filter,
+    currentCategory = selectedCategory,
+    currentWallet = selectedWalletId,
+    currentSearch = searchQuery
+  ) => {
+    try {
+      setIsLoading(true);
+      const params: Record<string, any> = {
+        page,
+        limit: 20,
+      };
+
+      if (currentPeriod.mode === 'MONTH') {
+        params.month = currentPeriod.month;
+        params.year = currentPeriod.year;
+      } else if (currentPeriod.mode === 'RANGE') {
+        if (currentPeriod.startDate) params.startDate = currentPeriod.startDate;
+        if (currentPeriod.endDate) params.endDate = currentPeriod.endDate;
+      } else if (currentPeriod.mode === 'ALL') {
+        params.allTime = 'true';
+      }
+
+      if (currentFilter !== 'ALL') {
+        params.type = currentFilter;
+      }
+      if (currentCategory !== 'ALL') {
+        params.category = currentCategory;
+      }
+      if (currentWallet !== 'ALL') {
+        params.walletId = currentWallet;
+      }
+      if (currentSearch.trim()) {
+        params.search = currentSearch.trim();
+      }
+
+      const res = await apiClient.get('/finance/transactions', { params });
+      const rawData = res.data?.data;
+      const items = rawData?.items || (Array.isArray(rawData) ? rawData : []);
+
+      setTransactions(
+        items.map((tx: any) => ({
+          id: tx.id,
+          type: tx.type,
+          wallet: tx.wallet?.name || 'Ví',
+          walletId: tx.walletId,
+          destWallet: tx.destinationWallet?.name,
+          destWalletId: tx.destinationWalletId,
+          category: tx.category,
+          amount: parseFloat(tx.amount) || 0,
+          date: new Date(tx.transactionDate).toLocaleDateString('vi-VN'),
+          rawDate: tx.transactionDate ? new Date(tx.transactionDate).toISOString().slice(0, 10) : undefined,
+          note: tx.note || '',
+        }))
+      );
+
+      if (rawData?.pagination) {
+        setTxPagination(rawData.pagination);
+      }
+
+      if (rawData?.filteredStats) {
+        setFilteredStats(rawData.filteredStats);
+      }
+
+      if (rawData?.periodSummary) {
+        setPeriodSummary(rawData.periodSummary);
+        setSummary({
+          monthlyIncome: rawData.periodSummary.income,
+          monthlyExpense: rawData.periodSummary.expense,
+          netCashflow: rawData.periodSummary.netCashflow,
+        });
+      }
+    } catch {
+      // Degrade gracefully
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Consolidated Initial Load: Fetches wallets, categories, summary, and default monthly transactions
   const fetchFinanceData = async (page = 1) => {
     try {
       setIsLoading(true);
-      const res = await apiClient.get('/finance/overview', {
-        params: { page, limit: 20 },
-      });
+      const params: Record<string, any> = {
+        page,
+        limit: 20,
+      };
+      if (period.mode === 'MONTH') {
+        params.month = period.month;
+        params.year = period.year;
+      }
 
+      const res = await apiClient.get('/finance/overview', { params });
       const { wallets: rawWallets, categories: rawCategories, summary: rawSummary, transactions: rawTx } =
         res.data?.data || {};
 
@@ -121,13 +248,24 @@ export const FinancePage: React.FC = () => {
         if (rawTx.pagination) {
           setTxPagination(rawTx.pagination);
         }
+        if (rawTx.filteredStats) {
+          setFilteredStats(rawTx.filteredStats);
+        }
+        if (rawTx.periodSummary) {
+          setPeriodSummary(rawTx.periodSummary);
+          setSummary({
+            monthlyIncome: rawTx.periodSummary.income,
+            monthlyExpense: rawTx.periodSummary.expense,
+            netCashflow: rawTx.periodSummary.netCashflow,
+          });
+        }
       }
 
       if (Array.isArray(rawCategories)) {
         setCategories(rawCategories);
       }
 
-      if (rawSummary) {
+      if (rawSummary && !rawTx?.periodSummary) {
         setSummary({
           monthlyIncome: Number(rawSummary.monthlyIncome) || 0,
           monthlyExpense: Number(rawSummary.monthlyExpense) || 0,
@@ -135,7 +273,7 @@ export const FinancePage: React.FC = () => {
         });
       }
     } catch {
-      // Degrade gracefully if backend/network error occurs
+      // Degrade gracefully
     } finally {
       setIsLoading(false);
     }
@@ -144,52 +282,37 @@ export const FinancePage: React.FC = () => {
   useEffect(() => {
     fetchFinanceData(1);
     const handleRefresh = () => {
-      fetchFinanceData(txPagination.page);
+      fetchTransactions(txPagination.page, period, filter, selectedCategory, selectedWalletId, searchQuery);
     };
     window.addEventListener('flux:refresh-data', handleRefresh);
     return () => window.removeEventListener('flux:refresh-data', handleRefresh);
   }, []);
 
-  const handlePageChange = async (newPage: number) => {
-    try {
-      setIsLoading(true);
-      const res = await apiClient.get('/finance/transactions', {
-        params: { page: newPage, limit: 20 },
-      });
-      const rawTx = res.data?.data;
-      const items = rawTx?.items || (Array.isArray(rawTx) ? rawTx : []);
-      setTransactions(
-        items.map((tx: any) => ({
-          id: tx.id,
-          type: tx.type,
-          wallet: tx.wallet?.name || 'Ví',
-          walletId: tx.walletId,
-          destWallet: tx.destinationWallet?.name,
-          destWalletId: tx.destinationWalletId,
-          category: tx.category,
-          amount: parseFloat(tx.amount) || 0,
-          date: new Date(tx.transactionDate).toLocaleDateString('vi-VN'),
-          rawDate: tx.transactionDate ? new Date(tx.transactionDate).toISOString().slice(0, 10) : undefined,
-          note: tx.note || '',
-        }))
-      );
-      if (rawTx?.pagination) {
-        setTxPagination(rawTx.pagination);
-      }
-    } catch {
-      // Ignore
-    } finally {
-      setIsLoading(false);
+  // Re-fetch transactions whenever period, filter, category, wallet, or search query changes
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
     }
+    const timer = setTimeout(() => {
+      fetchTransactions(1, period, filter, selectedCategory, selectedWalletId, searchQuery);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [period, filter, selectedCategory, selectedWalletId, searchQuery]);
+
+  const handlePageChange = async (newPage: number) => {
+    fetchTransactions(newPage, period, filter, selectedCategory, selectedWalletId, searchQuery);
+  };
+
+  const handleClearAllFilters = () => {
+    setFilter('ALL');
+    setSelectedCategory('ALL');
+    setSelectedWalletId('ALL');
+    setSearchQuery('');
   };
 
   const totalBalance = wallets.reduce((acc, curr) => acc + curr.balance, 0);
-
-  const filteredTransactions = transactions.filter((tx) => {
-    if (filter !== 'ALL' && tx.type !== filter) return false;
-    if (selectedCategory !== 'ALL' && tx.category !== selectedCategory) return false;
-    return true;
-  });
 
   const handleTransfer = async (
     sourceWalletId: string,
@@ -283,6 +406,9 @@ export const FinancePage: React.FC = () => {
       prev.map((w) => (w.id === walletId ? { ...w, balance: w.balance + deltaBalance } : w))
     );
     setTransactions((prev) => [newTx, ...prev]);
+    // Refresh calculations and totals for the current period
+    fetchTransactions(1, period, filter, selectedCategory, selectedWalletId, searchQuery);
+    window.dispatchEvent(new CustomEvent('flux:refresh-data'));
   };
 
   const handleOpenEditTx = (tx: TransactionItem) => {
@@ -399,32 +525,62 @@ export const FinancePage: React.FC = () => {
     }
   };
 
-  const handleExportCSV = () => {
-    if (transactions.length === 0) {
-      toast.error('Không có giao dịch nào để xuất.');
-      return;
+  const handleExportCSV = async () => {
+    try {
+      toast.info('Đang chuẩn bị file CSV dữ liệu...');
+      const params: Record<string, any> = {
+        page: 1,
+        limit: 1000,
+      };
+      if (period.mode === 'MONTH') {
+        params.month = period.month;
+        params.year = period.year;
+      } else if (period.mode === 'RANGE') {
+        if (period.startDate) params.startDate = period.startDate;
+        if (period.endDate) params.endDate = period.endDate;
+      } else if (period.mode === 'ALL') {
+        params.allTime = 'true';
+      }
+      if (filter !== 'ALL') params.type = filter;
+      if (selectedCategory !== 'ALL') params.category = selectedCategory;
+      if (selectedWalletId !== 'ALL') params.walletId = selectedWalletId;
+      if (searchQuery.trim()) params.search = searchQuery.trim();
+
+      const res = await apiClient.get('/finance/transactions', { params });
+      const rawData = res.data?.data;
+      const items = rawData?.items || transactions;
+
+      if (!items || items.length === 0) {
+        toast.error('Không có giao dịch nào phù hợp để xuất.');
+        return;
+      }
+
+      const headers = ['Mã Giao Dịch', 'Loại', 'Ví Nguồn', 'Ví Đích', 'Danh Mục', 'Số Tiền (VND)', 'Ngày', 'Ghi Chú'];
+      const rows = items.map((tx: any) => [
+        tx.id,
+        tx.type,
+        `"${tx.wallet?.name || tx.wallet || ''}"`,
+        `"${tx.destinationWallet?.name || tx.destWallet || ''}"`,
+        `"${tx.category || ''}"`,
+        tx.amount,
+        `"${tx.transactionDate ? new Date(tx.transactionDate).toLocaleDateString('vi-VN') : tx.date || ''}"`,
+        `"${(tx.note || '').replace(/"/g, '""')}"`,
+      ]);
+
+      const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r: any) => r.join(','))].join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const fileSuffix = period.mode === 'MONTH' ? `thang${period.month}_${period.year}` : new Date().toISOString().slice(0, 10);
+      link.setAttribute('download', `flux_giaodich_${fileSuffix}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success(`Đã xuất ${items.length} giao dịch ra file CSV thành công!`);
+    } catch {
+      toast.error('Không thể xuất file CSV.');
     }
-    const headers = ['Mã Giao Dịch', 'Loại', 'Ví Nguồn', 'Ví Đích', 'Danh Mục', 'Số Tiền (VND)', 'Ngày', 'Ghi Chú'];
-    const rows = transactions.map((tx) => [
-      tx.id,
-      tx.type,
-      `"${tx.wallet || ''}"`,
-      `"${tx.destWallet || ''}"`,
-      `"${tx.category || ''}"`,
-      tx.amount,
-      `"${tx.date || ''}"`,
-      `"${(tx.note || '').replace(/"/g, '""')}"`,
-    ]);
-    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `flux_transactions_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success('Đã xuất báo cáo giao dịch ra file CSV thành công!');
   };
 
   return (
@@ -435,6 +591,7 @@ export const FinancePage: React.FC = () => {
           netCashflow={summary.netCashflow}
           monthlyIncome={summary.monthlyIncome}
           monthlyExpense={summary.monthlyExpense}
+          periodLabel={periodLabel}
           isLoading={isLoading}
           onOpenCategoryModal={() => setIsCategoryModalOpen(true)}
           onOpenTransferModal={() => setIsTransferModalOpen(true)}
@@ -454,12 +611,23 @@ export const FinancePage: React.FC = () => {
         {/* Transactions Section */}
         <TransactionList
           transactions={transactions}
-          filteredTransactions={filteredTransactions}
+          filteredTransactions={transactions}
           categories={categories}
+          wallets={wallets}
           filter={filter}
           onFilterChange={setFilter}
           selectedCategory={selectedCategory}
           onSelectCategory={setSelectedCategory}
+          selectedWalletId={selectedWalletId}
+          onSelectWallet={setSelectedWalletId}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          period={period}
+          onPeriodChange={setPeriod}
+          periodSummary={periodSummary}
+          filteredStats={filteredStats}
+          periodLabel={periodLabel}
+          onClearAllFilters={handleClearAllFilters}
           onOpenAddTx={() => setIsAddTxModalOpen(true)}
           onExportCSV={handleExportCSV}
           onOpenEditTx={handleOpenEditTx}
@@ -501,6 +669,9 @@ export const FinancePage: React.FC = () => {
           onClose={() => setIsAddTxModalOpen(false)}
           wallets={wallets}
           categories={categories}
+          initialCategory={selectedCategory !== 'ALL' ? selectedCategory : undefined}
+          initialWalletId={selectedWalletId !== 'ALL' ? selectedWalletId : undefined}
+          initialType={filter === 'INCOME' || filter === 'EXPENSE' ? filter : undefined}
           onTransactionCreated={handleTransactionCreated}
           onOpenCategoryModal={() => {
             setIsAddTxModalOpen(false);

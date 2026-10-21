@@ -83,3 +83,28 @@ export type UpdateTransactionInput = z.infer<typeof updateTransactionSchema>;
 export type TransferMoneyInput = z.infer<typeof transferMoneySchema>;
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;
+
+export const getTransactionsQuerySchema = z.object({
+  page: z.string().optional().transform((v) => (v ? Math.max(parseInt(v, 10), 1) : 1)),
+  limit: z.string().optional().transform((v) => (v ? Math.min(Math.max(parseInt(v, 10), 1), 1000) : 20)),
+  offset: z.string().optional().transform((v) => (v ? Math.max(parseInt(v, 10), 0) : undefined)),
+  walletId: z.string().uuid('ID ví không hợp lệ').optional(),
+  type: z.enum(['INCOME', 'EXPENSE', 'TRANSFER', 'ALL']).optional(),
+  category: z.string().optional(),
+  search: z.string().max(100).optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  month: z.string().optional().transform((v) => (v ? parseInt(v, 10) : undefined)),
+  year: z.string().optional().transform((v) => (v ? parseInt(v, 10) : undefined)),
+});
+
+export type GetTransactionsQuery = z.infer<typeof getTransactionsQuerySchema>;
+
+export const getFinanceSummaryQuerySchema = z.object({
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  month: z.string().optional().transform((v) => (v ? parseInt(v, 10) : undefined)),
+  year: z.string().optional().transform((v) => (v ? parseInt(v, 10) : undefined)),
+});
+
+export type GetFinanceSummaryQuery = z.infer<typeof getFinanceSummaryQuerySchema>;

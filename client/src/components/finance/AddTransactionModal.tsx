@@ -17,6 +17,9 @@ interface AddTransactionModalProps {
     deltaBalance: number
   ) => void;
   onOpenCategoryModal: () => void;
+  initialCategory?: string;
+  initialWalletId?: string;
+  initialType?: 'EXPENSE' | 'INCOME';
 }
 
 export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
@@ -26,28 +29,49 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   categories,
   onTransactionCreated,
   onOpenCategoryModal,
+  initialCategory,
+  initialWalletId,
+  initialType,
 }) => {
   const [txType, setTxType] = useState<'EXPENSE' | 'INCOME'>('EXPENSE');
   const [txWalletId, setTxWalletId] = useState('');
   const [txAmount, setTxAmount] = useState('100000');
   const [txCategory, setTxCategory] = useState('');
+  const [txDate, setTxDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [txNote, setTxNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      if (wallets.length > 0 && (!txWalletId || !wallets.some((w) => w.id === txWalletId))) {
+      // 1. Pre-fill Wallet
+      if (initialWalletId && wallets.some((w) => w.id === initialWalletId)) {
+        setTxWalletId(initialWalletId);
+      } else if (wallets.length > 0 && (!txWalletId || !wallets.some((w) => w.id === txWalletId))) {
         const defaultWallet = wallets.find((w) => w.isDefault) || wallets[0];
         setTxWalletId(defaultWallet.id);
       }
-      const validCats = categories.filter((c) => c.type === txType);
-      if (validCats.length > 0 && !validCats.some((c) => c.name === txCategory)) {
+
+      // 2. Pre-fill Type
+      const targetType = initialType || 'EXPENSE';
+      setTxType(targetType);
+
+      // 3. Pre-fill Category
+      const validCats = categories.filter((c) => c.type === targetType);
+      if (initialCategory && initialCategory !== 'ALL' && categories.some((c) => c.name === initialCategory)) {
+        const matchedCat = categories.find((c) => c.name === initialCategory);
+        if (matchedCat) {
+          setTxType(matchedCat.type as 'EXPENSE' | 'INCOME');
+          setTxCategory(matchedCat.name);
+        }
+      } else if (validCats.length > 0 && !validCats.some((c) => c.name === txCategory)) {
         setTxCategory(validCats[0].name);
       } else if (validCats.length === 0) {
         setTxCategory('');
       }
+
+      setTxDate(new Date().toISOString().slice(0, 10));
     }
-  }, [isOpen, wallets, categories, txType]);
+  }, [isOpen, wallets, categories, initialCategory, initialWalletId, initialType]);
 
   // Keyboard accessibility: Close on Escape key
   useEffect(() => {
@@ -90,12 +114,15 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
     setIsSubmitting(true);
     let createdId = `tx-${Date.now()}`;
+    const targetDateObj = txDate ? new Date(`${txDate}T12:00:00Z`) : new Date();
+
     try {
       const res = await apiClient.post('/finance/transactions', {
         walletId: selectedWalletId,
         type: txType,
         amount: amt,
         category: txCategory,
+        transactionDate: targetDateObj.toISOString(),
         note: txNote || undefined,
       });
       if (res.data?.data?.id) {
@@ -115,8 +142,8 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
       walletId: selectedWalletId,
       category: txCategory,
       amount: amt,
-      date: new Date().toLocaleDateString('vi-VN'),
-      rawDate: new Date().toISOString().slice(0, 10),
+      date: targetDateObj.toLocaleDateString('vi-VN'),
+      rawDate: txDate || targetDateObj.toISOString().slice(0, 10),
       note: txNote,
     };
 
@@ -206,20 +233,35 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             </select>
           </div>
 
-          <div>
-            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-              Số tiền (VND)
-            </label>
-            <input
-              type="number"
-              required
-              min="1"
-              step="any"
-              placeholder="VD: 47857"
-              value={txAmount}
-              onChange={(e) => setTxAmount(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-base font-extrabold tabular-nums focus:outline-none focus:ring-2 focus:ring-brand"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+                Số tiền (VND)
+              </label>
+              <input
+                type="number"
+                required
+                min="1"
+                step="any"
+                placeholder="VD: 100000"
+                value={txAmount}
+                onChange={(e) => setTxAmount(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-base font-extrabold tabular-nums focus:outline-none focus:ring-2 focus:ring-brand"
+              />
+            </div>
+
+            <div>
+              <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+                Ngày giao dịch
+              </label>
+              <input
+                type="date"
+                required
+                value={txDate}
+                onChange={(e) => setTxDate(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-semibold focus:outline-none focus:ring-2 focus:ring-brand"
+              />
+            </div>
           </div>
 
           <div>

@@ -192,20 +192,79 @@ export class FinanceService {
   }
 
   /**
-   * 5. Get transactions with filters and pagination
+   * Helper: Parse date range filter into Date objects for Prisma query
+   */
+  private parseDateRange(filter?: {
+    startDate?: string;
+    endDate?: string;
+    month?: number;
+    year?: number;
+    allTime?: boolean;
+  }): { gte?: Date; lte?: Date } | undefined {
+    if (filter?.allTime || filter?.startDate === 'ALL') {
+      return undefined;
+    }
+
+    if (filter?.month && filter?.year) {
+      const start = new Date(filter.year, filter.month - 1, 1, 0, 0, 0, 0);
+      const end = new Date(filter.year, filter.month, 0, 23, 59, 59, 999);
+      return { gte: start, lte: end };
+    }
+
+    if (filter?.startDate || filter?.endDate) {
+      const range: { gte?: Date; lte?: Date } = {};
+      if (filter.startDate) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(filter.startDate)) {
+          const [y, m, d] = filter.startDate.split('-').map(Number);
+          range.gte = new Date(y, m - 1, d, 0, 0, 0, 0);
+        } else {
+          range.gte = new Date(filter.startDate);
+        }
+      }
+      if (filter.endDate) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(filter.endDate)) {
+          const [y, m, d] = filter.endDate.split('-').map(Number);
+          range.lte = new Date(y, m - 1, d, 23, 59, 59, 999);
+        } else {
+          range.lte = new Date(filter.endDate);
+        }
+      }
+      return range;
+    }
+
+    // Default: Current month
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    return { gte: startOfMonth, lte: endOfMonth };
+  }
+
+  /**
+   * 5. Get transactions with filters, pagination, and real-time aggregated insights
    */
   async getTransactions(
     userId: string,
     filter?: {
       walletId?: string;
       category?: string;
-      type?: 'INCOME' | 'EXPENSE' | 'TRANSFER';
+      type?: 'INCOME' | 'EXPENSE' | 'TRANSFER' | 'ALL';
       limit?: number;
       offset?: number;
       page?: number;
+      startDate?: string;
+      endDate?: string;
+      month?: number;
+      year?: number;
+      allTime?: boolean;
+      search?: string;
     }
   ) {
     const where: any = { userId };
+    const dateRange = this.parseDateRange(filter);
+
+    if (dateRange) {
+      where.transactionDate = dateRange;
+    }
 
     if (filter?.walletId) {
       where.OR = [
@@ -214,12 +273,27 @@ export class FinanceService {
       ];
     }
 
-    if (filter?.type) {
+    if (filter?.type && filter.type !== 'ALL') {
       where.type = filter.type;
     }
 
-    if (filter?.category) {
+    if (filter?.category && filter.category !== 'ALL') {
       where.category = filter.category;
+    }
+
+    if (filter?.search?.trim()) {
+      const q = filter.search.trim();
+      const searchCondition = [
+        { note: { contains: q, mode: 'insensitive' as const } },
+        { category: { contains: q, mode: 'insensitive' as const } },
+      ];
+
+      if (where.OR) {
+        where.AND = [{ OR: where.OR }, { OR: searchCondition }];
+        delete where.OR;
+      } else {
+        where.OR = searchCondition;
+      }
     }
 
     const limit = Math.min(Math.max(filter?.limit ? Number(filter.limit) : 20, 1), 1000);
@@ -229,7 +303,13 @@ export class FinanceService {
         ? Math.max(Number(filter.offset), 0)
         : (page - 1) * limit;
 
-    const [total, items] = await Promise.all([
+    // Period summary condition (independent of category/wallet/type/search)
+    const periodWhere: any = { userId };
+    if (dateRange) {
+      periodWhere.transactionDate = dateRange;
+    }
+
+    const [total, items, filterAgg, periodTypes, maxTx] = await Promise.all([
       prisma.transaction.count({ where }),
       prisma.transaction.findMany({
         where,
@@ -241,7 +321,46 @@ export class FinanceService {
         take: limit,
         skip,
       }),
+      // Filtered set statistics
+      prisma.transaction.aggregate({
+        where,
+        _sum: { amount: true },
+        _avg: { amount: true },
+        _max: { amount: true },
+        _count: { id: true },
+      }),
+      // Period totals (all transactions in the active time window)
+      prisma.transaction.groupBy({
+        by: ['type'],
+        where: periodWhere,
+        _sum: { amount: true },
+      }),
+      // Largest transaction in the filtered set for instant insight
+      prisma.transaction.findFirst({
+        where,
+        orderBy: { amount: 'desc' },
+        select: { id: true, amount: true, category: true, note: true, transactionDate: true },
+      }),
     ]);
+
+    let periodIncome = 0;
+    let periodExpense = 0;
+    for (const pt of periodTypes) {
+      const amt = pt._sum.amount ? Number(pt._sum.amount) : 0;
+      if (pt.type === 'INCOME') periodIncome = amt;
+      else if (pt.type === 'EXPENSE') periodExpense = amt;
+    }
+
+    const filteredTotal = filterAgg._sum.amount ? Number(filterAgg._sum.amount) : 0;
+    const filteredCount = filterAgg._count.id || 0;
+    const averageAmount = filterAgg._avg.amount ? Math.round(Number(filterAgg._avg.amount)) : 0;
+    const maxAmount = filterAgg._max.amount ? Number(filterAgg._max.amount) : 0;
+
+    // Percentage of period expense
+    const percentageOfPeriodExpense =
+      periodExpense > 0 && filteredTotal > 0
+        ? Math.min(Math.round((filteredTotal / periodExpense) * 1000) / 10, 100)
+        : 0;
 
     const totalPages = Math.ceil(total / limit) || 1;
     const currentPage =
@@ -257,6 +376,19 @@ export class FinanceService {
         totalPages,
         hasNext: currentPage < totalPages,
         hasPrev: currentPage > 1,
+      },
+      periodSummary: {
+        income: periodIncome,
+        expense: periodExpense,
+        netCashflow: Number(new Decimal(periodIncome).minus(new Decimal(periodExpense)).toNumber()),
+      },
+      filteredStats: {
+        totalAmount: filteredTotal,
+        count: filteredCount,
+        averageAmount,
+        maxAmount,
+        maxTransactionNote: maxTx ? (maxTx.note || maxTx.category) : undefined,
+        percentageOfPeriodExpense,
       },
     };
   }
@@ -535,17 +667,28 @@ export class FinanceService {
   }
 
   /**
-   * 8. Financial Summary (Total balance, monthly income, monthly expense, category breakdown)
+   * 8. Financial Summary (Total balance, period income, period expense, category breakdown)
    * High-performance aggregation using database-level indexes and SUM/GROUP BY
-   * Cached for 10s via Cache-Aside SWR to sustain 500 concurrent users.
+   * Cached via Cache-Aside SWR
    */
-  async getFinanceSummary(userId: string) {
-    const cacheKey = `cache:finance-summary:${userId}`;
+  async getFinanceSummary(
+    userId: string,
+    filter?: {
+      startDate?: string;
+      endDate?: string;
+      month?: number;
+      year?: number;
+      allTime?: boolean;
+    }
+  ) {
+    const cacheKey = `cache:finance-summary:${userId}:${filter?.year ?? ''}:${filter?.month ?? ''}:${filter?.startDate ?? ''}:${filter?.endDate ?? ''}:${filter?.allTime ? 'all' : ''}`;
 
     return cacheService.remember(cacheKey, 60, async () => {
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      const dateRange = this.parseDateRange(filter);
+      const txWhere: any = { userId };
+      if (dateRange) {
+        txWhere.transactionDate = dateRange;
+      }
 
       // Parallel DB-level aggregations utilizing PostgreSQL B-Tree composite indexes
       const [walletAgg, typeAggregates, categoryAggregates] = await Promise.all([
@@ -556,24 +699,14 @@ export class FinanceService {
         }),
         prisma.transaction.groupBy({
           by: ['type'],
-          where: {
-            userId,
-            transactionDate: {
-              gte: startOfMonth,
-              lte: endOfMonth,
-            },
-          },
+          where: txWhere,
           _sum: { amount: true },
         }),
         prisma.transaction.groupBy({
           by: ['category'],
           where: {
-            userId,
+            ...txWhere,
             type: 'EXPENSE',
-            transactionDate: {
-              gte: startOfMonth,
-              lte: endOfMonth,
-            },
           },
           _sum: { amount: true },
           orderBy: {
@@ -617,17 +750,34 @@ export class FinanceService {
 
   /**
    * Consolidated Finance Overview (T2.3)
-   * Single roundtrip replacing 4 separate HTTP requests (wallets, categories, summary, transactions)
+   * Single roundtrip replacing separate HTTP requests
    */
-  async getFinanceOverview(userId: string, page = 1, limit = 20) {
-    const cacheKey = `cache:finance-overview:${userId}:${page}:${limit}`;
+  async getFinanceOverview(
+    userId: string,
+    options?: {
+      page?: number;
+      limit?: number;
+      month?: number;
+      year?: number;
+      startDate?: string;
+      endDate?: string;
+      allTime?: boolean;
+      walletId?: string;
+      category?: string;
+      type?: 'INCOME' | 'EXPENSE' | 'TRANSFER' | 'ALL';
+      search?: string;
+    }
+  ) {
+    const page = options?.page || 1;
+    const limit = options?.limit || 20;
+    const cacheKey = `cache:finance-overview:${userId}:${page}:${limit}:${options?.year ?? ''}:${options?.month ?? ''}:${options?.startDate ?? ''}:${options?.endDate ?? ''}:${options?.allTime ? 'all' : ''}:${options?.category ?? ''}:${options?.walletId ?? ''}:${options?.type ?? ''}:${options?.search ?? ''}`;
 
-    return cacheService.remember(cacheKey, 60, async () => {
+    return cacheService.remember(cacheKey, 30, async () => {
       const [wallets, categories, summary, transactions] = await Promise.all([
         this.getWallets(userId),
         this.getCategories(userId),
-        this.getFinanceSummary(userId),
-        this.getTransactions(userId, { page, limit }),
+        this.getFinanceSummary(userId, options),
+        this.getTransactions(userId, options),
       ]);
 
       return {
