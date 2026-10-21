@@ -26,6 +26,7 @@ import {
 import { formatCurrency } from '../../lib/utils';
 import { PaginationControl, PaginationMeta } from '../common/PaginationControl';
 import { Tooltip, InfoTooltip } from '../common/Tooltip';
+import { CustomSelect } from '../common/CustomSelect';
 import { EmptyTransactions, EmptySearch } from '../illustrations';
 import { staggerContainer, staggerItem } from '../../lib/motionTokens';
 import { PeriodSelector } from './PeriodSelector';
@@ -214,9 +215,11 @@ export const TransactionList: React.FC<TransactionListProps> = ({
           <div className="flex items-center gap-2">
             <h2 className="font-bold text-base sm:text-lg">Lịch Sử Giao Dịch</h2>
             {hasActiveFilters && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand/10 text-brand font-bold">
-                Đang lọc
-              </span>
+              <Tooltip content="Đang áp dụng bộ lọc cho danh sách. Nhấp nút Xóa bộ lọc bên dưới để đặt lại.">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand/10 text-brand font-bold cursor-help">
+                  Đang lọc
+                </span>
+              </Tooltip>
             )}
             <InfoTooltip content="Lịch sử mọi khoản thu, chi và chuyển khoản được tự động lọc theo chu kỳ thời gian và thống kê tức thời." />
           </div>
@@ -272,33 +275,41 @@ export const TransactionList: React.FC<TransactionListProps> = ({
               className="w-full pl-8.5 pr-8 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-brand transition-colors font-medium"
             />
             {searchQuery && (
-              <button
-                type="button"
-                onClick={() => onSearchChange?.('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 cursor-pointer"
-              >
-                <X className="w-3 h-3" />
-              </button>
+              <Tooltip content="Xóa từ khóa tìm kiếm">
+                <button
+                  type="button"
+                  onClick={() => onSearchChange?.('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 cursor-pointer"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </Tooltip>
             )}
           </div>
 
-          {/* Wallet Selector Dropdown */}
+          {/* Unified Custom Wallet Selector Dropdown */}
           {wallets.length > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-xs shadow-2xs">
-              <WalletIcon className="w-3.5 h-3.5 text-brand" />
-              <select
+            <Tooltip content="Lọc giao dịch theo từng ví hoặc tài khoản nguồn/đích">
+              <CustomSelect
                 value={selectedWalletId}
-                onChange={(e) => onSelectWallet?.(e.target.value)}
-                className="bg-transparent text-slate-700 dark:text-slate-200 font-semibold focus:outline-none cursor-pointer text-xs"
-              >
-                <option value="ALL">Tất cả ví ({wallets.length})</option>
-                {wallets.map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {w.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+                onChange={(val) => onSelectWallet?.(val)}
+                size="sm"
+                icon={<WalletIcon className="w-3.5 h-3.5 text-brand" />}
+                options={[
+                  {
+                    value: 'ALL',
+                    label: `Tất cả ví (${wallets.length})`,
+                    icon: <WalletIcon className="w-3.5 h-3.5 text-brand" />,
+                  },
+                  ...wallets.map((w) => ({
+                    value: w.id,
+                    label: w.name,
+                    color: w.color,
+                    badge: formatCurrency(w.balance),
+                  })),
+                ]}
+              />
+            </Tooltip>
           )}
         </div>
 
@@ -370,48 +381,51 @@ export const TransactionList: React.FC<TransactionListProps> = ({
         <span className="text-xs text-slate-400 font-semibold flex items-center gap-1 pl-1 flex-shrink-0">
           <Tag className="w-3.5 h-3.5 text-brand" /> Danh mục:
         </span>
-        <button
-          type="button"
-          onClick={() => onSelectCategory('ALL')}
-          className={`px-3 py-1 rounded-xl text-xs transition-all cursor-pointer flex-shrink-0 ${
-            selectedCategory === 'ALL'
-              ? 'bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 font-bold shadow-xs'
-              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-          }`}
-        >
-          Tất cả ({transactions.length})
-        </button>
+        <Tooltip content="Xem tất cả các danh mục giao dịch">
+          <button
+            type="button"
+            onClick={() => onSelectCategory('ALL')}
+            className={`px-3 py-1 rounded-xl text-xs transition-all cursor-pointer flex-shrink-0 ${
+              selectedCategory === 'ALL'
+                ? 'bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 font-bold shadow-xs'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+            }`}
+          >
+            Tất cả ({transactions.length})
+          </button>
+        </Tooltip>
         {categories.map((cat) => {
           const count = transactions.filter((tx) => tx.category === cat.name).length;
           const isActive = selectedCategory === cat.name;
           return (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => onSelectCategory(isActive ? 'ALL' : cat.name)}
-              className={`px-2.5 py-1 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0 ${
-                isActive
-                  ? 'bg-brand text-white font-bold shadow-xs'
-                  : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-brand/10 hover:text-brand'
-              }`}
-            >
-              <span
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: cat.color || '#6366F1' }}
-              />
-              <span>{cat.name}</span>
-              {count > 0 && (
+            <Tooltip key={cat.id} content={`Lọc các khoản thuộc danh mục "${cat.name}"`}>
+              <button
+                type="button"
+                onClick={() => onSelectCategory(isActive ? 'ALL' : cat.name)}
+                className={`px-2.5 py-1 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0 ${
+                  isActive
+                    ? 'bg-brand text-white font-bold shadow-xs'
+                    : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-brand/10 hover:text-brand'
+                }`}
+              >
                 <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                    isActive
-                      ? 'bg-white/20 text-white'
-                      : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
-                  }`}
-                >
-                  {count}
-                </span>
-              )}
-            </button>
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: cat.color || '#6366F1' }}
+                />
+                <span>{cat.name}</span>
+                {count > 0 && (
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                      isActive
+                        ? 'bg-white/20 text-white'
+                        : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
+                    }`}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            </Tooltip>
           );
         })}
       </div>
@@ -503,14 +517,18 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                   </div>
                   <div className="flex items-center gap-2.5 text-[11px] font-semibold">
                     {group.totalExpense > 0 && (
-                      <span className="text-rose-500 tabular-nums">
-                        Chi: -{formatCurrency(group.totalExpense)}
-                      </span>
+                      <Tooltip content={`Tổng chi tiêu trong ngày ${group.displayDate}`}>
+                        <span className="text-rose-500 tabular-nums cursor-help">
+                          Chi: -{formatCurrency(group.totalExpense)}
+                        </span>
+                      </Tooltip>
                     )}
                     {group.totalIncome > 0 && (
-                      <span className="text-emerald-600 dark:text-emerald-400 tabular-nums">
-                        Thu: +{formatCurrency(group.totalIncome)}
-                      </span>
+                      <Tooltip content={`Tổng thu nhập trong ngày ${group.displayDate}`}>
+                        <span className="text-emerald-600 dark:text-emerald-400 tabular-nums cursor-help">
+                          Thu: +{formatCurrency(group.totalIncome)}
+                        </span>
+                      </Tooltip>
                     )}
                   </div>
                 </div>
@@ -526,69 +544,99 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                       className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4 hover:border-brand/40 transition-colors group"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div
-                          className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                        <Tooltip
+                          content={
                             tx.type === 'INCOME'
-                              ? 'bg-emerald-500/10 text-emerald-600'
+                              ? 'Giao dịch thu tiền vào (+)'
                               : tx.type === 'EXPENSE'
-                              ? 'bg-rose-500/10 text-rose-500'
-                              : 'bg-brand/10 text-brand'
-                          }`}
+                              ? 'Giao dịch chi tiêu ra (-)'
+                              : 'Giao dịch chuyển tiền nội bộ (↔)'
+                          }
                         >
-                          {tx.type === 'INCOME' && <ArrowDownRight className="w-5 h-5" />}
-                          {tx.type === 'EXPENSE' && <ArrowUpRight className="w-5 h-5" />}
-                          {tx.type === 'TRANSFER' && <ArrowRightLeft className="w-5 h-5" />}
-                        </div>
+                          <div
+                            className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 cursor-help ${
+                              tx.type === 'INCOME'
+                                ? 'bg-emerald-500/10 text-emerald-600'
+                                : tx.type === 'EXPENSE'
+                                ? 'bg-rose-500/10 text-rose-500'
+                                : 'bg-brand/10 text-brand'
+                            }`}
+                          >
+                            {tx.type === 'INCOME' && <ArrowDownRight className="w-5 h-5" />}
+                            {tx.type === 'EXPENSE' && <ArrowUpRight className="w-5 h-5" />}
+                            {tx.type === 'TRANSFER' && <ArrowRightLeft className="w-5 h-5" />}
+                          </div>
+                        </Tooltip>
 
                         <div className="min-w-0">
-                          <div
-                            onClick={() =>
-                              onSelectCategory(
-                                selectedCategory === tx.category ? 'ALL' : tx.category
-                              )
-                            }
-                            className="font-bold text-xs text-slate-800 dark:text-slate-100 hover:text-brand transition-colors cursor-pointer truncate"
-                            title={`Lọc nhanh theo danh mục "${tx.category}"`}
-                          >
-                            {tx.category}
-                          </div>
+                          <Tooltip content={`Lọc nhanh theo danh mục "${tx.category}"`}>
+                            <div
+                              onClick={() =>
+                                onSelectCategory(
+                                  selectedCategory === tx.category ? 'ALL' : tx.category
+                                )
+                              }
+                              className="font-bold text-xs text-slate-800 dark:text-slate-100 hover:text-brand transition-colors cursor-pointer truncate"
+                            >
+                              {tx.category}
+                            </div>
+                          </Tooltip>
                           <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5 truncate">
                             <span>{tx.date}</span>
                             <span>•</span>
-                            <span
-                              onClick={() => {
-                                if (tx.walletId && onSelectWallet) {
-                                  onSelectWallet(
-                                    selectedWalletId === tx.walletId ? 'ALL' : tx.walletId
-                                  );
-                                }
-                              }}
-                              className="truncate hover:text-brand cursor-pointer"
-                              title="Lọc theo ví này"
+                            <Tooltip
+                              content={
+                                tx.type === 'TRANSFER'
+                                  ? `Lọc theo ví ${tx.wallet} hoặc ${tx.destWallet}`
+                                  : `Lọc theo ví ${tx.wallet}`
+                              }
                             >
-                              {tx.type === 'TRANSFER'
-                                ? `${tx.wallet} → ${tx.destWallet}`
-                                : tx.wallet}
-                            </span>
+                              <span
+                                onClick={() => {
+                                  if (tx.walletId && onSelectWallet) {
+                                    onSelectWallet(
+                                      selectedWalletId === tx.walletId ? 'ALL' : tx.walletId
+                                    );
+                                  }
+                                }}
+                                className="truncate hover:text-brand cursor-pointer"
+                              >
+                                {tx.type === 'TRANSFER'
+                                  ? `${tx.wallet} → ${tx.destWallet}`
+                                  : tx.wallet}
+                              </span>
+                            </Tooltip>
                           </div>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
                         <div className="text-right">
-                          <div
-                            className={`text-sm font-extrabold tabular-nums ${
+                          <Tooltip
+                            content={
                               tx.type === 'INCOME'
-                                ? 'text-emerald-600 dark:text-emerald-400'
+                                ? `Khoản thu nhập vào ví: +${formatCurrency(tx.amount)}`
                                 : tx.type === 'EXPENSE'
-                                ? 'text-rose-500 dark:text-rose-400'
-                                : 'text-brand'
-                            }`}
+                                ? `Khoản chi tiêu từ ví: -${formatCurrency(tx.amount)}`
+                                : `Chuyển khoản nội bộ: ${formatCurrency(tx.amount)}`
+                            }
                           >
-                            {tx.type === 'INCOME'
-                              ? `+${formatCurrency(tx.amount)}`
-                              : `-${formatCurrency(tx.amount)}`}
-                          </div>
+                            <div
+                              className={`text-sm font-extrabold tabular-nums cursor-help ${
+                                tx.type === 'INCOME'
+                                  ? 'text-emerald-600 dark:text-emerald-400'
+                                  : tx.type === 'EXPENSE'
+                                  ? 'text-rose-500 dark:text-rose-400'
+                                  : 'text-brand'
+                              }`}
+                            >
+                              {tx.type === 'INCOME'
+                                ? `+${formatCurrency(tx.amount)}`
+                                : tx.type === 'EXPENSE'
+                                ? `-${formatCurrency(tx.amount)}`
+                                : `${formatCurrency(tx.amount)}`}
+                            </div>
+                          </Tooltip>
                           <div className="text-[10px] text-slate-400 line-clamp-1 max-w-[140px] sm:max-w-[200px]">
                             {tx.note}
                           </div>

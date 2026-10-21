@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRightLeft, X } from 'lucide-react';
+import { ArrowRightLeft, X, Wallet as WalletIcon } from 'lucide-react';
 import { WalletItem } from './types';
 import { formatCurrency } from '../../lib/utils';
 import { toast } from 'sonner';
 import { Modal } from '../common/Modal';
 import { InfoTooltip } from '../common/Tooltip';
+import { CustomSelect } from '../common/CustomSelect';
 
 interface TransferModalProps {
   isOpen: boolean;
@@ -116,43 +117,52 @@ export const TransferModal: React.FC<TransferModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           <div>
-            <div className="flex items-center gap-1.5 mb-1">
-              <label className="font-semibold block">Ví nguồn (Trừ tiền)</label>
-              <InfoTooltip content="Số tiền chuyển sẽ được trừ khỏi số dư của ví này." />
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                Ví nguồn (Trừ tiền)
+              </label>
+              <InfoTooltip content="Số tiền chuyển sẽ được trừ trực tiếp khỏi số dư của ví này." />
             </div>
-            <select
+            <CustomSelect
               value={sourceWalletId}
-              onChange={(e) => setSourceWalletId(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
-            >
-              {wallets.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.name} {w.isDefault ? ' (Mặc định)' : ''} ({formatCurrency(w.balance)})
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setSourceWalletId(val)}
+              options={wallets.map((w) => ({
+                value: w.id,
+                label: `${w.name}${w.isDefault ? ' (Mặc định)' : ''}`,
+                color: w.color,
+                badge: formatCurrency(w.balance),
+              }))}
+              icon={<WalletIcon className="w-4 h-4 text-brand" />}
+            />
           </div>
 
           <div>
-            <div className="flex items-center gap-1.5 mb-1">
-              <label className="font-semibold block">Ví đích (Cộng tiền)</label>
-              <InfoTooltip content="Số tiền chuyển sẽ được cộng vào số dư của ví này." />
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                Ví đích (Cộng tiền)
+              </label>
+              <InfoTooltip content="Số tiền chuyển sẽ được cộng trực tiếp vào số dư của ví này." />
             </div>
-            <select
+            <CustomSelect
               value={destWalletId}
-              onChange={(e) => setDestWalletId(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
-            >
-              {wallets.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.name} {w.isDefault ? ' (Mặc định)' : ''} ({formatCurrency(w.balance)})
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setDestWalletId(val)}
+              options={wallets.map((w) => ({
+                value: w.id,
+                label: `${w.name}${w.isDefault ? ' (Mặc định)' : ''}`,
+                color: w.color,
+                badge: formatCurrency(w.balance),
+              }))}
+              icon={<WalletIcon className="w-4 h-4 text-brand" />}
+            />
           </div>
 
           <div>
-            <label className="font-semibold block mb-1">Số tiền chuyển (VND)</label>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                Số tiền chuyển (VND)
+              </label>
+              <InfoTooltip content="Số tiền chuyển giữa hai ví (> 0 và không vượt quá số dư ví nguồn)." />
+            </div>
             <input
               type="number"
               required
@@ -166,7 +176,12 @@ export const TransferModal: React.FC<TransferModalProps> = ({
           </div>
 
           <div>
-            <label className="font-semibold block mb-1">Ghi chú chuyển khoản</label>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                Ghi chú chuyển khoản
+              </label>
+              <InfoTooltip content="Lý do chuyển tiền (ví dụ: rút tiền mặt chi tiêu, trích lương sang tiết kiệm...)." />
+            </div>
             <input
               type="text"
               value={transferNote}

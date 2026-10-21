@@ -4,6 +4,8 @@ import { CategoryItem, TransactionItem } from './types';
 import { apiClient } from '../../api/client';
 import { toast } from 'sonner';
 import { Modal } from '../common/Modal';
+import { CustomSelect } from '../common/CustomSelect';
+import { InfoTooltip } from '../common/Tooltip';
 
 interface CategoryModalProps {
   isOpen: boolean;
@@ -198,15 +200,19 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
             </div>
 
             <div>
-              <label className="font-semibold block mb-1">Loại danh mục</label>
-              <select
+              <div className="flex items-center gap-1 mb-1">
+                <label className="font-semibold block text-slate-700 dark:text-slate-300">Loại danh mục</label>
+                <InfoTooltip content="Phân loại danh mục này là Khoản chi tiêu (-) hay Khoản thu nhập (+)." />
+              </div>
+              <CustomSelect
                 value={newCatType}
-                onChange={(e) => setNewCatType(e.target.value as any)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs"
-              >
-                <option value="EXPENSE">Khoản chi (-)</option>
-                <option value="INCOME">Khoản thu (+)</option>
-              </select>
+                onChange={(val) => setNewCatType(val as 'EXPENSE' | 'INCOME')}
+                size="sm"
+                options={[
+                  { value: 'EXPENSE', label: 'Khoản chi (-)', color: '#EF4444' },
+                  { value: 'INCOME', label: 'Khoản thu (+)', color: '#10B981' },
+                ]}
+              />
             </div>
           </div>
 
@@ -268,14 +274,16 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                         placeholder="Tên danh mục..."
                         autoFocus
                       />
-                      <select
+                      <CustomSelect
                         value={editCategoryType}
-                        onChange={(e) => setEditCategoryType(e.target.value as any)}
-                        className="px-2 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs"
-                      >
-                        <option value="EXPENSE">Chi (-)</option>
-                        <option value="INCOME">Thu (+)</option>
-                      </select>
+                        onChange={(val) => setEditCategoryType(val as 'EXPENSE' | 'INCOME')}
+                        size="sm"
+                        className="w-32 flex-shrink-0"
+                        options={[
+                          { value: 'EXPENSE', label: 'Chi (-)', color: '#EF4444' },
+                          { value: 'INCOME', label: 'Thu (+)', color: '#10B981' },
+                        ]}
+                      />
                       <div className="flex items-center gap-1">
                         <button
                           type="button"

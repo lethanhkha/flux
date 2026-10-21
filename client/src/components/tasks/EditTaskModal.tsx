@@ -6,6 +6,7 @@ import { Modal } from '../common/Modal';
 import { TagSelect } from '../notes/TagSelect';
 import { TaskTagItem } from './TaskTagModal';
 import { InfoTooltip } from '../common/Tooltip';
+import { CustomSelect } from '../common/CustomSelect';
 import { PRIORITY_TOOLTIPS } from '../../lib/taskUtils';
 
 export interface TaskItemData {
@@ -184,38 +185,41 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
         </div>
 
         {/* Status & Priority */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-              Trạng thái
-            </label>
-            <select
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                Trạng thái
+              </label>
+              <InfoTooltip content="Tiến độ thực hiện của công việc này." />
+            </div>
+            <CustomSelect
               value={editStatus}
-              onChange={(e) => setEditStatus(e.target.value as any)}
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 font-medium"
-            >
-              <option value="TODO">Cần làm</option>
-              <option value="IN_PROGRESS">Đang thực hiện</option>
-              <option value="DONE">Đã hoàn thành</option>
-            </select>
+              onChange={(val) => setEditStatus(val as any)}
+              options={[
+                { value: 'TODO', label: 'Cần làm', color: '#94A3B8' },
+                { value: 'IN_PROGRESS', label: 'Đang thực hiện', color: '#3B82F6' },
+                { value: 'DONE', label: 'Đã hoàn thành', color: '#10B981' },
+              ]}
+            />
           </div>
           <div>
-            <div className="flex items-center gap-1.5 mb-1">
+            <div className="flex items-center gap-1.5 mb-1.5">
               <label className="font-semibold text-slate-700 dark:text-slate-300">
                 Độ ưu tiên
               </label>
               <InfoTooltip content={PRIORITY_TOOLTIPS[editPriority] || PRIORITY_TOOLTIPS.URGENT} />
             </div>
-            <select
+            <CustomSelect
               value={editPriority}
-              onChange={(e) => setEditPriority(e.target.value as any)}
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 font-medium"
-            >
-              <option value="URGENT">Khẩn cấp</option>
-              <option value="HIGH">Ưu tiên cao</option>
-              <option value="MEDIUM">Trung bình</option>
-              <option value="LOW">Thấp</option>
-            </select>
+              onChange={(val) => setEditPriority(val as any)}
+              options={[
+                { value: 'URGENT', label: 'Khẩn cấp', color: '#EF4444' },
+                { value: 'HIGH', label: 'Ưu tiên cao', color: '#F97316' },
+                { value: 'MEDIUM', label: 'Trung bình', color: '#3B82F6' },
+                { value: 'LOW', label: 'Thấp', color: '#6B7280' },
+              ]}
+            />
             <p className="text-[10px] text-slate-400 mt-1 leading-tight line-clamp-2">
               {PRIORITY_TOOLTIPS[editPriority]}
             </p>

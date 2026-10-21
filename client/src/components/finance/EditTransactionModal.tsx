@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Edit3, X } from 'lucide-react';
+import { Edit3, X, Wallet as WalletIcon, Tag as TagIcon } from 'lucide-react';
 import { WalletItem, CategoryItem, TransactionItem } from './types';
 import { apiClient, getErrorMessage } from '../../api/client';
 import { formatCurrency } from '../../lib/utils';
 import { toast } from 'sonner';
 import { Modal } from '../common/Modal';
+import { CustomSelect } from '../common/CustomSelect';
+import { InfoTooltip } from '../common/Tooltip';
 
 interface EditTransactionModalProps {
   isOpen: boolean;
@@ -192,65 +194,77 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
 
           {/* Wallets selection */}
           {editTxType === 'TRANSFER' ? (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-                  Ví nguồn (Trừ tiền)
-                </label>
-                <select
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                    Ví nguồn (Trừ tiền)
+                  </label>
+                  <InfoTooltip content="Ví tiền sẽ bị khấu trừ khoản chuyển này." />
+                </div>
+                <CustomSelect
                   value={editTxWalletId}
-                  onChange={(e) => setEditTxWalletId(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
-                >
-                  {wallets.map((w) => (
-                    <option key={w.id} value={w.id}>
-                      {w.name} {w.isDefault ? ' (Mặc định)' : ''}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setEditTxWalletId(val)}
+                  options={wallets.map((w) => ({
+                    value: w.id,
+                    label: `${w.name}${w.isDefault ? ' (Mặc định)' : ''}`,
+                    color: w.color,
+                    badge: formatCurrency(w.balance),
+                  }))}
+                  icon={<WalletIcon className="w-4 h-4 text-brand" />}
+                />
               </div>
               <div>
-                <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-                  Ví đích (Cộng tiền)
-                </label>
-                <select
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                    Ví đích (Cộng tiền)
+                  </label>
+                  <InfoTooltip content="Ví tiền sẽ được ghi nhận cộng thêm khoản chuyển này." />
+                </div>
+                <CustomSelect
                   value={editTxDestWalletId}
-                  onChange={(e) => setEditTxDestWalletId(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
-                >
-                  {wallets.map((w) => (
-                    <option key={w.id} value={w.id}>
-                      {w.name} {w.isDefault ? ' (Mặc định)' : ''}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setEditTxDestWalletId(val)}
+                  options={wallets.map((w) => ({
+                    value: w.id,
+                    label: `${w.name}${w.isDefault ? ' (Mặc định)' : ''}`,
+                    color: w.color,
+                    badge: formatCurrency(w.balance),
+                  }))}
+                  icon={<WalletIcon className="w-4 h-4 text-brand" />}
+                />
               </div>
             </div>
           ) : (
             <div>
-              <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-                Chọn Ví
-              </label>
-              <select
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                  Chọn Ví
+                </label>
+                <InfoTooltip content="Ví thực hiện giao dịch thu hoặc chi này." />
+              </div>
+              <CustomSelect
                 value={editTxWalletId}
-                onChange={(e) => setEditTxWalletId(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
-              >
-                {wallets.map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {w.name} {w.isDefault ? ' (Mặc định)' : ''} ({formatCurrency(w.balance)})
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setEditTxWalletId(val)}
+                options={wallets.map((w) => ({
+                  value: w.id,
+                  label: `${w.name}${w.isDefault ? ' (Mặc định)' : ''}`,
+                  color: w.color,
+                  badge: formatCurrency(w.balance),
+                }))}
+                icon={<WalletIcon className="w-4 h-4 text-brand" />}
+              />
             </div>
           )}
 
           {/* Amount & Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-                Số tiền (VND)
-              </label>
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                  Số tiền (VND)
+                </label>
+                <InfoTooltip content="Số tiền giao dịch đã cập nhật (> 0)." />
+              </div>
               <input
                 type="number"
                 required
@@ -264,9 +278,12 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
             </div>
 
             <div>
-              <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-                Ngày giao dịch
-              </label>
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                  Ngày giao dịch
+                </label>
+                <InfoTooltip content="Ngày phát sinh giao dịch." />
+              </div>
               <input
                 type="date"
                 required
@@ -280,28 +297,33 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
           {/* Category if not transfer */}
           {editTxType !== 'TRANSFER' && (
             <div>
-              <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-                Danh mục
-              </label>
-              <select
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                  Danh mục
+                </label>
+                <InfoTooltip content="Phân loại thu chi của giao dịch này." />
+              </div>
+              <CustomSelect
                 value={editTxCategory}
-                onChange={(e) => setEditTxCategory(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
-              >
-                {filteredCategories.map((c) => (
-                  <option key={c.id} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setEditTxCategory(val)}
+                options={filteredCategories.map((c) => ({
+                  value: c.name,
+                  label: c.name,
+                  color: c.color,
+                }))}
+                icon={<TagIcon className="w-4 h-4 text-brand" />}
+              />
             </div>
           )}
 
           {/* Note */}
           <div>
-            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-              Ghi chú
-            </label>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                Ghi chú
+              </label>
+              <InfoTooltip content="Nội dung hoặc ghi chú giải thích giao dịch (tùy chọn)." />
+            </div>
             <input
               type="text"
               value={editTxNote}

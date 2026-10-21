@@ -5,6 +5,8 @@ import { resolveWalletTypeAndIcon, WALLET_TYPE_OPTIONS } from './walletUtils';
 import { apiClient } from '../../api/client';
 import { toast } from 'sonner';
 import { Modal } from '../common/Modal';
+import { CustomSelect } from '../common/CustomSelect';
+import { InfoTooltip } from '../common/Tooltip';
 
 interface AddWalletModalProps {
   isOpen: boolean;
@@ -142,9 +144,12 @@ export const AddWalletModal: React.FC<AddWalletModalProps> = ({
 
         <form onSubmit={handleCreateWallet} className="space-y-4 text-xs">
           <div>
-            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-              Tên ví / Tài khoản
-            </label>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                Tên ví / Tài khoản
+              </label>
+              <InfoTooltip content="Tên gọi gợi nhớ của ví hoặc tài khoản ngân hàng (VD: MoMo, BIDV, Quỹ Khẩn Cấp)." />
+            </div>
             <input
               type="text"
               required
@@ -155,28 +160,31 @@ export const AddWalletModal: React.FC<AddWalletModalProps> = ({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-                Loại ví
-              </label>
-              <select
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                  Loại ví
+                </label>
+                <InfoTooltip content="Phân loại ví để áp dụng biểu tượng và cách thức quản lý phù hợp." />
+              </div>
+              <CustomSelect
                 value={newWalletType}
-                onChange={(e) => setNewWalletType(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
-              >
-                {WALLET_TYPE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setNewWalletType(val)}
+                options={WALLET_TYPE_OPTIONS.map((opt) => ({
+                  value: opt.value,
+                  label: opt.label,
+                }))}
+              />
             </div>
 
             <div>
-              <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-                Số dư ban đầu (VND)
-              </label>
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                  Số dư ban đầu (VND)
+                </label>
+                <InfoTooltip content="Số dư thực tế đang có trong ví tại thời điểm khởi tạo." />
+              </div>
               <input
                 type="number"
                 min="0"

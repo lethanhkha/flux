@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Wallet as WalletIcon, Tag as TagIcon } from 'lucide-react';
 import { WalletItem, CategoryItem, TransactionItem } from './types';
 import { apiClient, getErrorMessage } from '../../api/client';
 import { formatCurrency } from '../../lib/utils';
 import { toast } from 'sonner';
 import { Modal } from '../common/Modal';
+import { CustomSelect } from '../common/CustomSelect';
+import { InfoTooltip } from '../common/Tooltip';
 
 interface AddTransactionModalProps {
   isOpen: boolean;
@@ -217,27 +219,33 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
           </div>
 
           <div>
-            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-              Chọn Ví
-            </label>
-            <select
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                Chọn Ví
+              </label>
+              <InfoTooltip content="Chọn ví hoặc tài khoản nguồn để ghi nhận biến động số dư." />
+            </div>
+            <CustomSelect
               value={txWalletId || (wallets.find((w) => w.isDefault)?.id || wallets[0]?.id || '')}
-              onChange={(e) => setTxWalletId(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
-            >
-              {wallets.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.name} {w.isDefault ? ' (Mặc định)' : ''} ({formatCurrency(w.balance)})
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setTxWalletId(val)}
+              options={wallets.map((w) => ({
+                value: w.id,
+                label: `${w.name}${w.isDefault ? ' (Mặc định)' : ''}`,
+                color: w.color,
+                badge: formatCurrency(w.balance),
+              }))}
+              icon={<WalletIcon className="w-4 h-4 text-brand" />}
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-                Số tiền (VND)
-              </label>
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                  Số tiền (VND)
+                </label>
+                <InfoTooltip content="Số tiền giao dịch thực tế tính bằng Việt Nam Đồng (> 0)." />
+              </div>
               <input
                 type="number"
                 required
@@ -246,14 +254,17 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 placeholder="VD: 100000"
                 value={txAmount}
                 onChange={(e) => setTxAmount(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-base font-extrabold tabular-nums focus:outline-none focus:ring-2 focus:ring-brand"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-base font-extrabold tabular-nums focus:outline-none focus:ring-2 focus:ring-brand font-medium"
               />
             </div>
 
             <div>
-              <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-                Ngày giao dịch
-              </label>
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                  Ngày giao dịch
+                </label>
+                <InfoTooltip content="Ngày phát sinh khoản thu/chi để ghi nhận vào đúng chu kỳ báo cáo." />
+              </div>
               <input
                 type="date"
                 required
@@ -265,8 +276,11 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1 text-slate-700 dark:text-slate-300">
-              <label className="font-semibold">Danh mục</label>
+            <div className="flex items-center justify-between mb-1.5 text-slate-700 dark:text-slate-300">
+              <div className="flex items-center gap-1.5">
+                <label className="font-semibold">Danh mục</label>
+                <InfoTooltip content="Phân loại thu chi giúp bạn phân tích thói quen tài chính và kiểm soát ngân sách." />
+              </div>
               <button
                 type="button"
                 onClick={onOpenCategoryModal}
@@ -287,30 +301,32 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 </button>
               </div>
             ) : (
-              <select
+              <CustomSelect
                 value={txCategory}
-                onChange={(e) => setTxCategory(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
-              >
-                {filteredCategories.map((c) => (
-                  <option key={c.id} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setTxCategory(val)}
+                options={filteredCategories.map((c) => ({
+                  value: c.name,
+                  label: c.name,
+                  color: c.color,
+                }))}
+                icon={<TagIcon className="w-4 h-4 text-brand" />}
+              />
             )}
           </div>
 
           <div>
-            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-              Ghi chú
-            </label>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                Ghi chú
+              </label>
+              <InfoTooltip content="Mô tả cụ thể giao dịch này để dễ nhớ hoặc tra cứu sau này (không bắt buộc)." />
+            </div>
             <input
               type="text"
               value={txNote}
               onChange={(e) => setTxNote(e.target.value)}
               placeholder="VD: Ăn tối với bạn, thanh toán hóa đơn..."
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
             />
           </div>
 

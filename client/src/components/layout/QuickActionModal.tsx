@@ -13,6 +13,7 @@ import { Modal } from '../common/Modal';
 import { TagSelect, TagOption } from '../notes/TagSelect';
 import { MarkdownEditor } from '../notes/MarkdownEditor';
 import { InfoTooltip } from '../common/Tooltip';
+import { CustomSelect } from '../common/CustomSelect';
 import { PRIORITY_TOOLTIPS } from '../../lib/taskUtils';
 
 export interface QuickActionModalProps {
@@ -380,33 +381,38 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
 
           {/* Wallet Selector */}
           <div>
-            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-              Chọn Ví
-            </label>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                Chọn Ví
+              </label>
+              <InfoTooltip content="Chọn ví ghi nhận dòng tiền này." />
+            </div>
             {wallets.length === 0 ? (
               <div className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-400">
                 Đang tải danh sách ví...
               </div>
             ) : (
-              <select
+              <CustomSelect
                 value={txWalletId || (wallets.find((w) => w.isDefault)?.id || wallets[0]?.id || '')}
-                onChange={(e) => setTxWalletId(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium text-xs focus:outline-none focus:ring-2 focus:ring-brand"
-              >
-                {wallets.map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {w.name} {w.isDefault ? ' (Mặc định)' : ''} ({formatCurrency(w.balance)})
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setTxWalletId(val)}
+                options={wallets.map((w) => ({
+                  value: w.id,
+                  label: `${w.name}${w.isDefault ? ' (Mặc định)' : ''}`,
+                  badge: formatCurrency(w.balance),
+                }))}
+                icon={<Wallet className="w-4 h-4 text-brand" />}
+              />
             )}
           </div>
 
           {/* Amount Input (supports any amount e.g. 47857) */}
           <div>
-            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-              Số tiền (VND)
-            </label>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                Số tiền (VND)
+              </label>
+              <InfoTooltip content="Số tiền giao dịch thực tế (> 0)." />
+            </div>
             <input
               type="number"
               required
@@ -415,15 +421,18 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
               placeholder="VD: 47857"
               value={txAmount}
               onChange={(e) => setTxAmount(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-base font-extrabold tabular-nums focus:outline-none focus:ring-2 focus:ring-brand"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-base font-extrabold tabular-nums focus:outline-none focus:ring-2 focus:ring-brand font-medium"
             />
           </div>
 
           {/* Category Selector */}
           <div>
-            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-              Danh mục
-            </label>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                Danh mục
+              </label>
+              <InfoTooltip content="Phân loại nhóm thu chi tương ứng." />
+            </div>
             {filteredCategories.length === 0 ? (
               <input
                 type="text"
@@ -437,17 +446,14 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-2 focus:ring-brand font-medium"
               />
             ) : (
-              <select
+              <CustomSelect
                 value={txCategory}
-                onChange={(e) => setTxCategory(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium text-xs focus:outline-none focus:ring-2 focus:ring-brand"
-              >
-                {filteredCategories.map((c) => (
-                  <option key={c.id} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setTxCategory(val)}
+                options={filteredCategories.map((c) => ({
+                  value: c.name,
+                  label: c.name,
+                }))}
+              />
             )}
           </div>
 
@@ -507,22 +513,22 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <div className="flex items-center gap-1.5 mb-1">
+              <div className="flex items-center gap-1.5 mb-1.5">
                 <label className="font-semibold text-slate-700 dark:text-slate-300">
                   Độ ưu tiên
                 </label>
                 <InfoTooltip content={PRIORITY_TOOLTIPS[taskPriority] || PRIORITY_TOOLTIPS.URGENT} />
               </div>
-              <select
+              <CustomSelect
                 value={taskPriority}
-                onChange={(e) => setTaskPriority(e.target.value as any)}
-                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand"
-              >
-                <option value="URGENT">Khẩn cấp</option>
-                <option value="HIGH">Ưu tiên cao</option>
-                <option value="MEDIUM">Trung bình</option>
-                <option value="LOW">Thấp</option>
-              </select>
+                onChange={(val) => setTaskPriority(val as any)}
+                options={[
+                  { value: 'URGENT', label: 'Khẩn cấp', color: '#EF4444' },
+                  { value: 'HIGH', label: 'Ưu tiên cao', color: '#F97316' },
+                  { value: 'MEDIUM', label: 'Trung bình', color: '#3B82F6' },
+                  { value: 'LOW', label: 'Thấp', color: '#6B7280' },
+                ]}
+              />
               <p className="text-[10px] text-slate-400 mt-1 leading-tight line-clamp-2">
                 {PRIORITY_TOOLTIPS[taskPriority]}
               </p>

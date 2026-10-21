@@ -68,9 +68,11 @@ export const FinanceHeader: React.FC<FinanceHeaderProps> = ({
                 <TrendingUp className="w-3 h-3" /> +{formatCurrency(netCashflow)} thặng dư ({periodLabel})
               </span>
               {savingsRate > 0 && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold">
-                  Tiết kiệm {savingsRate}%
-                </span>
+                <Tooltip content="Tỷ lệ tiết kiệm ròng = Thặng dư / Tổng thu nhập của chu kỳ này">
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold cursor-help">
+                    Tiết kiệm {savingsRate}%
+                  </span>
+                </Tooltip>
               )}
               <InfoTooltip content={`Chênh lệch ròng dương giữa tổng Thu nhập (${formatCurrency(monthlyIncome)}) và Chi tiêu (${formatCurrency(monthlyExpense)}) trong ${periodLabel} (Thu > Chi).`} />
             </div>

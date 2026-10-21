@@ -25,6 +25,7 @@ import { EditTaskModal } from '../components/tasks/EditTaskModal';
 import { EmptyTasks } from '../components/illustrations';
 import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
 import { Tooltip, InfoTooltip } from '../components/common/Tooltip';
+import { CustomSelect } from '../components/common/CustomSelect';
 import { getRemainingDaysInfo, PRIORITY_TOOLTIPS } from '../lib/taskUtils';
 
 interface TaskItem {
@@ -1133,22 +1134,22 @@ export const TasksPage: React.FC = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <label className="font-semibold">Độ ưu tiên</label>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <label className="font-semibold text-slate-700 dark:text-slate-300">Độ ưu tiên</label>
                   <InfoTooltip content={PRIORITY_TOOLTIPS[newTaskPriority] || PRIORITY_TOOLTIPS.URGENT} />
                 </div>
-                <select
+                <CustomSelect
                   value={newTaskPriority}
-                  onChange={(e) => setNewTaskPriority(e.target.value as any)}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs"
-                >
-                  <option value="URGENT">Khẩn cấp</option>
-                  <option value="HIGH">Ưu tiên cao</option>
-                  <option value="MEDIUM">Trung bình</option>
-                  <option value="LOW">Thấp</option>
-                </select>
+                  onChange={(val) => setNewTaskPriority(val as any)}
+                  options={[
+                    { value: 'URGENT', label: 'Khẩn cấp', color: '#EF4444' },
+                    { value: 'HIGH', label: 'Ưu tiên cao', color: '#F97316' },
+                    { value: 'MEDIUM', label: 'Trung bình', color: '#3B82F6' },
+                    { value: 'LOW', label: 'Thấp', color: '#6B7280' },
+                  ]}
+                />
                 <p className="text-[10px] text-slate-400 mt-1 leading-tight line-clamp-2">
                   {PRIORITY_TOOLTIPS[newTaskPriority]}
                 </p>

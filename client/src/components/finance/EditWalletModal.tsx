@@ -6,6 +6,8 @@ import { apiClient, getErrorMessage } from '../../api/client';
 import { formatCurrency } from '../../lib/utils';
 import { toast } from 'sonner';
 import { Modal } from '../common/Modal';
+import { CustomSelect } from '../common/CustomSelect';
+import { InfoTooltip } from '../common/Tooltip';
 
 interface EditWalletModalProps {
   isOpen: boolean;
@@ -152,6 +154,12 @@ export const EditWalletModal: React.FC<EditWalletModalProps> = ({
           <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
             Tên ví / Tài khoản
           </label>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <label className="font-semibold block text-slate-700 dark:text-slate-300">
+              Tên ví / Tài khoản
+            </label>
+            <InfoTooltip content="Tên gọi gợi nhớ của ví hoặc tài khoản ngân hàng." />
+          </div>
           <input
             type="text"
             required
@@ -165,27 +173,30 @@ export const EditWalletModal: React.FC<EditWalletModalProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* Wallet Type */}
           <div>
-            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-              Loại ví
-            </label>
-            <select
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                Loại ví
+              </label>
+              <InfoTooltip content="Phân loại ví để áp dụng biểu tượng tương ứng." />
+            </div>
+            <CustomSelect
               value={walletType}
-              onChange={(e) => setWalletType(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
-            >
-              {WALLET_TYPE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setWalletType(val)}
+              options={WALLET_TYPE_OPTIONS.map((opt) => ({
+                value: opt.value,
+                label: opt.label,
+              }))}
+            />
           </div>
 
           {/* Current Balance (Read-only) */}
           <div>
-            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
-              Số dư hiện tại
-            </label>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                Số dư hiện tại
+              </label>
+              <InfoTooltip content="Số dư hiện tại chỉ được cập nhật qua các giao dịch thu, chi hoặc chuyển khoản." />
+            </div>
             <div className="px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-900/60 font-mono font-bold text-slate-800 dark:text-slate-200">
               {formatCurrency(wallet.balance)}
             </div>
