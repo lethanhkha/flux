@@ -7,6 +7,9 @@ import {
   renameTaskTagSchema,
   deleteTaskTagSchema,
   updateTaskTagColorSchema,
+  createSubtaskSchema,
+  updateSubtaskSchema,
+  reorderSubtasksSchema,
 } from './tasks.schema';
 
 export class TasksController {
@@ -108,6 +111,75 @@ export class TasksController {
     try {
       const validated = updateTaskTagColorSchema.parse(req.body);
       const result = await tasksService.updateTagColor(req.user!.userId, validated);
+      res.status(200).json({ status: 'success', data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async createSubtask(req: Request, res: Response, next: NextFunction) {
+    try {
+      const validated = createSubtaskSchema.parse(req.body);
+      const subtask = await tasksService.createSubtask(
+        req.user!.userId,
+        req.params.id,
+        validated
+      );
+      res.status(201).json({ status: 'success', data: subtask });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateSubtask(req: Request, res: Response, next: NextFunction) {
+    try {
+      const validated = updateSubtaskSchema.parse(req.body);
+      const subtask = await tasksService.updateSubtask(
+        req.user!.userId,
+        req.params.id,
+        req.params.subtaskId,
+        validated
+      );
+      res.status(200).json({ status: 'success', data: subtask });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async toggleSubtask(req: Request, res: Response, next: NextFunction) {
+    try {
+      const subtask = await tasksService.toggleSubtask(
+        req.user!.userId,
+        req.params.id,
+        req.params.subtaskId
+      );
+      res.status(200).json({ status: 'success', data: subtask });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteSubtask(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await tasksService.deleteSubtask(
+        req.user!.userId,
+        req.params.id,
+        req.params.subtaskId
+      );
+      res.status(200).json({ status: 'success', data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async reorderSubtasks(req: Request, res: Response, next: NextFunction) {
+    try {
+      const validated = reorderSubtasksSchema.parse(req.body);
+      const result = await tasksService.reorderSubtasks(
+        req.user!.userId,
+        req.params.id,
+        validated
+      );
       res.status(200).json({ status: 'success', data: result });
     } catch (error) {
       next(error);

@@ -8,6 +8,9 @@ import {
   RenameTaskTagInput,
   DeleteTaskTagInput,
   UpdateTaskTagColorInput,
+  CreateSubtaskInput,
+  UpdateSubtaskInput,
+  ReorderSubtasksInput,
 } from './tasks.schema';
 import { getDefaultTagColor } from '../../utils/tagColors';
 
@@ -66,6 +69,11 @@ export class TasksService {
         prisma.task.count({ where }),
         prisma.task.findMany({
           where,
+          include: {
+            subtasks: {
+              orderBy: { orderIndex: 'asc' },
+            },
+          },
           orderBy: [{ status: 'asc' }, { dueDate: 'asc' }, { priority: 'desc' }],
           take: limit,
           skip,
@@ -102,6 +110,16 @@ export class TasksService {
    * 2. Create task
    */
   async createTask(userId: string, input: CreateTaskInput) {
+    const subtaskData =
+      input.subtasks && input.subtasks.length > 0
+        ? {
+            create: input.subtasks.map((stTitle, idx) => ({
+              title: stTitle.trim(),
+              orderIndex: idx,
+            })),
+          }
+        : undefined;
+
     const task = await prisma.task.create({
       data: {
         userId,
@@ -113,6 +131,12 @@ export class TasksService {
         isRecurring: input.isRecurring,
         recurrenceRule: input.recurrenceRule,
         tags: input.tags || [],
+        subtasks: subtaskData,
+      },
+      include: {
+        subtasks: {
+          orderBy: { orderIndex: 'asc' },
+        },
       },
     });
 
@@ -148,13 +172,34 @@ export class TasksService {
 
     if (input.status === 'DONE' && task.status !== 'DONE') {
       data.completedAt = new Date();
-    } else if (input.status && input.status !== 'DONE') {
+      // If completing parent task, mark all existing subtasks as completed
+      await prisma.subtask.updateMany({
+        where: { taskId },
+        data: {
+          isCompleted: true,
+          completedAt: new Date(),
+        },
+      });
+    } else if (input.status && input.status !== 'DONE' && task.status === 'DONE') {
       data.completedAt = null;
+      // If unticking / reopening parent task, reset all subtasks to incomplete
+      await prisma.subtask.updateMany({
+        where: { taskId },
+        data: {
+          isCompleted: false,
+          completedAt: null,
+        },
+      });
     }
 
     const updated = await prisma.task.update({
       where: { id: taskId },
       data,
+      include: {
+        subtasks: {
+          orderBy: { orderIndex: 'asc' },
+        },
+      },
     });
 
     await this.invalidateUserTasksCache(userId);
@@ -175,11 +220,36 @@ export class TasksService {
 
     const willBeDone = task.status !== 'DONE';
 
+    if (willBeDone) {
+      // If completing parent task, mark all existing subtasks as completed
+      await prisma.subtask.updateMany({
+        where: { taskId },
+        data: {
+          isCompleted: true,
+          completedAt: new Date(),
+        },
+      });
+    } else {
+      // If unticking / reopening parent task, reset all existing subtasks to incomplete
+      await prisma.subtask.updateMany({
+        where: { taskId },
+        data: {
+          isCompleted: false,
+          completedAt: null,
+        },
+      });
+    }
+
     const updatedTask = await prisma.task.update({
       where: { id: taskId },
       data: {
         status: willBeDone ? 'DONE' : 'TODO',
         completedAt: willBeDone ? new Date() : null,
+      },
+      include: {
+        subtasks: {
+          orderBy: { orderIndex: 'asc' },
+        },
       },
     });
 
@@ -246,6 +316,11 @@ export class TasksService {
       where: {
         userId,
         status: { not: 'DONE' },
+      },
+      include: {
+        subtasks: {
+          orderBy: { orderIndex: 'asc' },
+        },
       },
       orderBy: [
         { priority: 'desc' },
@@ -419,6 +494,233 @@ export class TasksService {
 
     await this.invalidateUserTasksCache(userId);
     return { updatedCount: tasksToUpdate.length, tag: cleanTag };
+  }
+
+  /**
+   * Helper: Verify task belongs to current user to prevent IDOR attacks
+   */
+  async verifyTaskOwnership(userId: string, taskId: string) {
+    const task = await prisma.task.findFirst({
+      where: { id: taskId, userId },
+      select: { id: true, userId: true },
+    });
+
+    if (!task) {
+      throw new AppError('Không tìm thấy công việc hoặc bạn không có quyền truy cập.', 404);
+    }
+
+    return task;
+  }
+
+  /**
+   * 11. Create Subtask for a Task
+   */
+  async createSubtask(userId: string, taskId: string, input: CreateSubtaskInput) {
+    await this.verifyTaskOwnership(userId, taskId);
+
+    const maxOrder = await prisma.subtask.findFirst({
+      where: { taskId },
+      orderBy: { orderIndex: 'desc' },
+      select: { orderIndex: true },
+    });
+
+    const nextOrder = maxOrder ? maxOrder.orderIndex + 1 : 0;
+
+    const subtask = await prisma.subtask.create({
+      data: {
+        taskId,
+        title: input.title.trim(),
+        orderIndex: nextOrder,
+      },
+    });
+
+    await this.invalidateUserTasksCache(userId);
+    return subtask;
+  }
+
+  /**
+   * 12. Update Subtask (Title or Completion state)
+   */
+  async updateSubtask(userId: string, taskId: string, subtaskId: string, input: UpdateSubtaskInput) {
+    await this.verifyTaskOwnership(userId, taskId);
+
+    const subtask = await prisma.subtask.findFirst({
+      where: { id: subtaskId, taskId },
+    });
+
+    if (!subtask) {
+      throw new AppError('Không tìm thấy việc con yêu cầu.', 404);
+    }
+
+    const data: any = {};
+    if (input.title !== undefined) {
+      data.title = input.title.trim();
+    }
+    if (input.isCompleted !== undefined) {
+      data.isCompleted = input.isCompleted;
+      data.completedAt = input.isCompleted ? new Date() : null;
+    }
+
+    const updated = await prisma.subtask.update({
+      where: { id: subtaskId },
+      data,
+    });
+
+    // Check Auto-completion of parent task if isCompleted changed
+    let parentTaskUpdated = false;
+    let parentTaskStatus: string | null = null;
+
+    if (input.isCompleted !== undefined) {
+      const allSubtasks = await prisma.subtask.findMany({
+        where: { taskId },
+      });
+      const allDone = allSubtasks.length > 0 && allSubtasks.every((st) => st.isCompleted);
+      const parentTask = await prisma.task.findUnique({
+        where: { id: taskId },
+        select: { id: true, status: true },
+      });
+
+      if (allDone && parentTask && parentTask.status !== 'DONE') {
+        await prisma.task.update({
+          where: { id: taskId },
+          data: {
+            status: 'DONE',
+            completedAt: new Date(),
+          },
+        });
+        parentTaskStatus = 'DONE';
+        parentTaskUpdated = true;
+      } else if (!allDone && parentTask && parentTask.status === 'DONE') {
+        await prisma.task.update({
+          where: { id: taskId },
+          data: {
+            status: 'IN_PROGRESS',
+            completedAt: null,
+          },
+        });
+        parentTaskStatus = 'IN_PROGRESS';
+        parentTaskUpdated = true;
+      }
+    }
+
+    await this.invalidateUserTasksCache(userId);
+    return {
+      ...updated,
+      parentTaskUpdated,
+      parentTaskStatus,
+    };
+  }
+
+  /**
+   * 13. Fast Toggle Subtask Completion State & Trigger Parent Auto-complete
+   */
+  async toggleSubtask(userId: string, taskId: string, subtaskId: string) {
+    await this.verifyTaskOwnership(userId, taskId);
+
+    const subtask = await prisma.subtask.findFirst({
+      where: { id: subtaskId, taskId },
+    });
+
+    if (!subtask) {
+      throw new AppError('Không tìm thấy việc con yêu cầu.', 404);
+    }
+
+    const nextState = !subtask.isCompleted;
+    const updated = await prisma.subtask.update({
+      where: { id: subtaskId },
+      data: {
+        isCompleted: nextState,
+        completedAt: nextState ? new Date() : null,
+      },
+    });
+
+    // Auto-completion check for Parent Task
+    const allSubtasks = await prisma.subtask.findMany({
+      where: { taskId },
+    });
+    const allDone = allSubtasks.length > 0 && allSubtasks.every((st) => st.isCompleted);
+    const parentTask = await prisma.task.findUnique({
+      where: { id: taskId },
+      select: { id: true, status: true },
+    });
+
+    let parentTaskUpdated = false;
+    let parentTaskStatus: string | null = null;
+
+    if (allDone && parentTask && parentTask.status !== 'DONE') {
+      await prisma.task.update({
+        where: { id: taskId },
+        data: {
+          status: 'DONE',
+          completedAt: new Date(),
+        },
+      });
+      parentTaskStatus = 'DONE';
+      parentTaskUpdated = true;
+    } else if (!allDone && parentTask && parentTask.status === 'DONE') {
+      await prisma.task.update({
+        where: { id: taskId },
+        data: {
+          status: 'IN_PROGRESS',
+          completedAt: null,
+        },
+      });
+      parentTaskStatus = 'IN_PROGRESS';
+      parentTaskUpdated = true;
+    }
+
+    await this.invalidateUserTasksCache(userId);
+    return {
+      ...updated,
+      parentTaskUpdated,
+      parentTaskStatus,
+    };
+  }
+
+  /**
+   * 14. Delete Subtask
+   */
+  async deleteSubtask(userId: string, taskId: string, subtaskId: string) {
+    await this.verifyTaskOwnership(userId, taskId);
+
+    const subtask = await prisma.subtask.findFirst({
+      where: { id: subtaskId, taskId },
+    });
+
+    if (!subtask) {
+      throw new AppError('Không tìm thấy việc con yêu cầu.', 404);
+    }
+
+    await prisma.subtask.delete({
+      where: { id: subtaskId },
+    });
+
+    await this.invalidateUserTasksCache(userId);
+    return { message: 'Đã xóa việc con thành công.' };
+  }
+
+  /**
+   * 15. Reorder Subtasks
+   */
+  async reorderSubtasks(userId: string, taskId: string, input: ReorderSubtasksInput) {
+    await this.verifyTaskOwnership(userId, taskId);
+
+    const updates = input.subtaskIds.map((subtaskId, index) =>
+      prisma.subtask.updateMany({
+        where: { id: subtaskId, taskId },
+        data: { orderIndex: index },
+      })
+    );
+
+    await prisma.$transaction(updates);
+    await this.invalidateUserTasksCache(userId);
+
+    const currentSubtasks = await prisma.subtask.findMany({
+      where: { taskId },
+      orderBy: { orderIndex: 'asc' },
+    });
+
+    return { message: 'Đã cập nhật thứ tự việc con thành công.', subtasks: currentSubtasks };
   }
 }
 

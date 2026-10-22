@@ -115,3 +115,83 @@ export function getRemainingDaysInfo(
     formattedDue: `${timeString} ngày ${dateString}`,
   };
 }
+
+export interface SubtaskProgressConfig {
+  barGradient: string;
+  badgeBg: string;
+  badgeText: string;
+  borderLeftAccent: string;
+  borderTopAccent: string;
+  stageLabel: string;
+  glowClass: string;
+}
+
+/**
+ * Multi-tier intuitive color system for subtask progress bars & visual indicators
+ */
+export function getSubtaskProgressConfig(percentage: number): SubtaskProgressConfig {
+  if (percentage <= 0) {
+    return {
+      barGradient: 'bg-slate-300 dark:bg-slate-700',
+      badgeBg: 'bg-slate-100 dark:bg-slate-800 text-slate-500',
+      badgeText: 'text-slate-400 dark:text-slate-500',
+      borderLeftAccent: 'border-l-slate-300 dark:border-l-slate-700',
+      borderTopAccent: 'border-t-slate-300 dark:border-t-slate-700',
+      stageLabel: 'Chưa bắt đầu',
+      glowClass: '',
+    };
+  }
+  if (percentage <= 25) {
+    return {
+      barGradient: 'bg-gradient-to-r from-rose-500 to-orange-400',
+      badgeBg: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20',
+      badgeText: 'text-rose-600 dark:text-rose-400 font-bold',
+      borderLeftAccent: 'border-l-rose-500',
+      borderTopAccent: 'border-t-rose-500',
+      stageLabel: 'Mới bắt đầu',
+      glowClass: 'shadow-xs shadow-rose-500/20',
+    };
+  }
+  if (percentage <= 50) {
+    return {
+      barGradient: 'bg-gradient-to-r from-amber-500 to-yellow-400',
+      badgeBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20',
+      badgeText: 'text-amber-600 dark:text-amber-400 font-bold',
+      borderLeftAccent: 'border-l-amber-500',
+      borderTopAccent: 'border-t-amber-500',
+      stageLabel: 'Đang tiến hành',
+      glowClass: 'shadow-xs shadow-amber-500/20',
+    };
+  }
+  if (percentage <= 75) {
+    return {
+      barGradient: 'bg-gradient-to-r from-blue-500 to-indigo-500',
+      badgeBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20',
+      badgeText: 'text-blue-600 dark:text-blue-400 font-bold',
+      borderLeftAccent: 'border-l-blue-500',
+      borderTopAccent: 'border-t-blue-500',
+      stageLabel: 'Tiến độ tốt',
+      glowClass: 'shadow-xs shadow-blue-500/20',
+    };
+  }
+  if (percentage < 100) {
+    return {
+      barGradient: 'bg-gradient-to-r from-indigo-500 to-purple-500',
+      badgeBg: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20',
+      badgeText: 'text-indigo-600 dark:text-indigo-400 font-bold',
+      borderLeftAccent: 'border-l-indigo-500',
+      borderTopAccent: 'border-t-indigo-500',
+      stageLabel: 'Gần về đích',
+      glowClass: 'shadow-xs shadow-indigo-500/20',
+    };
+  }
+  return {
+    barGradient: 'bg-gradient-to-r from-emerald-500 to-teal-400 shadow-sm shadow-emerald-500/30',
+    badgeBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
+    badgeText: 'text-emerald-600 dark:text-emerald-400 font-bold',
+    borderLeftAccent: 'border-l-emerald-500',
+    borderTopAccent: 'border-t-emerald-500',
+    stageLabel: 'Hoàn thành xuất sắc',
+    glowClass: 'shadow-sm shadow-emerald-500/25',
+  };
+}

@@ -19,6 +19,7 @@ export const createTaskSchema = z.object({
     .optional()
     .transform((val) => (val === '' ? null : val)),
   tags: z.array(z.string().trim()).default([]),
+  subtasks: z.array(z.string().trim().min(1)).optional().default([]),
 });
 
 export const updateTaskSchema = createTaskSchema.partial();
@@ -47,9 +48,36 @@ export const updateTaskTagColorSchema = z.object({
   color: z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'Mã màu không hợp lệ'),
 });
 
+export const createSubtaskSchema = z.object({
+  title: z
+    .string({ required_error: 'Tiêu đề việc con là bắt buộc' })
+    .min(1, 'Tiêu đề việc con không được để trống')
+    .max(255, 'Tiêu đề không được vượt quá 255 ký tự')
+    .trim(),
+});
+
+export const updateSubtaskSchema = z.object({
+  title: z
+    .string()
+    .min(1, 'Tiêu đề việc con không được để trống')
+    .max(255, 'Tiêu đề không được vượt quá 255 ký tự')
+    .trim()
+    .optional(),
+  isCompleted: z.boolean().optional(),
+});
+
+export const reorderSubtasksSchema = z.object({
+  subtaskIds: z
+    .array(z.string().uuid('ID việc con không hợp lệ'))
+    .min(1, 'Danh sách việc con sắp xếp không được để trống'),
+});
+
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
 export type TaskFilterInput = z.infer<typeof taskFilterSchema>;
 export type RenameTaskTagInput = z.infer<typeof renameTaskTagSchema>;
 export type DeleteTaskTagInput = z.infer<typeof deleteTaskTagSchema>;
 export type UpdateTaskTagColorInput = z.infer<typeof updateTaskTagColorSchema>;
+export type CreateSubtaskInput = z.infer<typeof createSubtaskSchema>;
+export type UpdateSubtaskInput = z.infer<typeof updateSubtaskSchema>;
+export type ReorderSubtasksInput = z.infer<typeof reorderSubtasksSchema>;

@@ -41,6 +41,7 @@ export const DashboardPage: React.FC = () => {
       priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
       rawDueDate?: string | null;
       due: string;
+      subtasksCount?: { total: number; completed: number };
     }>
   >([]);
   const [pinnedNotes, setPinnedNotes] = useState<Array<{ id: string; title: string; snippet: string }>>([]);
@@ -72,6 +73,13 @@ export const DashboardPage: React.FC = () => {
               due: t.dueDate
                 ? new Date(t.dueDate).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
                 : 'Không thời hạn',
+              subtasksCount:
+                Array.isArray(t.subtasks) && t.subtasks.length > 0
+                  ? {
+                      total: t.subtasks.length,
+                      completed: t.subtasks.filter((st: any) => st.isCompleted).length,
+                    }
+                  : undefined,
             }))
           );
         }
@@ -276,6 +284,14 @@ export const DashboardPage: React.FC = () => {
                             </Tooltip>
                           );
                         })()}
+                        {task.subtasksCount && (
+                          <span
+                            title={`Tiến độ việc con: ${task.subtasksCount.completed}/${task.subtasksCount.total}`}
+                            className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium tabular-nums border border-slate-200 dark:border-slate-700"
+                          >
+                            {task.subtasksCount.completed}/{task.subtasksCount.total} việc
+                          </span>
+                        )}
                         {task.urgent && !task.completed && (
                           <Tooltip content={PRIORITY_TOOLTIPS[task.priority] || PRIORITY_TOOLTIPS.URGENT}>
                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-500 font-bold cursor-help">

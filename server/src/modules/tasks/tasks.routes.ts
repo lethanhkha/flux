@@ -19,4 +19,11 @@ router.patch('/:id', tasksController.updateTask);
 router.patch('/:id/toggle', tasksController.toggleTaskComplete);
 router.delete('/:id', tasksController.deleteTask);
 
+// Subtask management endpoints
+router.post('/:id/subtasks', tasksController.createSubtask);
+router.put('/:id/subtasks/reorder', tasksController.reorderSubtasks);
+router.patch('/:id/subtasks/:subtaskId', tasksController.updateSubtask);
+router.patch('/:id/subtasks/:subtaskId/toggle', tasksController.toggleSubtask);
+router.delete('/:id/subtasks/:subtaskId', tasksController.deleteSubtask);
+
 export default router;

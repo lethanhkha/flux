@@ -8,6 +8,7 @@ import { TaskTagItem } from './TaskTagModal';
 import { InfoTooltip } from '../common/Tooltip';
 import { CustomSelect } from '../common/CustomSelect';
 import { PRIORITY_TOOLTIPS } from '../../lib/taskUtils';
+import { SubtaskList, SubtaskItem } from './SubtaskList';
 
 export interface TaskItemData {
   id: string;
@@ -21,6 +22,7 @@ export interface TaskItemData {
   recurrenceRule?: string;
   rawRecurrenceRule?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | null;
   tags?: string[];
+  subtasks?: SubtaskItem[];
 }
 
 interface EditTaskModalProps {
@@ -59,6 +61,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
   const [editIsRecurring, setEditIsRecurring] = useState(false);
   const [editRecurrenceRule, setEditRecurrenceRule] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('WEEKLY');
   const [editTags, setEditTags] = useState<string[]>([]);
+  const [subtasks, setSubtasks] = useState<SubtaskItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -71,6 +74,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
       setEditIsRecurring(Boolean(task.isRecurring));
       setEditRecurrenceRule(task.rawRecurrenceRule || 'WEEKLY');
       setEditTags(Array.isArray(task.tags) ? [...task.tags] : []);
+      setSubtasks(Array.isArray(task.subtasks) ? [...task.subtasks] : []);
     }
   }, [isOpen, task]);
 
@@ -111,7 +115,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
       const res = await apiClient.patch(`/tasks/${task.id}`, payload);
 
       toast.success('Đã cập nhật công việc thành công!');
-      onSuccess(res.data?.data);
+      onSuccess({ ...(res.data?.data || task), subtasks });
       onClose();
       window.dispatchEvent(new CustomEvent('flux:refresh-data'));
     } catch (err: any) {
@@ -285,6 +289,16 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
               ))}
             </div>
           )}
+        </div>
+
+        {/* Subtasks Section */}
+        <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+          <SubtaskList
+            taskId={task.id}
+            subtasks={subtasks}
+            onSubtasksChange={setSubtasks}
+            disabled={isSubmitting}
+          />
         </div>
 
         {/* Tags input */}

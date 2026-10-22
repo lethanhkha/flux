@@ -1,20 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { apiClient, getErrorMessage } from '../api/client';
 import {
   CheckSquare,
   Plus,
-  Clock,
-  Repeat,
   Layers,
   List,
   X,
-  Trash2,
   Tag,
   Settings,
-  ChevronDown,
-  ChevronUp,
-  AlignLeft,
-  Edit3,
+  ListTodo,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PaginationControl, PaginationMeta } from '../components/common/PaginationControl';
@@ -26,7 +20,13 @@ import { EmptyTasks } from '../components/illustrations';
 import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
 import { Tooltip, InfoTooltip } from '../components/common/Tooltip';
 import { CustomSelect } from '../components/common/CustomSelect';
-import { getRemainingDaysInfo, PRIORITY_TOOLTIPS } from '../lib/taskUtils';
+import { PRIORITY_TOOLTIPS } from '../lib/taskUtils';
+import { SubtaskItem } from '../components/tasks/SubtaskList';
+import { CompositeTaskRow } from '../components/tasks/CompositeTaskRow';
+import { KanbanCompositeCard } from '../components/tasks/KanbanCompositeCard';
+import { SimpleTaskRow } from '../components/tasks/SimpleTaskRow';
+import { KanbanTaskCard } from '../components/tasks/KanbanTaskCard';
+import { TaskDeleteUndoToast } from '../components/tasks/TaskDeleteUndoToast';
 
 interface TaskItem {
   id: string;
@@ -40,6 +40,14 @@ interface TaskItem {
   recurrenceRule?: string;
   rawRecurrenceRule?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | null;
   tags?: string[];
+  subtasks?: SubtaskItem[];
+}
+
+interface PendingDeleteTask {
+  timer: NodeJS.Timeout;
+  task: TaskItem;
+  index: number;
+  toastId: string | number;
 }
 
 type TaskFilterKey = 'ALL' | 'TODAY' | 'OVERDUE' | 'URGENT' | 'DONE';
@@ -72,6 +80,10 @@ export const TasksPage: React.FC = () => {
   const [newTaskDue, setNewTaskDue] = useState(() => new Date(Date.now() + 86400000).toISOString().slice(0, 16));
   const [newTaskIsRecurring, setNewTaskIsRecurring] = useState(false);
   const [newTaskRecurrenceRule, setNewTaskRecurrenceRule] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('WEEKLY');
+  const [newTaskSubtasks, setNewTaskSubtasks] = useState<string[]>([]);
+  const [draftSubtaskInput, setDraftSubtaskInput] = useState('');
+  const draftSubtaskInputRef = useRef<HTMLInputElement>(null);
+  const pendingDeletionsRef = useRef<Map<string, PendingDeleteTask>>(new Map());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Drag and Drop State for Kanban
@@ -81,7 +93,7 @@ export const TasksPage: React.FC = () => {
   // Set of task IDs with expanded descriptions
   const [expandedTaskIds, setExpandedTaskIds] = useState<Set<string>>(new Set());
 
-  const toggleDescriptionExpand = (taskId: string, e?: React.MouseEvent) => {
+  const toggleDescriptionExpand = useCallback((taskId: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
     setExpandedTaskIds((prev) => {
       const next = new Set(prev);
@@ -92,13 +104,85 @@ export const TasksPage: React.FC = () => {
       }
       return next;
     });
-  };
+  }, []);
+
+  const handleToggleSubtaskFromList = useCallback(async (taskId: string, subtaskId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    let prevTasksSnapshot: TaskItem[] = [];
+
+    setTasks((prev) => {
+      prevTasksSnapshot = prev;
+      const targetTask = prev.find((t) => t.id === taskId);
+      if (!targetTask) return prev;
+
+      const prevSubtasks = targetTask.subtasks || [];
+      const updatedSubtasks = prevSubtasks.map((st) =>
+        st.id === subtaskId
+          ? {
+              ...st,
+              isCompleted: !st.isCompleted,
+              completedAt: !st.isCompleted ? new Date().toISOString() : null,
+            }
+          : st
+      );
+
+      const allDone = updatedSubtasks.length > 0 && updatedSubtasks.every((st) => st.isCompleted);
+      let newStatus = targetTask.status;
+
+      if (allDone && targetTask.status !== 'DONE') {
+        newStatus = 'DONE';
+        toast.success(`🎉 Tuyệt vời! Bạn đã hoàn thành 100% việc con của "${targetTask.title}"!`);
+      } else if (!allDone && targetTask.status === 'DONE') {
+        newStatus = 'IN_PROGRESS';
+        toast.info(`Công việc "${targetTask.title}" đã chuyển về "Đang thực hiện" vì còn việc con chưa xong.`);
+      }
+
+      return prev.map((t) =>
+        t.id === taskId
+          ? {
+              ...t,
+              subtasks: updatedSubtasks,
+              status: newStatus,
+              completedAt: newStatus === 'DONE' ? new Date().toISOString() : null,
+            }
+          : t
+      );
+    });
+
+    try {
+      await apiClient.patch(`/tasks/${taskId}/subtasks/${subtaskId}/toggle`);
+      window.dispatchEvent(
+        new CustomEvent('flux:refresh-data', {
+          detail: { source: 'tasks-subtask-toggle', taskId },
+        })
+      );
+    } catch (err: any) {
+      if (prevTasksSnapshot.length > 0) setTasks(prevTasksSnapshot);
+      toast.error(getErrorMessage(err, 'Không thể cập nhật việc con.'));
+    }
+  }, []);
+
+  const handleAddDraftSubtask = useCallback((e?: React.FormEvent) => {
+    e?.preventDefault();
+    const clean = draftSubtaskInput.trim();
+    if (!clean) return;
+    setNewTaskSubtasks((prev) => [...prev, clean]);
+    setDraftSubtaskInput('');
+    draftSubtaskInputRef.current?.focus();
+    setTimeout(() => {
+      draftSubtaskInputRef.current?.focus();
+    }, 0);
+  }, [draftSubtaskInput]);
+
+  const handleRemoveDraftSubtask = useCallback((index: number) => {
+    setNewTaskSubtasks((prev) => prev.filter((_, idx) => idx !== index));
+  }, []);
 
   // Mouse-wheel horizontal scroll ref for tags
   const tagBarRef = useHorizontalScroll<HTMLDivElement>();
 
   // Fetch all tags globally for user
-  const fetchTags = async () => {
+  const fetchTags = useCallback(async () => {
     try {
       const res = await apiClient.get('/tasks/tags');
       if (Array.isArray(res.data?.data)) {
@@ -107,11 +191,11 @@ export const TasksPage: React.FC = () => {
     } catch {
       // Gracefully maintain current tags
     }
-  };
+  }, []);
 
-  const fetchTasks = async (page = 1) => {
+  const fetchTasks = useCallback(async (page = 1, isSilent = false) => {
     try {
-      setIsLoading(true);
+      if (!isSilent) setIsLoading(true);
       const limit = viewMode === 'kanban' ? 60 : 20;
       const res = await apiClient.get('/tasks', {
         params: {
@@ -123,7 +207,9 @@ export const TasksPage: React.FC = () => {
       });
 
       const rawData = res.data?.data;
-      const taskList = Array.isArray(rawData) ? rawData : (rawData?.items || []);
+      const rawTaskList = Array.isArray(rawData) ? rawData : (rawData?.items || []);
+      const pendingIds = new Set(pendingDeletionsRef.current.keys());
+      const taskList = rawTaskList.filter((t: any) => !pendingIds.has(t.id));
 
       setTasks(
         taskList.map((t: any) => ({
@@ -150,6 +236,7 @@ export const TasksPage: React.FC = () => {
               : undefined,
           rawRecurrenceRule: t.recurrenceRule || null,
           tags: Array.isArray(t.tags) ? t.tags : [],
+          subtasks: Array.isArray(t.subtasks) ? t.subtasks : [],
         }))
       );
 
@@ -161,76 +248,232 @@ export const TasksPage: React.FC = () => {
     } catch {
       // Fallback to empty list gracefully
     } finally {
-      setIsLoading(false);
+      if (!isSilent) setIsLoading(false);
     }
-  };
+  }, [viewMode, filter, selectedTag]);
 
   useEffect(() => {
     fetchTags();
-  }, []);
+  }, [fetchTags]);
 
   useEffect(() => {
     fetchTasks(1);
-  }, [filter, selectedTag, viewMode]);
+  }, [fetchTasks]);
 
   useEffect(() => {
-    const handleRefresh = () => {
-      fetchTasks(pagination.page);
+    const handleRefresh = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      // Skip if event originated from TasksPage's own actions to prevent full-page flicker
+      if (customEvent.detail?.source?.startsWith('tasks-')) {
+        return;
+      }
+      fetchTasks(pagination.page, true);
       fetchTags();
     };
     window.addEventListener('flux:refresh-data', handleRefresh);
     return () => window.removeEventListener('flux:refresh-data', handleRefresh);
-  }, [pagination.page, filter, selectedTag, viewMode]);
+  }, [fetchTasks, fetchTags, pagination.page]);
 
-  const toggleTaskStatus = async (id: string) => {
+  // Flush and commit any pending deletions when unmounting the page
+  useEffect(() => {
+    return () => {
+      pendingDeletionsRef.current.forEach((pending, taskId) => {
+        clearTimeout(pending.timer);
+        apiClient.delete(`/tasks/${taskId}`).catch(() => {});
+      });
+      pendingDeletionsRef.current.clear();
+    };
+  }, []);
+
+  const toggleTaskStatus = useCallback(async (id: string) => {
+    let prevTasksSnapshot: TaskItem[] = [];
+
     // Optimistic UI update
-    setTasks((prev) =>
-      prev.map((t) => {
+    setTasks((prev) => {
+      prevTasksSnapshot = prev;
+      return prev.map((t) => {
         if (t.id === id) {
           const nextStatus = t.status === 'DONE' ? 'TODO' : 'DONE';
           if (nextStatus === 'DONE') {
             toast.success(`Đã hoàn thành: "${t.title}"`);
+          } else {
+            toast.info(`Đã mở lại công việc: "${t.title}"`);
           }
-          return { ...t, status: nextStatus };
+          // If completing parent task, mark all existing subtasks as completed.
+          // Conversely, if unticking parent task, reset all subtasks to incomplete!
+          const updatedSubtasks = t.subtasks
+            ? t.subtasks.map((st) => ({
+                ...st,
+                isCompleted: nextStatus === 'DONE',
+                completedAt: nextStatus === 'DONE' ? new Date().toISOString() : null,
+              }))
+            : t.subtasks;
+
+          return {
+            ...t,
+            status: nextStatus,
+            completedAt: nextStatus === 'DONE' ? new Date().toISOString() : null,
+            subtasks: updatedSubtasks,
+          };
         }
         return t;
-      })
-    );
+      });
+    });
 
     try {
       await apiClient.patch(`/tasks/${id}/toggle`);
-      window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+      window.dispatchEvent(
+        new CustomEvent('flux:refresh-data', {
+          detail: { source: 'tasks-status-toggle', taskId: id },
+        })
+      );
     } catch (err: any) {
+      if (prevTasksSnapshot.length > 0) setTasks(prevTasksSnapshot);
       toast.error(getErrorMessage(err, 'Không thể cập nhật trạng thái.'));
-      fetchTasks(pagination.page);
     }
-  };
+  }, []);
 
-  const handleDeleteTask = async (id: string, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    const taskToDelete = tasks.find((t) => t.id === id);
-    setTasks((prev) => prev.filter((t) => t.id !== id));
-    toast.success('Đã xóa công việc khỏi danh sách.');
+  // Handle commit deletion to server (runs after 6s countdown expires or user closes toast)
+  const handleCommitDelete = useCallback(
+    async (taskId: string, toastId?: string | number) => {
+      const pending = pendingDeletionsRef.current.get(taskId);
+      if (!pending) return;
 
-    try {
-      await apiClient.delete(`/tasks/${id}`);
-      fetchTags();
-      window.dispatchEvent(new CustomEvent('flux:refresh-data'));
-    } catch {
-      if (taskToDelete) setTasks((prev) => [taskToDelete, ...prev]);
-      toast.error('Không thể xóa công việc trên máy chủ.');
-    }
-  };
+      clearTimeout(pending.timer);
+      pendingDeletionsRef.current.delete(taskId);
 
-  const handleOpenEditTask = (task: TaskItem, e?: React.MouseEvent) => {
+      if (toastId) {
+        toast.dismiss(toastId);
+      }
+
+      try {
+        await apiClient.delete(`/tasks/${taskId}`);
+        fetchTags();
+        window.dispatchEvent(
+          new CustomEvent('flux:refresh-data', {
+            detail: { source: 'tasks-delete', taskId },
+          })
+        );
+      } catch (err: any) {
+        // Revert if server request fails
+        setTasks((prev) => {
+          if (prev.some((t) => t.id === taskId)) return prev;
+          const next = [...prev];
+          const insertIdx = Math.min(pending.index, next.length);
+          next.splice(insertIdx, 0, pending.task);
+          return next;
+        });
+        toast.error(
+          getErrorMessage(
+            err,
+            `Không thể xóa công việc "${pending.task.title}" trên máy chủ.`
+          )
+        );
+      }
+    },
+    [fetchTags]
+  );
+
+  // Handle undoing deletion (restores task immediately)
+  const handleUndoDelete = useCallback(
+    (taskId: string, toastId: string | number) => {
+      const pending = pendingDeletionsRef.current.get(taskId);
+      if (pending) {
+        clearTimeout(pending.timer);
+        pendingDeletionsRef.current.delete(taskId);
+
+        setTasks((prev) => {
+          if (prev.some((t) => t.id === taskId)) return prev;
+          const next = [...prev];
+          const insertIdx = Math.min(pending.index, next.length);
+          next.splice(insertIdx, 0, pending.task);
+          return next;
+        });
+
+        toast.dismiss(toastId);
+        toast.success(`Đã khôi phục công việc "${pending.task.title}"!`, {
+          duration: 2500,
+        });
+      } else {
+        toast.dismiss(toastId);
+      }
+    },
+    []
+  );
+
+  const handleDeleteTask = useCallback(
+    (id: string, e?: React.MouseEvent) => {
+      e?.stopPropagation();
+
+      let deletedTask: TaskItem | undefined;
+      let taskIndex = 0;
+
+      setTasks((prev) => {
+        taskIndex = prev.findIndex((t) => t.id === id);
+        if (taskIndex !== -1) {
+          deletedTask = prev[taskIndex];
+        }
+        return prev.filter((t) => t.id !== id);
+      });
+
+      if (!deletedTask) return;
+
+      // Clear any previous pending timer for the same taskId if existed
+      const existing = pendingDeletionsRef.current.get(id);
+      if (existing) {
+        clearTimeout(existing.timer);
+        toast.dismiss(existing.toastId);
+        pendingDeletionsRef.current.delete(id);
+      }
+
+      const durationMs = 6000;
+      let toastId: string | number = '';
+
+      const timer = setTimeout(() => {
+        handleCommitDelete(id, toastId);
+      }, durationMs);
+
+      toastId = toast.custom(
+        (t) => (
+          <TaskDeleteUndoToast
+            toastId={t}
+            taskTitle={deletedTask!.title}
+            onUndo={() => handleUndoDelete(id, t)}
+            onDismiss={() => handleCommitDelete(id, t)}
+            durationMs={durationMs}
+          />
+        ),
+        {
+          duration: durationMs,
+          unstyled: true,
+        }
+      );
+
+      pendingDeletionsRef.current.set(id, {
+        timer,
+        task: deletedTask,
+        index: taskIndex,
+        toastId,
+      });
+    },
+    [handleCommitDelete, handleUndoDelete]
+  );
+
+  const handleOpenEditTask = useCallback((task: TaskItem, e?: React.MouseEvent) => {
     e?.stopPropagation();
     setEditingTask(task);
     setIsEditModalOpen(true);
-  };
+  }, []);
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
+
+    // Capture any pending draft subtask input
+    const finalSubtaskTitles = [...newTaskSubtasks];
+    if (draftSubtaskInput.trim()) {
+      finalSubtaskTitles.push(draftSubtaskInput.trim());
+    }
 
     setIsSubmitting(true);
     const tempId = `task-${Date.now()}`;
@@ -257,6 +500,13 @@ export const TasksPage: React.FC = () => {
         : undefined,
       rawRecurrenceRule: newTaskIsRecurring ? newTaskRecurrenceRule : null,
       tags: [...newTaskTags],
+      subtasks: finalSubtaskTitles.map((title, idx) => ({
+        id: `draft-${idx}`,
+        taskId: tempId,
+        title,
+        isCompleted: false,
+        orderIndex: idx,
+      })),
     };
 
     setTasks([newTask, ...tasks]);
@@ -273,17 +523,20 @@ export const TasksPage: React.FC = () => {
         recurrenceRule: newTaskIsRecurring ? newTaskRecurrenceRule : undefined,
         status: 'TODO',
         tags: newTaskTags,
+        subtasks: finalSubtaskTitles,
       });
       if (res.data.data?.id) {
         const created = res.data.data;
         setTasks((prev) =>
-          prev.map((t) => (t.id === tempId ? { ...t, id: created.id } : t))
+          prev.map((t) => (t.id === tempId ? { ...t, id: created.id, subtasks: Array.isArray(created.subtasks) ? created.subtasks : t.subtasks } : t))
         );
       }
       setNewTaskTitle('');
       setNewTaskDescription('');
       setNewTaskIsRecurring(false);
       setNewTaskTags([]);
+      setNewTaskSubtasks([]);
+      setDraftSubtaskInput('');
       fetchTags();
       window.dispatchEvent(new CustomEvent('flux:refresh-data'));
     } catch (err: any) {
@@ -294,49 +547,49 @@ export const TasksPage: React.FC = () => {
   };
 
   // Tag Management Actions
-  const handleRenameTag = async (oldTag: string, newTag: string) => {
+  const handleRenameTag = useCallback(async (oldTag: string, newTag: string) => {
     try {
       await apiClient.post('/tasks/tags/rename', { oldTag, newTag });
       toast.success(`Đã đổi tên thẻ #${oldTag} thành #${newTag}!`);
       if (selectedTag === oldTag) {
         setSelectedTag(newTag);
       }
-      await Promise.all([fetchTags(), fetchTasks(pagination.page)]);
-      window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+      await Promise.all([fetchTags(), fetchTasks(pagination.page, true)]);
+      window.dispatchEvent(new CustomEvent('flux:refresh-data', { detail: { source: 'tasks-tag-rename' } }));
     } catch (err: any) {
       toast.error(getErrorMessage(err, 'Không thể đổi tên thẻ.'));
       throw err;
     }
-  };
+  }, [selectedTag, fetchTags, fetchTasks, pagination.page]);
 
-  const handleDeleteTag = async (tag: string) => {
+  const handleDeleteTag = useCallback(async (tag: string) => {
     try {
       await apiClient.post('/tasks/tags/delete', { tag });
       toast.success(`Đã xóa thẻ #${tag} khỏi tất cả công việc!`);
       if (selectedTag === tag) {
         setSelectedTag(null);
       }
-      await Promise.all([fetchTags(), fetchTasks(1)]);
-      window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+      await Promise.all([fetchTags(), fetchTasks(1, true)]);
+      window.dispatchEvent(new CustomEvent('flux:refresh-data', { detail: { source: 'tasks-tag-delete' } }));
     } catch (err: any) {
       toast.error(getErrorMessage(err, 'Không thể xóa thẻ.'));
       throw err;
     }
-  };
+  }, [selectedTag, fetchTags, fetchTasks]);
 
-  const handleUpdateTagColor = async (tag: string, color: string) => {
+  const handleUpdateTagColor = useCallback(async (tag: string, color: string) => {
     try {
       await apiClient.patch('/tasks/tags/color', { tag, color });
       toast.success(`Đã cập nhật màu cho thẻ #${tag}!`);
       await fetchTags();
-      window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+      window.dispatchEvent(new CustomEvent('flux:refresh-data', { detail: { source: 'tasks-tag-color' } }));
     } catch (err: any) {
       toast.error(getErrorMessage(err, 'Không thể cập nhật màu thẻ.'));
       throw err;
     }
-  };
+  }, [fetchTags]);
 
-  const tagColorMap = React.useMemo(() => {
+  const tagColorMap = useMemo(() => {
     const map = new Map<string, string>();
     availableTags.forEach((t) => {
       if (t.color) map.set(t.name.toLowerCase(), t.color);
@@ -344,35 +597,33 @@ export const TasksPage: React.FC = () => {
     return map;
   }, [availableTags]);
 
-  const getTagColor = (name: string) => {
+  const getTagColor = useCallback((name: string) => {
     return tagColorMap.get(name.toLowerCase()) || '#6366F1';
-  };
+  }, [tagColorMap]);
 
   // HTML5 Drag and Drop Handlers for Kanban
-  const handleDragStart = (e: React.DragEvent, id: string) => {
+  const handleDragStart = useCallback((e: React.DragEvent, id: string) => {
     e.dataTransfer.setData('text/plain', id);
     e.dataTransfer.effectAllowed = 'move';
     setDraggingTaskId(id);
-  };
+  }, []);
 
-  const handleDragEnd = () => {
+  const handleDragEnd = useCallback(() => {
     setDraggingTaskId(null);
     setDragOverColumn(null);
-  };
+  }, []);
 
-  const handleDragOver = (e: React.DragEvent, column: 'TODO' | 'IN_PROGRESS' | 'DONE') => {
+  const handleDragOver = useCallback((e: React.DragEvent, column: 'TODO' | 'IN_PROGRESS' | 'DONE') => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    if (dragOverColumn !== column) {
-      setDragOverColumn(column);
-    }
-  };
+    setDragOverColumn((prev) => (prev !== column ? column : prev));
+  }, []);
 
-  const handleDragLeave = () => {
+  const handleDragLeave = useCallback(() => {
     setDragOverColumn(null);
-  };
+  }, []);
 
-  const handleDrop = async (e: React.DragEvent, targetStatus: 'TODO' | 'IN_PROGRESS' | 'DONE') => {
+  const handleDrop = useCallback(async (e: React.DragEvent, targetStatus: 'TODO' | 'IN_PROGRESS' | 'DONE') => {
     e.preventDefault();
     const taskId = e.dataTransfer.getData('text/plain') || draggingTaskId;
     setDraggingTaskId(null);
@@ -383,6 +634,14 @@ export const TasksPage: React.FC = () => {
     if (!targetTask || targetTask.status === targetStatus) return;
 
     const prevStatus = targetTask.status;
+    const isTargetDone = targetStatus === 'DONE';
+    const updatedSubtasks = targetTask.subtasks
+      ? targetTask.subtasks.map((st) => ({
+          ...st,
+          isCompleted: isTargetDone,
+          completedAt: isTargetDone ? new Date().toISOString() : null,
+        }))
+      : targetTask.subtasks;
 
     // Optimistic UI update
     setTasks((prev) =>
@@ -391,7 +650,8 @@ export const TasksPage: React.FC = () => {
           ? {
               ...t,
               status: targetStatus,
-              completedAt: targetStatus === 'DONE' ? new Date().toISOString() : undefined,
+              completedAt: isTargetDone ? new Date().toISOString() : undefined,
+              subtasks: updatedSubtasks,
             }
           : t
       )
@@ -410,7 +670,11 @@ export const TasksPage: React.FC = () => {
         status: targetStatus,
         completedAt: targetStatus === 'DONE' ? new Date().toISOString() : null,
       });
-      window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+      window.dispatchEvent(
+        new CustomEvent('flux:refresh-data', {
+          detail: { source: 'tasks-status-drag', taskId },
+        })
+      );
     } catch (err: any) {
       // Revert if API fails
       setTasks((prev) =>
@@ -418,45 +682,7 @@ export const TasksPage: React.FC = () => {
       );
       toast.error(getErrorMessage(err, 'Không thể cập nhật trạng thái công việc.'));
     }
-  };
-
-  const priorityBadge = (p: TaskItem['priority']) => {
-    const tip = PRIORITY_TOOLTIPS[p];
-    switch (p) {
-      case 'URGENT':
-        return (
-          <Tooltip content={tip}>
-            <span className="text-[10px] px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-500 font-bold cursor-help hover:scale-105 transition-transform inline-flex items-center gap-1">
-              Khẩn cấp
-            </span>
-          </Tooltip>
-        );
-      case 'HIGH':
-        return (
-          <Tooltip content={tip}>
-            <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-500 font-bold cursor-help hover:scale-105 transition-transform inline-flex items-center gap-1">
-              Ưu tiên cao
-            </span>
-          </Tooltip>
-        );
-      case 'MEDIUM':
-        return (
-          <Tooltip content={tip}>
-            <span className="text-[10px] px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-500 font-bold cursor-help hover:scale-105 transition-transform inline-flex items-center gap-1">
-              Trung bình
-            </span>
-          </Tooltip>
-        );
-      case 'LOW':
-        return (
-          <Tooltip content={tip}>
-            <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-500/10 text-slate-500 font-bold cursor-help hover:scale-105 transition-transform inline-flex items-center gap-1">
-              Thấp
-            </span>
-          </Tooltip>
-        );
-    }
-  };
+  }, [draggingTaskId, tasks]);
 
   return (
     <div className="space-y-6">
@@ -726,150 +952,39 @@ export const TasksPage: React.FC = () => {
             </div>
           ) : (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-3">
-              {tasks.map((t) => (
-                <div
-                  key={t.id}
-                  onClick={() => toggleTaskStatus(t.id)}
-                  className={`p-4 rounded-2xl border transition-all flex ${
-                    expandedTaskIds.has(t.id) ? 'items-start' : 'items-start sm:items-center'
-                  } justify-between gap-4 cursor-pointer hover:border-brand/50 ${
-                    t.status === 'DONE'
-                      ? 'bg-slate-50/50 dark:bg-slate-950/30 border-slate-100 dark:border-slate-800/80 opacity-70'
-                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover-lift'
-                  }`}
-                >
-                  <div className={`flex ${expandedTaskIds.has(t.id) ? 'items-start' : 'items-start sm:items-center'} gap-3.5 flex-1 min-w-0`}>
-                    <input
-                      type="checkbox"
-                      checked={t.status === 'DONE'}
-                      onChange={() => {}}
-                      className={`${expandedTaskIds.has(t.id) ? 'mt-1' : 'mt-0.5 sm:mt-0'} w-4 h-4 rounded text-brand focus:ring-brand cursor-pointer flex-shrink-0`}
+              {tasks.map((t) => {
+                const hasSubtasks = Boolean(t.subtasks && t.subtasks.length > 0);
+                const isExpanded = expandedTaskIds.has(t.id);
+
+                if (hasSubtasks) {
+                  return (
+                    <CompositeTaskRow
+                      key={t.id}
+                      task={t}
+                      isDescriptionExpanded={isExpanded}
+                      onToggleParentStatus={toggleTaskStatus}
+                      onToggleSubtask={handleToggleSubtaskFromList}
+                      onEditTask={handleOpenEditTask}
+                      onDeleteTask={handleDeleteTask}
+                      getTagColor={getTagColor}
+                      toggleDescriptionExpand={toggleDescriptionExpand}
                     />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`font-semibold text-xs leading-snug truncate ${
-                            t.status === 'DONE' ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-slate-100'
-                          }`}
-                        >
-                          {t.title}
-                        </span>
-                        {t.isRecurring && (
-                          <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-500 flex-shrink-0 font-medium">
-                            <Repeat className="w-2.5 h-2.5" /> {t.recurrenceRule}
-                          </span>
-                        )}
-                      </div>
+                  );
+                }
 
-                      {t.description && (
-                        <div className="mt-1">
-                          {expandedTaskIds.has(t.id) ? (
-                            <div
-                              onClick={(e) => e.stopPropagation()}
-                              className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-100 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 select-text leading-relaxed whitespace-pre-wrap break-words shadow-xs"
-                            >
-                              <div className="flex items-center justify-between gap-2 pb-1.5 mb-2 border-b border-slate-200/60 dark:border-slate-800 text-[10px] font-semibold text-slate-400">
-                                <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
-                                  <AlignLeft className="w-3 h-3 text-brand" /> Chi tiết công việc
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={(e) => toggleDescriptionExpand(t.id, e)}
-                                  className="inline-flex items-center gap-0.5 text-brand hover:underline cursor-pointer font-medium"
-                                >
-                                  Thu gọn <ChevronUp className="w-3 h-3" />
-                                </button>
-                              </div>
-                              {t.description}
-                            </div>
-                          ) : (
-                            <div className="flex items-start gap-1.5">
-                              <p
-                                onClick={(e) => toggleDescriptionExpand(t.id, e)}
-                                title={t.description}
-                                className="text-[11px] text-slate-400 dark:text-slate-500 line-clamp-1 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer transition-colors flex-1"
-                              >
-                                {t.description}
-                              </p>
-                              <button
-                                type="button"
-                                onClick={(e) => toggleDescriptionExpand(t.id, e)}
-                                title="Bấm để xem toàn bộ mô tả"
-                                className="inline-flex items-center gap-0.5 text-[10px] font-medium text-brand hover:underline cursor-pointer flex-shrink-0"
-                              >
-                                Xem thêm <ChevronDown className="w-2.5 h-2.5" />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {t.tags && t.tags.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-1 mt-1.5">
-                          {t.tags.map((tag) => {
-                            const color = getTagColor(tag);
-                            return (
-                              <span
-                                key={tag}
-                                className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border"
-                                style={{
-                                  backgroundColor: `${color}15`,
-                                  borderColor: `${color}35`,
-                                  color: color,
-                                }}
-                              >
-                                #{tag}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2.5 flex-shrink-0">
-                    {priorityBadge(t.priority)}
-
-                    {/* Deadline Countdown Badge */}
-                    {t.rawDueDate && (() => {
-                      const remaining = getRemainingDaysInfo(t.rawDueDate, t.status);
-                      return (
-                        <Tooltip content={`Hạn chót: ${remaining.formattedDue}`}>
-                          <span
-                            className={`text-[10px] px-2 py-0.5 rounded-md border font-medium flex items-center gap-1 transition-all ${remaining.colorClasses}`}
-                          >
-                            <Clock className="w-3 h-3 flex-shrink-0" />
-                            <span>{remaining.label}</span>
-                          </span>
-                        </Tooltip>
-                      );
-                    })()}
-
-                    <div className="flex items-center gap-1">
-                      <Tooltip content="Chỉnh sửa nội dung, thời hạn và trạng thái công việc">
-                        <button
-                          type="button"
-                          onClick={(e) => handleOpenEditTask(t, e)}
-                          aria-label={`Chỉnh sửa công việc: ${t.title}`}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-brand hover:bg-brand/10 transition-colors focus-ring cursor-pointer"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-                      </Tooltip>
-                      <Tooltip content="Xóa công việc này khỏi hệ thống">
-                        <button
-                          type="button"
-                          onClick={(e) => handleDeleteTask(t.id, e)}
-                          aria-label={`Xóa công việc: ${t.title}`}
-                          className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors focus-ring cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </Tooltip>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                return (
+                  <SimpleTaskRow
+                    key={t.id}
+                    task={t}
+                    isDescriptionExpanded={isExpanded}
+                    onToggleTaskStatus={toggleTaskStatus}
+                    onToggleDescriptionExpand={toggleDescriptionExpand}
+                    onEditTask={handleOpenEditTask}
+                    onDeleteTask={handleDeleteTask}
+                    getTagColor={getTagColor}
+                  />
+                );
+              })}
             </div>
           )
         )}
@@ -955,118 +1070,46 @@ export const TasksPage: React.FC = () => {
                           </div>
                         </div>
                       ) : (
-                        columnTasks.map((t) => (
-                          <div
+                        columnTasks.map((t) => {
+                        const hasSubtasks = Boolean(t.subtasks && t.subtasks.length > 0);
+                        const isExpanded = expandedTaskIds.has(t.id);
+                        const isDragging = draggingTaskId === t.id;
+
+                        if (hasSubtasks) {
+                          return (
+                            <KanbanCompositeCard
+                              key={t.id}
+                              task={t}
+                              isDragging={isDragging}
+                              isDescriptionExpanded={isExpanded}
+                              onDragStart={handleDragStart}
+                              onDragEnd={handleDragEnd}
+                              onToggleParentStatus={toggleTaskStatus}
+                              onToggleSubtask={handleToggleSubtaskFromList}
+                              onEditTask={handleOpenEditTask}
+                              onDeleteTask={handleDeleteTask}
+                              getTagColor={getTagColor}
+                              toggleDescriptionExpand={toggleDescriptionExpand}
+                            />
+                          );
+                        }
+
+                        return (
+                          <KanbanTaskCard
                             key={t.id}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, t.id)}
+                            task={t}
+                            isDragging={isDragging}
+                            isDescriptionExpanded={isExpanded}
+                            onDragStart={handleDragStart}
                             onDragEnd={handleDragEnd}
-                            onClick={() => toggleTaskStatus(t.id)}
-                            className={`p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover-lift cursor-grab active:cursor-grabbing space-y-2.5 transition-all select-none ${
-                              draggingTaskId === t.id
-                                ? 'opacity-40 scale-95 border-brand ring-2 ring-brand/30'
-                                : ''
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              {priorityBadge(t.priority)}
-                              <div className="flex items-center gap-1.5">
-                                {t.rawDueDate && (() => {
-                                  const remaining = getRemainingDaysInfo(t.rawDueDate, t.status);
-                                  return (
-                                    <Tooltip content={`Hạn chót: ${remaining.formattedDue}`}>
-                                      <span
-                                        className={`text-[10px] px-1.5 py-0.5 rounded border font-medium flex items-center gap-1 ${remaining.colorClasses}`}
-                                      >
-                                        <Clock className="w-2.5 h-2.5 flex-shrink-0" />
-                                        <span>{remaining.shortLabel}</span>
-                                      </span>
-                                    </Tooltip>
-                                  );
-                                })()}
-                                <Tooltip content="Chỉnh sửa công việc">
-                                  <button
-                                    type="button"
-                                    onClick={(e) => handleOpenEditTask(t, e)}
-                                    aria-label={`Chỉnh sửa công việc: ${t.title}`}
-                                    className="text-slate-400 hover:text-brand hover:bg-brand/10 p-1 rounded-md transition-colors cursor-pointer focus-ring"
-                                  >
-                                    <Edit3 className="w-3 h-3" />
-                                  </button>
-                                </Tooltip>
-                                <Tooltip content="Xóa công việc">
-                                  <button
-                                    type="button"
-                                    onClick={(e) => handleDeleteTask(t.id, e)}
-                                    aria-label={`Xóa công việc: ${t.title}`}
-                                    className="text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 p-1 rounded-md transition-colors cursor-pointer focus-ring"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </button>
-                                </Tooltip>
-                              </div>
-                            </div>
-                            <div
-                              className={`font-semibold text-xs leading-snug ${
-                                t.status === 'DONE' ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-100'
-                              }`}
-                            >
-                              {t.title}
-                            </div>
-                            {t.description && (
-                              <div
-                                onClick={(e) => toggleDescriptionExpand(t.id, e)}
-                                className="cursor-pointer"
-                              >
-                                {expandedTaskIds.has(t.id) ? (
-                                  <div
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-100 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300 select-text leading-relaxed whitespace-pre-wrap break-words mt-1 shadow-xs"
-                                  >
-                                    <div className="flex items-center justify-between text-[9px] text-slate-400 font-semibold mb-1 pb-1 border-b border-slate-200/50 dark:border-slate-800">
-                                      <span>Mô tả chi tiết</span>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => toggleDescriptionExpand(t.id, e)}
-                                        className="text-brand hover:underline cursor-pointer font-medium"
-                                      >
-                                        Thu gọn ▲
-                                      </button>
-                                    </div>
-                                    {t.description}
-                                  </div>
-                                ) : (
-                                  <p
-                                    title="Bấm để xem toàn bộ mô tả"
-                                    className="text-[11px] text-slate-400 dark:text-slate-500 line-clamp-2 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                                  >
-                                    {t.description}
-                                  </p>
-                                )}
-                              </div>
-                            )}
-                            {t.tags && t.tags.length > 0 && (
-                              <div className="flex flex-wrap items-center gap-1 pt-1">
-                                {t.tags.map((tag) => {
-                                  const color = getTagColor(tag);
-                                  return (
-                                    <span
-                                      key={tag}
-                                      className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-semibold border"
-                                      style={{
-                                        backgroundColor: `${color}15`,
-                                        borderColor: `${color}35`,
-                                        color: color,
-                                      }}
-                                    >
-                                      #{tag}
-                                    </span>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
-                        ))
+                            onToggleParentStatus={toggleTaskStatus}
+                            onToggleDescriptionExpand={toggleDescriptionExpand}
+                            onEditTask={handleOpenEditTask}
+                            onDeleteTask={handleDeleteTask}
+                            getTagColor={getTagColor}
+                          />
+                        );
+                      })
                       )}
                     </div>
                   </div>
@@ -1234,6 +1277,73 @@ export const TasksPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Draft Subtasks for Add Task Modal */}
+            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <ListTodo className="w-3.5 h-3.5 text-brand" />
+                  <span>Việc con dự kiến ({newTaskSubtasks.length})</span>
+                </label>
+                {newTaskSubtasks.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setNewTaskSubtasks([])}
+                    className="text-[11px] text-rose-500 hover:underline cursor-pointer"
+                  >
+                    Xóa tất cả
+                  </button>
+                )}
+              </div>
+
+              {/* List of draft subtasks */}
+              {newTaskSubtasks.length > 0 && (
+                <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
+                  {newTaskSubtasks.map((st, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-200"
+                    >
+                      <span className="truncate flex-1">{idx + 1}. {st}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveDraftSubtask(idx)}
+                        className="p-0.5 text-slate-400 hover:text-rose-500 rounded cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Input to add draft subtask */}
+              <div className="flex items-center gap-1.5">
+                <input
+                  ref={draftSubtaskInputRef}
+                  type="text"
+                  value={draftSubtaskInput}
+                  onChange={(e) => setDraftSubtaskInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddDraftSubtask();
+                    }
+                  }}
+                  placeholder="Gõ việc con và nhấn Enter..."
+                  className="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-brand font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddDraftSubtask}
+                  disabled={!draftSubtaskInput.trim()}
+                  className="px-3 py-1.5 rounded-xl bg-brand text-white font-semibold text-xs hover:bg-brand-hover disabled:opacity-40 cursor-pointer flex items-center gap-1"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Thêm</span>
+                </button>
+              </div>
+            </div>
+
             <button
               type="submit"
               disabled={isSubmitting}
@@ -1264,7 +1374,7 @@ export const TasksPage: React.FC = () => {
           task={editingTask}
           availableTags={availableTags}
           onSuccess={() => {
-            fetchTasks(pagination.page);
+            fetchTasks(pagination.page, true);
             fetchTags();
           }}
         />
