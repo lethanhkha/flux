@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { apiClient, getErrorMessage } from '../api/client';
 import { ConfirmModal } from '../components/common/ConfirmModal';
 import { formatCurrency } from '../lib/utils';
 import { toast } from 'sonner';
+import { useDebounce } from '../hooks/useDebounce';
 
 import {
   WalletItem,
@@ -37,6 +38,7 @@ export const FinancePage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [selectedWalletId, setSelectedWalletId] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
   // Modals visibility state
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
@@ -62,7 +64,8 @@ export const FinancePage: React.FC = () => {
 
   const [wallets, setWallets] = useState<WalletItem[]>([]);
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
+  const [isTxLoading, setIsTxLoading] = useState<boolean>(false);
   const [summary, setSummary] = useState({
     monthlyIncome: 0,
     monthlyExpense: 0,
@@ -112,16 +115,16 @@ export const FinancePage: React.FC = () => {
   }, [period]);
 
   // Fetch transactions with full server-side filters and DB-level stats
-  const fetchTransactions = async (
+  const fetchTransactions = useCallback(async (
     page = 1,
     currentPeriod = period,
     currentFilter = filter,
     currentCategory = selectedCategory,
     currentWallet = selectedWalletId,
-    currentSearch = searchQuery
+    currentSearch = debouncedSearch
   ) => {
     try {
-      setIsLoading(true);
+      setIsTxLoading(true);
       const params: Record<string, any> = {
         page,
         limit: 20,
@@ -180,23 +183,33 @@ export const FinancePage: React.FC = () => {
 
       if (rawData?.periodSummary) {
         setPeriodSummary(rawData.periodSummary);
-        setSummary({
-          monthlyIncome: rawData.periodSummary.income,
-          monthlyExpense: rawData.periodSummary.expense,
-          netCashflow: rawData.periodSummary.netCashflow,
+        setSummary((prev) => {
+          if (
+            prev.monthlyIncome === rawData.periodSummary.income &&
+            prev.monthlyExpense === rawData.periodSummary.expense &&
+            prev.netCashflow === rawData.periodSummary.netCashflow
+          ) {
+            return prev;
+          }
+          return {
+            monthlyIncome: rawData.periodSummary.income,
+            monthlyExpense: rawData.periodSummary.expense,
+            netCashflow: rawData.periodSummary.netCashflow,
+          };
         });
       }
     } catch {
       // Degrade gracefully
     } finally {
-      setIsLoading(false);
+      setIsTxLoading(false);
     }
-  };
+  }, [period, filter, selectedCategory, selectedWalletId, debouncedSearch]);
 
   // Consolidated Initial Load: Fetches wallets, categories, summary, and default monthly transactions
   const fetchFinanceData = async (page = 1) => {
     try {
-      setIsLoading(true);
+      setIsInitialLoading(true);
+      setIsTxLoading(true);
       const params: Record<string, any> = {
         page,
         limit: 20,
@@ -275,44 +288,68 @@ export const FinancePage: React.FC = () => {
     } catch {
       // Degrade gracefully
     } finally {
-      setIsLoading(false);
+      setIsInitialLoading(false);
+      setIsTxLoading(false);
     }
   };
+
+  const currentParamsRef = useRef({
+    page: txPagination.page,
+    period,
+    filter,
+    selectedCategory,
+    selectedWalletId,
+    debouncedSearch,
+  });
+
+  useEffect(() => {
+    currentParamsRef.current = {
+      page: txPagination.page,
+      period,
+      filter,
+      selectedCategory,
+      selectedWalletId,
+      debouncedSearch,
+    };
+  });
+
+  const fetchTransactionsRef = useRef(fetchTransactions);
+  useEffect(() => {
+    fetchTransactionsRef.current = fetchTransactions;
+  }, [fetchTransactions]);
 
   useEffect(() => {
     fetchFinanceData(1);
     const handleRefresh = () => {
-      fetchTransactions(txPagination.page, period, filter, selectedCategory, selectedWalletId, searchQuery);
+      const p = currentParamsRef.current;
+      fetchTransactionsRef.current(p.page, p.period, p.filter, p.selectedCategory, p.selectedWalletId, p.debouncedSearch);
     };
     window.addEventListener('flux:refresh-data', handleRefresh);
     return () => window.removeEventListener('flux:refresh-data', handleRefresh);
-  }, []);
+  }, []); // Run ONLY once on mount! Never re-run when debouncedSearch or fetchTransactions changes!
 
-  // Re-fetch transactions whenever period, filter, category, wallet, or search query changes
+  // Re-fetch transactions whenever period, filter, category, wallet, or debounced search query changes
   const isFirstRender = useRef(true);
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
-    const timer = setTimeout(() => {
-      fetchTransactions(1, period, filter, selectedCategory, selectedWalletId, searchQuery);
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [period, filter, selectedCategory, selectedWalletId, searchQuery]);
+    fetchTransactions(1, period, filter, selectedCategory, selectedWalletId, debouncedSearch);
+  }, [fetchTransactions, period, filter, selectedCategory, selectedWalletId, debouncedSearch]);
 
-  const handlePageChange = async (newPage: number) => {
-    fetchTransactions(newPage, period, filter, selectedCategory, selectedWalletId, searchQuery);
-  };
+  const handlePageChange = useCallback(async (newPage: number) => {
+    fetchTransactions(newPage, period, filter, selectedCategory, selectedWalletId, debouncedSearch);
+  }, [fetchTransactions, period, filter, selectedCategory, selectedWalletId, debouncedSearch]);
 
-  const handleClearAllFilters = () => {
+  const handleClearAllFilters = useCallback(() => {
     setFilter('ALL');
     setSelectedCategory('ALL');
     setSelectedWalletId('ALL');
     setSearchQuery('');
-  };
+  }, []);
 
-  const totalBalance = wallets.reduce((acc, curr) => acc + curr.balance, 0);
+  const totalBalance = useMemo(() => wallets.reduce((acc, curr) => acc + curr.balance, 0), [wallets]);
 
   const handleTransfer = async (
     sourceWalletId: string,
@@ -374,12 +411,18 @@ export const FinancePage: React.FC = () => {
     });
   };
 
-  const handleSetDefaultWallet = async (walletId: string) => {
-    const target = wallets.find((w) => w.id === walletId);
-    if (!target) return;
+  const handleOpenCategoryModal = useCallback(() => setIsCategoryModalOpen(true), []);
+  const handleOpenTransferModal = useCallback(() => setIsTransferModalOpen(true), []);
+  const handleOpenAddWalletModal = useCallback(() => setIsAddWalletModalOpen(true), []);
+  const handleOpenAddTx = useCallback(() => setIsAddTxModalOpen(true), []);
 
+  const handleSetDefaultWallet = useCallback(async (walletId: string) => {
+    let walletName = '';
     // Optimistic UI update: target becomes default and is placed at the front
     setWallets((prev) => {
+      const target = prev.find((w) => w.id === walletId);
+      if (!target) return prev;
+      walletName = target.name;
       const updated = prev.map((w) => ({
         ...w,
         isDefault: w.id === walletId,
@@ -389,13 +432,13 @@ export const FinancePage: React.FC = () => {
 
     try {
       await apiClient.patch(`/finance/wallets/${walletId}/default`);
-      toast.success(`Đã đặt "${target.name}" làm ví mặc định!`);
+      toast.success(walletName ? `Đã đặt "${walletName}" làm ví mặc định!` : 'Đã đặt ví mặc định!');
       window.dispatchEvent(new CustomEvent('flux:refresh-data'));
     } catch (err) {
       toast.error(getErrorMessage(err, 'Không thể đặt ví mặc định.'));
-      fetchFinanceData(txPagination.page);
+      fetchFinanceData(1);
     }
-  };
+  }, []);
 
   const handleTransactionCreated = (
     newTx: TransactionItem,
@@ -407,14 +450,14 @@ export const FinancePage: React.FC = () => {
     );
     setTransactions((prev) => [newTx, ...prev]);
     // Refresh calculations and totals for the current period
-    fetchTransactions(1, period, filter, selectedCategory, selectedWalletId, searchQuery);
+    fetchTransactions(1, period, filter, selectedCategory, selectedWalletId, debouncedSearch);
     window.dispatchEvent(new CustomEvent('flux:refresh-data'));
   };
 
-  const handleOpenEditTx = (tx: TransactionItem) => {
+  const handleOpenEditTx = useCallback((tx: TransactionItem) => {
     setEditingTx(tx);
     setIsEditTxModalOpen(true);
-  };
+  }, []);
 
   const handleCategoryCreated = (cat: CategoryItem) => {
     setCategories((prev) => [...prev, cat]);
@@ -432,16 +475,16 @@ export const FinancePage: React.FC = () => {
     }
   };
 
-  const handleRequestDeleteCategory = (cat: CategoryItem) => {
+  const handleRequestDeleteCategory = useCallback((cat: CategoryItem) => {
     setDeleteModalState({
       isOpen: true,
       type: 'CATEGORY',
       targetCategory: cat,
       isLoading: false,
     });
-  };
+  }, []);
 
-  const handleRequestDeleteTx = (tx: TransactionItem, e?: React.MouseEvent) => {
+  const handleRequestDeleteTx = useCallback((tx: TransactionItem, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setDeleteModalState({
       isOpen: true,
@@ -449,12 +492,12 @@ export const FinancePage: React.FC = () => {
       targetTx: tx,
       isLoading: false,
     });
-  };
+  }, []);
 
-  const handleOpenEditWallet = (wallet: WalletItem) => {
+  const handleOpenEditWallet = useCallback((wallet: WalletItem) => {
     setEditingWallet(wallet);
     setIsEditWalletModalOpen(true);
-  };
+  }, []);
 
   const handleWalletUpdated = (updatedWallet: WalletItem) => {
     setWallets((prev) =>
@@ -466,18 +509,21 @@ export const FinancePage: React.FC = () => {
     );
   };
 
-  const handleRequestDeleteWallet = (wallet: WalletItem) => {
-    if (wallets.length <= 1) {
-      toast.error('Bạn không thể xóa ví duy nhất còn lại. Hệ thống yêu cầu ít nhất 1 ví.');
-      return;
-    }
-    setDeleteModalState({
-      isOpen: true,
-      type: 'WALLET',
-      targetWallet: wallet,
-      isLoading: false,
+  const handleRequestDeleteWallet = useCallback((wallet: WalletItem) => {
+    setWallets((prev) => {
+      if (prev.length <= 1) {
+        toast.error('Bạn không thể xóa ví duy nhất còn lại. Hệ thống yêu cầu ít nhất 1 ví.');
+        return prev;
+      }
+      setDeleteModalState({
+        isOpen: true,
+        type: 'WALLET',
+        targetWallet: wallet,
+        isLoading: false,
+      });
+      return prev;
     });
-  };
+  }, []);
 
   const handleConfirmDelete = async () => {
     if (deleteModalState.type === 'TRANSACTION' && deleteModalState.targetTx) {
@@ -525,7 +571,7 @@ export const FinancePage: React.FC = () => {
     }
   };
 
-  const handleExportCSV = async () => {
+  const handleExportCSV = useCallback(async () => {
     try {
       toast.info('Đang chuẩn bị file CSV dữ liệu...');
       const params: Record<string, any> = {
@@ -544,7 +590,7 @@ export const FinancePage: React.FC = () => {
       if (filter !== 'ALL') params.type = filter;
       if (selectedCategory !== 'ALL') params.category = selectedCategory;
       if (selectedWalletId !== 'ALL') params.walletId = selectedWalletId;
-      if (searchQuery.trim()) params.search = searchQuery.trim();
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
 
       const res = await apiClient.get('/finance/transactions', { params });
       const rawData = res.data?.data;
@@ -581,7 +627,7 @@ export const FinancePage: React.FC = () => {
     } catch {
       toast.error('Không thể xuất file CSV.');
     }
-  };
+  }, [period, filter, selectedCategory, selectedWalletId, debouncedSearch, transactions]);
 
   return (
     <div className="space-y-6">
@@ -592,17 +638,17 @@ export const FinancePage: React.FC = () => {
           monthlyIncome={summary.monthlyIncome}
           monthlyExpense={summary.monthlyExpense}
           periodLabel={periodLabel}
-          isLoading={isLoading}
-          onOpenCategoryModal={() => setIsCategoryModalOpen(true)}
-          onOpenTransferModal={() => setIsTransferModalOpen(true)}
-          onOpenAddWalletModal={() => setIsAddWalletModalOpen(true)}
+          isLoading={isInitialLoading}
+          onOpenCategoryModal={handleOpenCategoryModal}
+          onOpenTransferModal={handleOpenTransferModal}
+          onOpenAddWalletModal={handleOpenAddWalletModal}
         />
 
         {/* Wallets Grid */}
         <WalletList
           wallets={wallets}
-          isLoading={isLoading}
-          onOpenAddWallet={() => setIsAddWalletModalOpen(true)}
+          isLoading={isInitialLoading}
+          onOpenAddWallet={handleOpenAddWalletModal}
           onSetDefaultWallet={handleSetDefaultWallet}
           onEditWallet={handleOpenEditWallet}
           onDeleteWallet={handleRequestDeleteWallet}
@@ -628,11 +674,11 @@ export const FinancePage: React.FC = () => {
           filteredStats={filteredStats}
           periodLabel={periodLabel}
           onClearAllFilters={handleClearAllFilters}
-          onOpenAddTx={() => setIsAddTxModalOpen(true)}
+          onOpenAddTx={handleOpenAddTx}
           onExportCSV={handleExportCSV}
           onOpenEditTx={handleOpenEditTx}
           onRequestDeleteTx={handleRequestDeleteTx}
-          isLoading={isLoading}
+          isLoading={isTxLoading}
           pagination={txPagination}
           onPageChange={handlePageChange}
         />

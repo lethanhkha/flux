@@ -53,6 +53,20 @@ export class TasksService {
       };
     }
 
+    if (filterInput?.search?.trim()) {
+      const q = filterInput.search.trim();
+      const searchCondition = [
+        { title: { contains: q, mode: 'insensitive' as const } },
+        { description: { contains: q, mode: 'insensitive' as const } },
+      ];
+      if (where.OR) {
+        where.AND = [{ OR: where.OR }, { OR: searchCondition }];
+        delete where.OR;
+      } else {
+        where.OR = searchCondition;
+      }
+    }
+
     const limit = Math.min(Math.max(filterInput?.limit ? Number(filterInput.limit) : 20, 1), 1000);
     const page = filterInput?.page ? Math.max(Number(filterInput.page), 1) : 1;
     const skip =
@@ -62,7 +76,7 @@ export class TasksService {
     const currentPage =
       filterInput?.offset !== undefined ? Math.floor(skip / limit) + 1 : page;
 
-    const cacheKey = `cache:tasks:${userId}:${filterInput?.filter || 'all'}:${filterInput?.tag || ''}:${currentPage}:${limit}`;
+    const cacheKey = `cache:tasks:${userId}:${filterInput?.filter || 'all'}:${filterInput?.tag || ''}:${filterInput?.search || ''}:${currentPage}:${limit}`;
 
     return cacheService.remember(cacheKey, 60, async () => {
       const [total, items] = await Promise.all([

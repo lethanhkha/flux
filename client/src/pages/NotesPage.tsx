@@ -1,12 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import {
   FileText,
   Plus,
-  Search,
-  Pin,
-  Clock,
   LayoutGrid,
   List,
   X,
@@ -20,47 +17,31 @@ import { ConfirmModal } from '../components/common/ConfirmModal';
 import { Modal } from '../components/common/Modal';
 import { PaginationControl, PaginationMeta } from '../components/common/PaginationControl';
 import { ColorPickerPopover } from '../components/common/ColorPickerPopover';
+import { SearchInput } from '../components/common/SearchInput';
 import { TagSelect } from '../components/notes/TagSelect';
 import { MarkdownEditor } from '../components/notes/MarkdownEditor';
 import { MarkdownViewer } from '../components/notes/MarkdownViewer';
 import { EditNoteModal } from '../components/notes/EditNoteModal';
+import { NoteCard, NoteItem } from '../components/notes/NoteCard';
+import { NoteRow } from '../components/notes/NoteRow';
 import { Tooltip, InfoTooltip } from '../components/common/Tooltip';
 import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
+import { useDebounce } from '../hooks/useDebounce';
 import { EmptyNotes, EmptySearch } from '../components/illustrations';
 import { toast } from 'sonner';
-
-interface NoteItem {
-  id: string;
-  title: string;
-  content: string;
-  tags: string[];
-  isPinned: boolean;
-  color: string;
-  updatedAt: string;
-}
 
 export const NotesPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const noteIdFromUrl = searchParams.get('id') || searchParams.get('noteId') || searchParams.get('viewNoteId');
 
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [selectedTag, setSelectedTag] = useState<string>('ALL');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [activeNote, setActiveNote] = useState<NoteItem | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<NoteItem | null>(null);
-
-  const handleCloseViewModal = () => {
-    setActiveNote(null);
-    if (searchParams.has('id') || searchParams.has('noteId') || searchParams.has('viewNoteId')) {
-      const nextParams = new URLSearchParams(searchParams);
-      nextParams.delete('id');
-      nextParams.delete('noteId');
-      nextParams.delete('viewNoteId');
-      setSearchParams(nextParams, { replace: true });
-    }
-  };
 
   // Tag Manager modal state
   const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
@@ -87,7 +68,7 @@ export const NotesPage: React.FC = () => {
   const [newContent, setNewContent] = useState('');
   const [newNoteTags, setNewNoteTags] = useState<string[]>(['tài-chính']);
 
-  const tagColorMap = React.useMemo(() => {
+  const tagColorMap = useMemo(() => {
     const map = new Map<string, string>();
     availableTags.forEach((t) => {
       if (t.color) map.set(t.name.toLowerCase(), t.color);
@@ -95,22 +76,24 @@ export const NotesPage: React.FC = () => {
     return map;
   }, [availableTags]);
 
-  const getTagColor = (name: string) => {
+  const getTagColor = useCallback((name: string) => {
     return tagColorMap.get(name.toLowerCase()) || '#6366F1';
-  };
+  }, [tagColorMap]);
 
-  const getPreviewSnippet = (markdown: string): string => {
-    if (!markdown) return '';
-    return markdown
-      .replace(/<[^>]*>/g, '')
-      .replace(/^#+\s+/gm, '')
-      .replace(/(\*\*|__)(.*?)\1/g, '$2')
-      .replace(/(\*|_)(.*?)\1/g, '$2')
-      .replace(/`{1,3}(.*?)`{1,3}/g, '$1')
-      .replace(/\[(.*?)\]\(.*?\)/g, '$1')
-      .replace(/^\s*[-*+]\s+/gm, '• ')
-      .trim();
-  };
+  const handleSelectNote = useCallback((note: NoteItem) => {
+    setActiveNote(note);
+  }, []);
+
+  const handleCloseViewModal = useCallback(() => {
+    setActiveNote(null);
+    if (searchParams.has('id') || searchParams.has('noteId') || searchParams.has('viewNoteId')) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('id');
+      nextParams.delete('noteId');
+      nextParams.delete('viewNoteId');
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleUpdateTagColor = async (tag: string, color: string) => {
     setColorPickerTag(null);
@@ -134,14 +117,14 @@ export const NotesPage: React.FC = () => {
     }
   };
 
-  const fetchNotes = async (page = 1) => {
+  const fetchNotes = useCallback(async (page = 1) => {
     try {
       setIsLoading(true);
       const res = await apiClient.get('/notes', {
         params: {
           page,
           limit: 24,
-          q: searchQuery || undefined,
+          q: debouncedSearch.trim() || undefined,
           tag: selectedTag !== 'ALL' ? selectedTag : undefined,
         },
       });
@@ -174,7 +157,7 @@ export const NotesPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [debouncedSearch, selectedTag]);
 
   useEffect(() => {
     fetchTags();
@@ -182,7 +165,7 @@ export const NotesPage: React.FC = () => {
 
   useEffect(() => {
     fetchNotes(1);
-  }, [searchQuery, selectedTag]);
+  }, [fetchNotes]);
 
   useEffect(() => {
     const handleRefresh = () => {
@@ -191,7 +174,7 @@ export const NotesPage: React.FC = () => {
     };
     window.addEventListener('flux:refresh-data', handleRefresh);
     return () => window.removeEventListener('flux:refresh-data', handleRefresh);
-  }, [pagination.page, searchQuery, selectedTag]);
+  }, [fetchNotes, pagination.page]);
 
   // Tự động mở xem chi tiết ghi chú nếu có tham số trên URL (ví dụ chuyển hướng từ Dashboard ghim)
   useEffect(() => {
@@ -237,7 +220,7 @@ export const NotesPage: React.FC = () => {
     };
   }, [noteIdFromUrl, notes, activeNote]);
 
-  const togglePin = async (id: string, e: React.MouseEvent) => {
+  const togglePin = useCallback(async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     // Optimistic UI update
     setNotes((prev) =>
@@ -257,12 +240,15 @@ export const NotesPage: React.FC = () => {
     } catch {
       // Degrade gracefully
     }
-  };
+  }, []);
 
-  const handleDeleteNote = async (id: string, e?: React.MouseEvent) => {
+  const handleDeleteNote = useCallback(async (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    const noteToDelete = notes.find((n) => n.id === id);
-    setNotes((prev) => prev.filter((n) => n.id !== id));
+    let noteToDelete: NoteItem | undefined;
+    setNotes((prev) => {
+      noteToDelete = prev.find((n) => n.id === id);
+      return prev.filter((n) => n.id !== id);
+    });
     handleCloseViewModal();
     toast.success('Đã xóa ghi chú thành công.');
 
@@ -270,16 +256,16 @@ export const NotesPage: React.FC = () => {
       await apiClient.delete(`/notes/${id}`);
       window.dispatchEvent(new CustomEvent('flux:refresh-data'));
     } catch {
-      if (noteToDelete) setNotes((prev) => [noteToDelete, ...prev]);
+      if (noteToDelete) setNotes((prev) => [noteToDelete!, ...prev]);
       toast.error('Không thể xóa ghi chú trên máy chủ.');
     }
-  };
+  }, [handleCloseViewModal]);
 
-  const handleOpenEditNote = (note: NoteItem, e?: React.MouseEvent) => {
+  const handleOpenEditNote = useCallback((note: NoteItem, e?: React.MouseEvent) => {
     e?.stopPropagation();
     setEditingNote(note);
     setIsEditModalOpen(true);
-  };
+  }, []);
 
   const handleCreateNote = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -452,16 +438,13 @@ export const NotesPage: React.FC = () => {
 
         {/* Search & Tag Filter Bar */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm kiếm nội dung ghi chú (Full-Text Search)..."
-              className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
-            />
-          </div>
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Tìm kiếm nội dung ghi chú (Full-Text Search)..."
+            isLoading={isLoading}
+            className="flex-1 max-w-md"
+          />
 
           <div
             ref={tagBarRef}
@@ -575,81 +558,15 @@ export const NotesPage: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {filteredNotes.map((note) => (
-                <div
+                <NoteCard
                   key={note.id}
-                  onClick={() => setActiveNote(note)}
-                  className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover-lift cursor-pointer flex flex-col justify-between space-y-4 hover:border-brand/40"
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100 line-clamp-1">
-                        {note.title}
-                      </h3>
-                      <div className="flex items-center gap-1">
-                        <Tooltip content={note.isPinned ? 'Bỏ ghim khỏi đầu danh sách' : 'Ghim ghi chú lên đầu trang và bảng điều khiển'}>
-                          <button
-                            type="button"
-                            onClick={(e) => togglePin(note.id, e)}
-                            aria-label={note.isPinned ? `Bỏ ghim ghi chú: ${note.title}` : `Ghim ghi chú: ${note.title}`}
-                            aria-pressed={note.isPinned}
-                            className={`p-1.5 rounded-lg transition-colors cursor-pointer focus-ring ${
-                              note.isPinned ? 'text-brand bg-brand/10' : 'text-slate-300 hover:text-slate-500'
-                            }`}
-                          >
-                            <Pin className="w-3.5 h-3.5 fill-current" />
-                          </button>
-                        </Tooltip>
-                        <Tooltip content="Chỉnh sửa nội dung ghi chú">
-                          <button
-                            type="button"
-                            onClick={(e) => handleOpenEditNote(note, e)}
-                            aria-label={`Chỉnh sửa ghi chú: ${note.title}`}
-                            className="p-1.5 rounded-lg text-slate-300 hover:text-brand hover:bg-brand/10 transition-colors cursor-pointer focus-ring"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-                        </Tooltip>
-                        <Tooltip content="Xóa ghi chú này">
-                          <button
-                            type="button"
-                            onClick={(e) => handleDeleteNote(note.id, e)}
-                            aria-label={`Xóa ghi chú: ${note.title}`}
-                            className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer focus-ring"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </Tooltip>
-                      </div>
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed">
-                      {getPreviewSnippet(note.content)}
-                    </p>
-                  </div>
-
-                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
-                    <div className="flex items-center gap-1 flex-wrap">
-                      {note.tags.map((t) => {
-                        const color = getTagColor(t);
-                        return (
-                          <span
-                            key={t}
-                            className="px-2 py-0.5 rounded-md text-[10px] font-semibold border"
-                            style={{
-                              backgroundColor: `${color}15`,
-                              borderColor: `${color}35`,
-                              color: color,
-                            }}
-                          >
-                            #{t}
-                          </span>
-                        );
-                      })}
-                    </div>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> {note.updatedAt}
-                    </span>
-                  </div>
-                </div>
+                  note={note}
+                  onSelect={handleSelectNote}
+                  onTogglePin={togglePin}
+                  onEdit={handleOpenEditNote}
+                  onDelete={handleDeleteNote}
+                  getTagColor={getTagColor}
+                />
               ))}
             </div>
           )
@@ -703,76 +620,15 @@ export const NotesPage: React.FC = () => {
           ) : (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-sm space-y-2">
               {filteredNotes.map((note) => (
-                <div
+                <NoteRow
                   key={note.id}
-                  onClick={() => setActiveNote(note)}
-                  className="p-3.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/60 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all flex items-center justify-between gap-4 cursor-pointer"
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <FileText className="w-5 h-5 text-brand flex-shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <div className="font-bold text-xs text-slate-900 dark:text-slate-100 line-clamp-1">
-                        {note.title}
-                      </div>
-                      <div className="text-[11px] text-slate-400 line-clamp-1">
-                        {getPreviewSnippet(note.content)}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 text-xs text-slate-400 flex-shrink-0">
-                    <div className="hidden sm:flex items-center gap-1">
-                      {note.tags.map((t) => {
-                        const color = getTagColor(t);
-                        return (
-                          <span
-                            key={t}
-                            className="px-1.5 py-0.5 rounded text-[10px] font-semibold border"
-                            style={{
-                              backgroundColor: `${color}15`,
-                              borderColor: `${color}35`,
-                              color: color,
-                            }}
-                          >
-                            #{t}
-                          </span>
-                        );
-                      })}
-                    </div>
-                    <span>{note.updatedAt}</span>
-                    <Tooltip content={note.isPinned ? 'Bỏ ghim khỏi đầu danh sách' : 'Ghim ghi chú lên đầu trang và bảng điều khiển'}>
-                      <button
-                        type="button"
-                        onClick={(e) => togglePin(note.id, e)}
-                        aria-label={note.isPinned ? `Bỏ ghim ghi chú: ${note.title}` : `Ghim ghi chú: ${note.title}`}
-                        aria-pressed={note.isPinned}
-                        className={`p-1.5 rounded-lg transition-colors cursor-pointer focus-ring ${note.isPinned ? 'text-brand' : 'text-slate-300'}`}
-                      >
-                        <Pin className="w-3.5 h-3.5 fill-current" />
-                      </button>
-                    </Tooltip>
-                    <Tooltip content="Chỉnh sửa nội dung ghi chú">
-                      <button
-                        type="button"
-                        onClick={(e) => handleOpenEditNote(note, e)}
-                        aria-label={`Chỉnh sửa ghi chú: ${note.title}`}
-                        className="p-1.5 text-slate-300 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors cursor-pointer focus-ring"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </button>
-                    </Tooltip>
-                    <Tooltip content="Xóa ghi chú này">
-                      <button
-                        type="button"
-                        onClick={(e) => handleDeleteNote(note.id, e)}
-                        aria-label={`Xóa ghi chú: ${note.title}`}
-                        className="p-1.5 text-slate-300 hover:text-rose-500 rounded-lg transition-colors cursor-pointer focus-ring"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </Tooltip>
-                  </div>
-                </div>
+                  note={note}
+                  onSelect={handleSelectNote}
+                  onTogglePin={togglePin}
+                  onEdit={handleOpenEditNote}
+                  onDelete={handleDeleteNote}
+                  getTagColor={getTagColor}
+                />
               ))}
             </div>
           )

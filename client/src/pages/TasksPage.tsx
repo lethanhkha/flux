@@ -20,6 +20,8 @@ import { EmptyTasks } from '../components/illustrations';
 import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
 import { Tooltip, InfoTooltip } from '../components/common/Tooltip';
 import { CustomSelect } from '../components/common/CustomSelect';
+import { SearchInput } from '../components/common/SearchInput';
+import { useDebounce } from '../hooks/useDebounce';
 import { PRIORITY_TOOLTIPS } from '../lib/taskUtils';
 import { SubtaskItem } from '../components/tasks/SubtaskList';
 import { CompositeTaskRow } from '../components/tasks/CompositeTaskRow';
@@ -55,6 +57,8 @@ type TaskFilterKey = 'ALL' | 'TODAY' | 'OVERDUE' | 'URGENT' | 'DONE';
 export const TasksPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
   const [filter, setFilter] = useState<TaskFilterKey>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -203,6 +207,7 @@ export const TasksPage: React.FC = () => {
           limit,
           filter: filter.toLowerCase(),
           tag: selectedTag || undefined,
+          search: debouncedSearch.trim() || undefined,
         },
       });
 
@@ -250,7 +255,7 @@ export const TasksPage: React.FC = () => {
     } finally {
       if (!isSilent) setIsLoading(false);
     }
-  }, [viewMode, filter, selectedTag]);
+  }, [viewMode, filter, selectedTag, debouncedSearch]);
 
   useEffect(() => {
     fetchTags();
@@ -744,7 +749,18 @@ export const TasksPage: React.FC = () => {
         </div>
 
         {/* Filters & Tags Dual Stacked Bars */}
-        <div className="space-y-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-3xl shadow-xs">
+        <div className="space-y-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-3xl shadow-xs">
+          {/* Top Search Bar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Tìm kiếm công việc theo tiêu đề hoặc mô tả..."
+              isLoading={isLoading}
+              className="flex-1 max-w-md"
+            />
+          </div>
+
           {/* Bar 1: Status & Priority Filter Pills */}
           <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar-x pb-1 pt-0.5 text-xs scroll-smooth">
             <span className="text-xs text-slate-400 font-semibold flex items-center gap-1 pl-1 flex-shrink-0 mr-1">
@@ -856,9 +872,14 @@ export const TasksPage: React.FC = () => {
           </div>
 
           {/* Active compound filter summary banner */}
-          {(filter !== 'ALL' || selectedTag !== null) && (
+          {(filter !== 'ALL' || selectedTag !== null || searchQuery.trim() !== '') && (
             <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/60 text-xs text-slate-500 dark:text-slate-400">
               <span className="font-semibold text-slate-700 dark:text-slate-300">Đang lọc kết hợp:</span>
+              {searchQuery.trim() !== '' && (
+                <span className="px-2.5 py-0.5 rounded-lg bg-brand/10 text-brand font-bold flex items-center gap-1">
+                  Từ khóa: "{searchQuery.trim()}"
+                </span>
+              )}
               {filter !== 'ALL' && (
                 <span className="px-2.5 py-0.5 rounded-lg bg-brand/10 text-brand font-bold flex items-center gap-1">
                   Trạng thái:{' '}
@@ -892,6 +913,7 @@ export const TasksPage: React.FC = () => {
                 onClick={() => {
                   setFilter('ALL');
                   setSelectedTag(null);
+                  setSearchQuery('');
                 }}
                 className="text-slate-400 hover:text-rose-500 text-[11px] underline ml-auto cursor-pointer"
               >

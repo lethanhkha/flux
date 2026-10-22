@@ -15,7 +15,7 @@ interface FinanceHeaderProps {
   onOpenAddWalletModal: () => void;
 }
 
-export const FinanceHeader: React.FC<FinanceHeaderProps> = ({
+export const FinanceHeader = React.memo<FinanceHeaderProps>(({
   totalBalance,
   netCashflow = 0,
   monthlyIncome = 0,
@@ -126,4 +126,15 @@ export const FinanceHeader: React.FC<FinanceHeaderProps> = ({
       </div>
     </div>
   );
-};
+}, (prev, next) => {
+  return (
+    prev.totalBalance === next.totalBalance &&
+    prev.netCashflow === next.netCashflow &&
+    prev.monthlyIncome === next.monthlyIncome &&
+    prev.monthlyExpense === next.monthlyExpense &&
+    prev.isLoading === next.isLoading &&
+    prev.periodLabel === next.periodLabel
+  );
+});
+
+FinanceHeader.displayName = 'FinanceHeader';

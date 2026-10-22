@@ -11,3 +11,4 @@ export * from './CategoryModal';
 export * from './walletUtils';
 export * from './PeriodSelector';
 export * from './FilterInsightCard';
+export * from './TransactionRow';

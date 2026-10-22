@@ -13,7 +13,7 @@ interface WalletListProps {
   onDeleteWallet?: (wallet: WalletItem) => void;
 }
 
-export const WalletList: React.FC<WalletListProps> = ({
+export const WalletList = React.memo<WalletListProps>(({
   wallets,
   isLoading = false,
   onOpenAddWallet,
@@ -163,4 +163,22 @@ export const WalletList: React.FC<WalletListProps> = ({
       )}
     </div>
   );
-};
+}, (prev, next) => {
+  if (prev.isLoading !== next.isLoading) return false;
+  if (prev.wallets === next.wallets) return true;
+  if (prev.wallets.length !== next.wallets.length) return false;
+  return prev.wallets.every((w, i) => {
+    const nextW = next.wallets[i];
+    return (
+      nextW &&
+      w.id === nextW.id &&
+      w.balance === nextW.balance &&
+      w.isDefault === nextW.isDefault &&
+      w.name === nextW.name &&
+      w.color === nextW.color &&
+      w.icon === nextW.icon
+    );
+  });
+});
+
+WalletList.displayName = 'WalletList';

@@ -4,15 +4,8 @@ import {
   Plus,
   Download,
   Tag,
-  ArrowDownRight,
-  ArrowUpRight,
-  ArrowRightLeft,
-  Edit3,
-  Trash2,
   RotateCcw,
-  Search,
   Wallet as WalletIcon,
-  X,
   CalendarDays,
 } from 'lucide-react';
 import {
@@ -27,10 +20,12 @@ import { formatCurrency } from '../../lib/utils';
 import { PaginationControl, PaginationMeta } from '../common/PaginationControl';
 import { Tooltip, InfoTooltip } from '../common/Tooltip';
 import { CustomSelect } from '../common/CustomSelect';
+import { SearchInput } from '../common/SearchInput';
 import { EmptyTransactions, EmptySearch } from '../illustrations';
-import { staggerContainer, staggerItem } from '../../lib/motionTokens';
+import { staggerContainer } from '../../lib/motionTokens';
 import { PeriodSelector } from './PeriodSelector';
 import { FilterInsightCard } from './FilterInsightCard';
+import { TransactionRow } from './TransactionRow';
 
 interface TransactionListProps {
   transactions: TransactionItem[];
@@ -60,7 +55,7 @@ interface TransactionListProps {
   onPageChange?: (newPage: number) => void;
 }
 
-export const TransactionList: React.FC<TransactionListProps> = ({
+export const TransactionList = React.memo<TransactionListProps>(({
   transactions,
   filteredTransactions,
   categories,
@@ -265,27 +260,13 @@ export const TransactionList: React.FC<TransactionListProps> = ({
         {/* Left: Search Bar & Wallet Selector */}
         <div className="flex flex-wrap items-center gap-2 flex-1">
           {/* Search Input */}
-          <div className="relative flex-1 min-w-[200px] max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm nội dung, ghi chú, danh mục..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange?.(e.target.value)}
-              className="w-full pl-8.5 pr-8 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-brand transition-colors font-medium"
-            />
-            {searchQuery && (
-              <Tooltip content="Xóa từ khóa tìm kiếm">
-                <button
-                  type="button"
-                  onClick={() => onSearchChange?.('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 cursor-pointer"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </Tooltip>
-            )}
-          </div>
+          <SearchInput
+            value={searchQuery}
+            onChange={(val) => onSearchChange?.(val)}
+            placeholder="Tìm kiếm nội dung, ghi chú, danh mục..."
+            isLoading={isLoading}
+            className="flex-1 min-w-[200px] max-w-sm"
+          />
 
           {/* Unified Custom Wallet Selector Dropdown */}
           {wallets.length > 0 && (
@@ -536,137 +517,16 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                 {/* Day Items */}
                 <div className="space-y-2">
                   {group.items.map((tx) => (
-                    <motion.div
+                    <TransactionRow
                       key={tx.id}
-                      variants={staggerItem}
-                      layout
-                      whileHover={{ y: -1 }}
-                      className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4 hover:border-brand/40 transition-colors group"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <Tooltip
-                          content={
-                            tx.type === 'INCOME'
-                              ? 'Giao dịch thu tiền vào (+)'
-                              : tx.type === 'EXPENSE'
-                              ? 'Giao dịch chi tiêu ra (-)'
-                              : 'Giao dịch chuyển tiền nội bộ (↔)'
-                          }
-                        >
-                          <div
-                            className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 cursor-help ${
-                              tx.type === 'INCOME'
-                                ? 'bg-emerald-500/10 text-emerald-600'
-                                : tx.type === 'EXPENSE'
-                                ? 'bg-rose-500/10 text-rose-500'
-                                : 'bg-brand/10 text-brand'
-                            }`}
-                          >
-                            {tx.type === 'INCOME' && <ArrowDownRight className="w-5 h-5" />}
-                            {tx.type === 'EXPENSE' && <ArrowUpRight className="w-5 h-5" />}
-                            {tx.type === 'TRANSFER' && <ArrowRightLeft className="w-5 h-5" />}
-                          </div>
-                        </Tooltip>
-
-                        <div className="min-w-0">
-                          <Tooltip content={`Lọc nhanh theo danh mục "${tx.category}"`}>
-                            <div
-                              onClick={() =>
-                                onSelectCategory(
-                                  selectedCategory === tx.category ? 'ALL' : tx.category
-                                )
-                              }
-                              className="font-bold text-xs text-slate-800 dark:text-slate-100 hover:text-brand transition-colors cursor-pointer truncate"
-                            >
-                              {tx.category}
-                            </div>
-                          </Tooltip>
-                          <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5 truncate">
-                            <span>{tx.date}</span>
-                            <span>•</span>
-                            <Tooltip
-                              content={
-                                tx.type === 'TRANSFER'
-                                  ? `Lọc theo ví ${tx.wallet} hoặc ${tx.destWallet}`
-                                  : `Lọc theo ví ${tx.wallet}`
-                              }
-                            >
-                              <span
-                                onClick={() => {
-                                  if (tx.walletId && onSelectWallet) {
-                                    onSelectWallet(
-                                      selectedWalletId === tx.walletId ? 'ALL' : tx.walletId
-                                    );
-                                  }
-                                }}
-                                className="truncate hover:text-brand cursor-pointer"
-                              >
-                                {tx.type === 'TRANSFER'
-                                  ? `${tx.wallet} → ${tx.destWallet}`
-                                  : tx.wallet}
-                              </span>
-                            </Tooltip>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
-                        <div className="text-right">
-                          <Tooltip
-                            content={
-                              tx.type === 'INCOME'
-                                ? `Khoản thu nhập vào ví: +${formatCurrency(tx.amount)}`
-                                : tx.type === 'EXPENSE'
-                                ? `Khoản chi tiêu từ ví: -${formatCurrency(tx.amount)}`
-                                : `Chuyển khoản nội bộ: ${formatCurrency(tx.amount)}`
-                            }
-                          >
-                            <div
-                              className={`text-sm font-extrabold tabular-nums cursor-help ${
-                                tx.type === 'INCOME'
-                                  ? 'text-emerald-600 dark:text-emerald-400'
-                                  : tx.type === 'EXPENSE'
-                                  ? 'text-rose-500 dark:text-rose-400'
-                                  : 'text-brand'
-                              }`}
-                            >
-                              {tx.type === 'INCOME'
-                                ? `+${formatCurrency(tx.amount)}`
-                                : tx.type === 'EXPENSE'
-                                ? `-${formatCurrency(tx.amount)}`
-                                : `${formatCurrency(tx.amount)}`}
-                            </div>
-                          </Tooltip>
-                          <div className="text-[10px] text-slate-400 line-clamp-1 max-w-[140px] sm:max-w-[200px]">
-                            {tx.note}
-                          </div>
-                        </div>
-
-                        {/* Actions: Edit & Delete buttons */}
-                        <div className="flex items-center gap-1 opacity-80 sm:opacity-40 group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100 transition-opacity">
-                          <Tooltip content="Chỉnh sửa giao dịch này">
-                            <button
-                              type="button"
-                              onClick={() => onOpenEditTx(tx)}
-                              aria-label={`Chỉnh sửa giao dịch ${tx.category}: ${formatCurrency(tx.amount)}`}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-brand hover:bg-brand/10 transition-colors cursor-pointer focus-ring"
-                            >
-                              <Edit3 className="w-3.5 h-3.5" />
-                            </button>
-                          </Tooltip>
-                          <Tooltip content="Xóa giao dịch này">
-                            <button
-                              type="button"
-                              onClick={(e) => onRequestDeleteTx(tx, e)}
-                              aria-label={`Xóa giao dịch ${tx.category}: ${formatCurrency(tx.amount)}`}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer focus-ring"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </Tooltip>
-                        </div>
-                      </div>
-                    </motion.div>
+                      tx={tx}
+                      selectedCategory={selectedCategory}
+                      selectedWalletId={selectedWalletId}
+                      onSelectCategory={onSelectCategory}
+                      onSelectWallet={onSelectWallet}
+                      onOpenEditTx={onOpenEditTx}
+                      onRequestDeleteTx={onRequestDeleteTx}
+                    />
                   ))}
                 </div>
               </div>
@@ -684,4 +544,6 @@ export const TransactionList: React.FC<TransactionListProps> = ({
       )}
     </div>
   );
-};
+});
+
+TransactionList.displayName = 'TransactionList';

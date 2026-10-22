@@ -29,6 +29,7 @@ export const taskFilterSchema = z.object({
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
   filter: z.enum(['all', 'today', 'overdue', 'urgent', 'done', 'next7days']).optional().default('all'),
   tag: z.string().optional(),
+  search: z.string().optional(),
   page: z.coerce.number().min(1).optional(),
   limit: z.coerce.number().min(1).max(1000).optional(),
   offset: z.coerce.number().min(0).optional(),
