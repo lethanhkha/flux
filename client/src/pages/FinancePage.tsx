@@ -318,11 +318,43 @@ export const FinancePage: React.FC = () => {
     fetchTransactionsRef.current = fetchTransactions;
   }, [fetchTransactions]);
 
+  // Fetch wallets directly from the authoritative endpoint
+  const fetchWallets = useCallback(async () => {
+    try {
+      const res = await apiClient.get('/finance/wallets');
+      const rawWallets = res.data?.data;
+      if (Array.isArray(rawWallets)) {
+        setWallets(
+          rawWallets.map((w: any) => {
+            const { type, icon } = resolveWalletTypeAndIcon(w.icon, w.name);
+            return {
+              id: w.id,
+              name: w.name,
+              balance: parseFloat(w.currentBalance) || 0,
+              type,
+              color: w.color || '#6366F1',
+              icon,
+              isDefault: Boolean(w.isDefault),
+            };
+          })
+        );
+      }
+    } catch {
+      // Degrade gracefully
+    }
+  }, []);
+
+  const fetchWalletsRef = useRef(fetchWallets);
+  useEffect(() => {
+    fetchWalletsRef.current = fetchWallets;
+  }, [fetchWallets]);
+
   useEffect(() => {
     fetchFinanceData(1);
     const handleRefresh = () => {
       const p = currentParamsRef.current;
       fetchTransactionsRef.current(p.page, p.period, p.filter, p.selectedCategory, p.selectedWalletId, p.debouncedSearch);
+      fetchWalletsRef.current();
     };
     window.addEventListener('flux:refresh-data', handleRefresh);
     return () => window.removeEventListener('flux:refresh-data', handleRefresh);
@@ -398,6 +430,7 @@ export const FinancePage: React.FC = () => {
     };
 
     setTransactions((prev) => [newTx, ...prev]);
+    fetchWallets();
     toast.success('Chuyển tiền thành công! Số dư các ví đã được cập nhật.');
     window.dispatchEvent(new CustomEvent('flux:refresh-data'));
   };
@@ -451,8 +484,17 @@ export const FinancePage: React.FC = () => {
     setTransactions((prev) => [newTx, ...prev]);
     // Refresh calculations and totals for the current period
     fetchTransactions(1, period, filter, selectedCategory, selectedWalletId, debouncedSearch);
+    fetchWallets();
     window.dispatchEvent(new CustomEvent('flux:refresh-data'));
   };
+
+  const handleTransactionUpdated = useCallback(() => {
+    setIsEditTxModalOpen(false);
+    setEditingTx(null);
+    fetchWallets();
+    const p = currentParamsRef.current;
+    fetchTransactions(p.page, p.period, p.filter, p.selectedCategory, p.selectedWalletId, p.debouncedSearch);
+  }, [fetchWallets, fetchTransactions]);
 
   const handleOpenEditTx = useCallback((tx: TransactionItem) => {
     setEditingTx(tx);
@@ -534,6 +576,9 @@ export const FinancePage: React.FC = () => {
         toast.success('Đã xóa giao dịch và hoàn lại số dư ví thành công!');
         setTransactions((prev) => prev.filter((t) => t.id !== tx.id));
         setDeleteModalState({ isOpen: false, type: null, isLoading: false });
+        fetchWallets();
+        const p = currentParamsRef.current;
+        fetchTransactions(p.page, p.period, p.filter, p.selectedCategory, p.selectedWalletId, p.debouncedSearch);
         window.dispatchEvent(new CustomEvent('flux:refresh-data'));
       } catch (err) {
         toast.error(getErrorMessage(err, 'Không thể xóa giao dịch.'));
@@ -735,10 +780,7 @@ export const FinancePage: React.FC = () => {
           transaction={editingTx}
           wallets={wallets}
           categories={categories}
-          onSuccess={() => {
-            setIsEditTxModalOpen(false);
-            setEditingTx(null);
-          }}
+          onSuccess={handleTransactionUpdated}
         />
 
         {/* Category Management Modal */}

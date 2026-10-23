@@ -506,7 +506,9 @@ export class FinanceService {
       const targetType = input.type ?? (existing.type as 'INCOME' | 'EXPENSE' | 'TRANSFER');
       const targetWalletId = input.walletId ?? existing.walletId;
       const targetDestWalletId =
-        input.destinationWalletId !== undefined ? input.destinationWalletId : existing.destinationWalletId;
+        targetType === 'TRANSFER'
+          ? (input.destinationWalletId !== undefined ? input.destinationWalletId : existing.destinationWalletId)
+          : null;
 
       // 1. REVERSE old transaction effects from wallets
       const oldSourceWallet = await tx.wallet.findFirst({
@@ -521,7 +523,7 @@ export class FinanceService {
         oldSourceBal = oldSourceBal.minus(oldAmount);
       } else if (existing.type === 'EXPENSE') {
         oldSourceBal = oldSourceBal.plus(oldAmount);
-      } else if (existing.type === 'TRANSFER' && existing.destinationWalletId) {
+      } else if (existing.type === 'TRANSFER' && existing.destinationWalletId && existing.destinationWalletId !== existing.walletId) {
         oldSourceBal = oldSourceBal.plus(oldAmount);
         const oldDestWallet = await tx.wallet.findFirst({
           where: { id: existing.destinationWalletId, userId },

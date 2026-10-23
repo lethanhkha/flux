@@ -14,7 +14,7 @@ interface EditTransactionModalProps {
   transaction: TransactionItem | null;
   wallets: WalletItem[];
   categories: CategoryItem[];
-  onSuccess: () => void;
+  onSuccess: (updatedTx?: any) => void;
 }
 
 export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
@@ -102,15 +102,13 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
         category: editTxType === 'TRANSFER' ? 'Chuyển tiền nội bộ' : (editTxCategory || 'Khác'),
         note: editTxNote || undefined,
         transactionDate: editTxDate ? new Date(editTxDate).toISOString() : undefined,
+        destinationWalletId: editTxType === 'TRANSFER' ? editTxDestWalletId : null,
       };
-      if (editTxType === 'TRANSFER') {
-        payload.destinationWalletId = editTxDestWalletId;
-      }
 
-      await apiClient.patch(`/finance/transactions/${transaction.id}`, payload);
+      const res = await apiClient.patch(`/finance/transactions/${transaction.id}`, payload);
 
       toast.success('Đã cập nhật giao dịch thành công!');
-      onSuccess();
+      onSuccess(res.data?.data);
       onClose();
       window.dispatchEvent(new CustomEvent('flux:refresh-data'));
     } catch (err) {
