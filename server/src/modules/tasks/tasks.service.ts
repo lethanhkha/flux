@@ -47,6 +47,10 @@ export class TasksService {
       where.status = 'DONE';
     }
 
+    if (filterInput?.hideCompleted && filterInput?.filter !== 'done' && filterInput?.status !== 'DONE') {
+      where.status = { not: 'DONE' };
+    }
+
     if (filterInput?.tag) {
       where.tags = {
         array_contains: filterInput.tag,
@@ -76,7 +80,7 @@ export class TasksService {
     const currentPage =
       filterInput?.offset !== undefined ? Math.floor(skip / limit) + 1 : page;
 
-    const cacheKey = `cache:tasks:${userId}:${filterInput?.filter || 'all'}:${filterInput?.tag || ''}:${filterInput?.search || ''}:${currentPage}:${limit}`;
+    const cacheKey = `cache:tasks:${userId}:${filterInput?.filter || 'all'}:${filterInput?.tag || ''}:${filterInput?.search || ''}:${filterInput?.hideCompleted ? 'hideDone' : 'allDone'}:${currentPage}:${limit}`;
 
     return cacheService.remember(cacheKey, 60, async () => {
       const [total, items] = await Promise.all([

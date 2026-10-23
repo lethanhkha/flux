@@ -30,6 +30,10 @@ export const taskFilterSchema = z.object({
   filter: z.enum(['all', 'today', 'overdue', 'urgent', 'done', 'next7days']).optional().default('all'),
   tag: z.string().optional(),
   search: z.string().optional(),
+  hideCompleted: z
+    .union([z.boolean(), z.enum(['true', 'false'])])
+    .optional()
+    .transform((val) => (val === undefined ? undefined : val === true || val === 'true')),
   page: z.coerce.number().min(1).optional(),
   limit: z.coerce.number().min(1).max(1000).optional(),
   offset: z.coerce.number().min(0).optional(),
