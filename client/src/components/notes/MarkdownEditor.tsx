@@ -21,6 +21,9 @@ interface MarkdownEditorProps {
   placeholder?: string;
   rows?: number;
   required?: boolean;
+  className?: string;
+  minHeightClass?: string;
+  maxHeightPreviewClass?: string;
 }
 
 export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
@@ -29,6 +32,9 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   placeholder = 'Nhập nội dung markdown...',
   rows = 8,
   required = false,
+  className = '',
+  minHeightClass = 'min-h-[160px]',
+  maxHeightPreviewClass = 'max-h-96',
 }) => {
   const [activeTab, setActiveTab] = useState<'write' | 'preview'>('write');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -124,7 +130,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   ];
 
   return (
-    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-2xs">
+    <div className={`rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-2xs ${className}`}>
       {/* Editor Header: Toolbar & Mode Switcher */}
       <div className="flex items-center justify-between p-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/70 gap-2">
         {/* Quick Toolbar (only active in write mode) */}
@@ -181,10 +187,10 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full p-3.5 bg-transparent font-mono text-xs leading-relaxed outline-none resize-y min-h-[160px] text-slate-800 dark:text-slate-200"
+          className={`w-full p-3.5 bg-transparent font-mono text-xs leading-relaxed outline-none resize-y ${minHeightClass} text-slate-800 dark:text-slate-200`}
         />
       ) : (
-        <div className="p-4 min-h-[160px] max-h-96 overflow-y-auto bg-slate-50/50 dark:bg-slate-950/50 custom-scrollbar-y">
+        <div className={`p-4 ${minHeightClass} ${maxHeightPreviewClass} overflow-y-auto bg-slate-50/50 dark:bg-slate-950/50 custom-scrollbar-y`}>
           {value.trim() ? (
             <MarkdownViewer content={value} />
           ) : (

@@ -18,9 +18,8 @@ import { Modal } from '../components/common/Modal';
 import { PaginationControl, PaginationMeta } from '../components/common/PaginationControl';
 import { ColorPickerPopover } from '../components/common/ColorPickerPopover';
 import { SearchInput } from '../components/common/SearchInput';
-import { TagSelect } from '../components/notes/TagSelect';
-import { MarkdownEditor } from '../components/notes/MarkdownEditor';
 import { MarkdownViewer } from '../components/notes/MarkdownViewer';
+import { AddNoteModal } from '../components/notes/AddNoteModal';
 import { EditNoteModal } from '../components/notes/EditNoteModal';
 import { NoteCard, NoteItem } from '../components/notes/NoteCard';
 import { NoteRow } from '../components/notes/NoteRow';
@@ -63,10 +62,6 @@ export const NotesPage: React.FC = () => {
     hasNext: false,
     hasPrev: false,
   });
-
-  const [newTitle, setNewTitle] = useState('');
-  const [newContent, setNewContent] = useState('');
-  const [newNoteTags, setNewNoteTags] = useState<string[]>(['tài-chính']);
 
   const tagColorMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -266,50 +261,6 @@ export const NotesPage: React.FC = () => {
     setEditingNote(note);
     setIsEditModalOpen(true);
   }, []);
-
-  const handleCreateNote = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTitle.trim()) return;
-
-    const finalTags = newNoteTags.length > 0 ? newNoteTags : ['chung'];
-
-    const tempId = `note-${Date.now()}`;
-    const newNote: NoteItem = {
-      id: tempId,
-      title: newTitle.trim(),
-      content: newContent.trim(),
-      tags: finalTags,
-      isPinned: false,
-      color: '#6366F1',
-      updatedAt: 'Vừa xong',
-    };
-
-    setNotes([newNote, ...notes]);
-    setIsAddModalOpen(false);
-    toast.success('Đã lưu ghi chú mới vào kho tri thức!');
-
-    try {
-      const res = await apiClient.post('/notes', {
-        title: newTitle.trim(),
-        content: newContent.trim(),
-        tags: finalTags,
-      });
-      if (res.data.data?.id) {
-        const created = res.data.data;
-        setNotes((prev) =>
-          prev.map((n) => (n.id === tempId ? { ...n, id: created.id } : n))
-        );
-      }
-      setNewTitle('');
-      setNewContent('');
-      setNewNoteTags(['tài-chính']);
-      await fetchTags();
-      await fetchNotes(1);
-      window.dispatchEvent(new CustomEvent('flux:refresh-data'));
-    } catch {
-      // Degrade gracefully
-    }
-  };
 
   const handleStartRenameTag = (tag: string) => {
     setEditingTag(tag);
@@ -724,69 +675,15 @@ export const NotesPage: React.FC = () => {
         </Modal>
 
         {/* Add Note Modal */}
-        <Modal
+        <AddNoteModal
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
-          ariaLabelledBy="add-note-title"
-          maxWidth="lg"
-        >
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center font-bold">
-                <FileText className="w-4 h-4" />
-              </div>
-              <h3 id="add-note-title" className="font-bold text-base">Soạn Thảo Ghi Chú Mới</h3>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsAddModalOpen(false)}
-              aria-label="Đóng soạn thảo ghi chú"
-              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          <form onSubmit={handleCreateNote} className="space-y-4 text-xs">
-            <div>
-              <label className="font-semibold block mb-1">Tiêu đề ghi chú</label>
-              <input
-                type="text"
-                required
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="VD: Kế hoạch tuần tới..."
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand font-medium text-xs"
-              />
-            </div>
-
-            <div>
-              <label className="font-semibold block mb-1">Thẻ phân loại (Tags)</label>
-              <TagSelect
-                availableTags={availableTags}
-                selectedTags={newNoteTags}
-                onChange={setNewNoteTags}
-                placeholder="Chọn hoặc nhập thẻ mới..."
-              />
-            </div>
-
-            <div>
-              <label className="font-semibold block mb-1">Nội dung ghi chú (Markdown)</label>
-              <MarkdownEditor
-                value={newContent}
-                onChange={setNewContent}
-                placeholder="Nhập nội dung ghi chú (hỗ trợ tiêu đề, danh sách, bảng, task list...)"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all cursor-pointer"
-            >
-              Lưu Ghi Chú Vào CSDL
-            </button>
-          </form>
-        </Modal>
+          availableTags={availableTags}
+          onSuccess={() => {
+            fetchNotes(1);
+            fetchTags();
+          }}
+        />
 
         {/* Tag Manager Modal */}
         <Modal
