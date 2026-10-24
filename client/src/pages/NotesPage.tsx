@@ -262,6 +262,25 @@ export const NotesPage: React.FC = () => {
     setIsEditModalOpen(true);
   }, []);
 
+  const handleSilentNoteUpdate = useCallback((updatedNote: any) => {
+    if (!updatedNote?.id) return;
+    setNotes((prev) =>
+      prev.map((n) =>
+        n.id === updatedNote.id
+          ? {
+              ...n,
+              title: updatedNote.title,
+              content: updatedNote.content,
+              tags: Array.isArray(updatedNote.tags) ? updatedNote.tags : n.tags,
+              isPinned: updatedNote.isPinned !== undefined ? updatedNote.isPinned : n.isPinned,
+              color: updatedNote.color || n.color,
+              updatedAt: 'Vừa xong',
+            }
+          : n
+      )
+    );
+  }, []);
+
   const handleStartRenameTag = (tag: string) => {
     setEditingTag(tag);
     setRenameValue(tag);
@@ -887,19 +906,17 @@ export const NotesPage: React.FC = () => {
           }
         />
 
-        {/* Edit Note Modal */}
+        {/* Edit Note Modal with Auto-Save */}
         <EditNoteModal
           isOpen={isEditModalOpen}
           onClose={() => {
             setIsEditModalOpen(false);
             setEditingNote(null);
+            fetchTags();
           }}
           note={editingNote}
           availableTags={availableTags}
-          onSuccess={() => {
-            fetchNotes(pagination.page);
-            fetchTags();
-          }}
+          onNoteSaved={handleSilentNoteUpdate}
         />
       </div>
   );
