@@ -40,6 +40,17 @@ export const taskFilterSchema = z.object({
         .map((s) => s.trim())
         .filter(Boolean);
     }),
+  excludeTags: z
+    .union([z.string(), z.array(z.string())])
+    .optional()
+    .transform((val) => {
+      if (!val) return undefined;
+      if (Array.isArray(val)) return val.map((s) => s.trim()).filter(Boolean);
+      return val
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }),
   search: z.string().optional(),
   hideCompleted: z
     .union([z.boolean(), z.enum(['true', 'false'])])

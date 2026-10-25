@@ -102,12 +102,56 @@ export const TasksPage: React.FC = () => {
   });
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [excludedTags, setExcludedTags] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('flux_tasks_excluded_tags');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const handleToggleExcludeTag = useCallback((tagName: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    const cleanName = tagName.toLowerCase().trim();
+    setExcludedTags((prev) => {
+      const exists = prev.some((t) => t.toLowerCase() === cleanName);
+      const next = exists
+        ? prev.filter((t) => t.toLowerCase() !== cleanName)
+        : [...prev, tagName];
+      try {
+        localStorage.setItem('flux_tasks_excluded_tags', JSON.stringify(next));
+      } catch {
+        // Safe ignore
+      }
+      return next;
+    });
+
+    // If tag was in selectedTags, remove it from selectedTags so it's not both included and excluded
+    setSelectedTags((prev) => prev.filter((t) => t.toLowerCase() !== cleanName));
+  }, []);
 
   const handleToggleTag = useCallback((tagName: string) => {
+    const cleanName = tagName.toLowerCase().trim();
+
+    // If it was excluded, un-exclude it automatically when explicitly selected
+    setExcludedTags((prev) => {
+      if (prev.some((t) => t.toLowerCase() === cleanName)) {
+        const next = prev.filter((t) => t.toLowerCase() !== cleanName);
+        try {
+          localStorage.setItem('flux_tasks_excluded_tags', JSON.stringify(next));
+        } catch {
+          // Safe ignore
+        }
+        return next;
+      }
+      return prev;
+    });
+
     setSelectedTags((prev) => {
-      const exists = prev.some((t) => t.toLowerCase() === tagName.toLowerCase());
+      const exists = prev.some((t) => t.toLowerCase() === cleanName);
       if (exists) {
-        return prev.filter((t) => t.toLowerCase() !== tagName.toLowerCase());
+        return prev.filter((t) => t.toLowerCase() !== cleanName);
       }
       return [...prev, tagName];
     });
@@ -242,6 +286,7 @@ export const TasksPage: React.FC = () => {
           limit,
           filter: filter.toLowerCase(),
           tags: selectedTags.length > 0 ? selectedTags.join(',') : undefined,
+          excludeTags: excludedTags.length > 0 ? excludedTags.join(',') : undefined,
           search: debouncedSearch.trim() || undefined,
           hideCompleted: effectiveHideCompleted ? true : undefined,
         },
@@ -291,7 +336,7 @@ export const TasksPage: React.FC = () => {
     } finally {
       if (!isSilent) setIsLoading(false);
     }
-  }, [viewMode, filter, selectedTags, debouncedSearch, effectiveHideCompleted]);
+  }, [viewMode, filter, selectedTags, excludedTags, debouncedSearch, effectiveHideCompleted]);
 
   useEffect(() => {
     fetchTags();
@@ -595,6 +640,13 @@ export const TasksPage: React.FC = () => {
       setSelectedTags((prev) =>
         prev.map((t) => (t.toLowerCase() === oldTag.toLowerCase() ? newTag : t))
       );
+      setExcludedTags((prev) => {
+        const next = prev.map((t) => (t.toLowerCase() === oldTag.toLowerCase() ? newTag : t));
+        try {
+          localStorage.setItem('flux_tasks_excluded_tags', JSON.stringify(next));
+        } catch {}
+        return next;
+      });
       await Promise.all([fetchTags(), fetchTasks(pagination.page, true)]);
       window.dispatchEvent(new CustomEvent('flux:refresh-data', { detail: { source: 'tasks-tag-rename' } }));
     } catch (err: any) {
@@ -608,6 +660,13 @@ export const TasksPage: React.FC = () => {
       await apiClient.post('/tasks/tags/delete', { tag });
       toast.success(`Đã xóa thẻ #${tag} khỏi tất cả công việc!`);
       setSelectedTags((prev) => prev.filter((t) => t.toLowerCase() !== tag.toLowerCase()));
+      setExcludedTags((prev) => {
+        const next = prev.filter((t) => t.toLowerCase() !== tag.toLowerCase());
+        try {
+          localStorage.setItem('flux_tasks_excluded_tags', JSON.stringify(next));
+        } catch {}
+        return next;
+      });
       await Promise.all([fetchTags(), fetchTasks(1, true)]);
       window.dispatchEvent(new CustomEvent('flux:refresh-data', { detail: { source: 'tasks-tag-delete' } }));
     } catch (err: any) {
@@ -895,40 +954,108 @@ export const TasksPage: React.FC = () => {
             </button>
 
             {availableTags.map((item) => {
-              const isActive = selectedTags.some(
-                (t) => t.toLowerCase() === item.name.toLowerCase()
-              );
+              const cleanName = item.name.toLowerCase().trim();
+              const isExcluded = excludedTags.some((t) => t.toLowerCase() === cleanName);
+              const isActive = selectedTags.some((t) => t.toLowerCase() === cleanName);
               const color = item.color || '#6366F1';
+
               return (
-                <button
+                <div
                   key={item.name}
-                  type="button"
-                  onClick={() => handleToggleTag(item.name)}
-                  className={`px-2.5 py-1.5 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0 border ${
-                    isActive
+                  className={`group flex items-center rounded-xl text-xs transition-all flex-shrink-0 border ${
+                    isExcluded
+                      ? 'border-dashed border-rose-300 dark:border-rose-900/60 bg-rose-50/50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400'
+                      : isActive
                       ? 'text-white font-bold shadow-xs'
-                      : 'text-slate-700 dark:text-slate-300 hover:scale-[1.02]'
+                      : 'text-slate-700 dark:text-slate-300 hover:scale-[1.01]'
                   }`}
                   style={{
-                    backgroundColor: isActive ? color : `${color}15`,
-                    borderColor: isActive ? color : `${color}35`,
+                    backgroundColor: isExcluded
+                      ? undefined
+                      : isActive
+                      ? color
+                      : `${color}15`,
+                    borderColor: isExcluded
+                      ? undefined
+                      : isActive
+                      ? color
+                      : `${color}35`,
                   }}
                 >
-                  <span
-                    className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: isActive ? '#ffffff' : color }}
-                  />
-                  <span>#{item.name}</span>
-                  <span
-                    className="text-[10px] px-1.5 py-0.2 rounded-full font-medium"
-                    style={{
-                      backgroundColor: isActive ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.06)',
-                      color: isActive ? '#ffffff' : 'inherit',
-                    }}
+                  {/* Main Tag Selection Button */}
+                  <Tooltip
+                    content={
+                      isExcluded
+                        ? `Thẻ #${item.name} đang bị ẩn. Bấm để hiển thị lại thẻ này.`
+                        : isActive
+                        ? `Bỏ chọn thẻ #${item.name}`
+                        : `Lọc các công việc thuộc thẻ #${item.name}`
+                    }
                   >
-                    {item.count}
-                  </span>
-                </button>
+                    <button
+                      type="button"
+                      onClick={() => (isExcluded ? handleToggleExcludeTag(item.name) : handleToggleTag(item.name))}
+                      className="px-2.5 py-1.5 flex items-center gap-1.5 cursor-pointer rounded-l-xl"
+                    >
+                      {isExcluded ? (
+                        <EyeOff className="w-3 h-3 text-rose-500 flex-shrink-0" />
+                      ) : (
+                        <span
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: isActive ? '#ffffff' : color }}
+                        />
+                      )}
+                      <span className={isExcluded ? 'line-through opacity-80' : ''}>#{item.name}</span>
+                      <span
+                        className="text-[10px] px-1.5 py-0.2 rounded-full font-medium ml-0.5"
+                        style={{
+                          backgroundColor: isExcluded
+                            ? 'rgba(244,63,94,0.15)'
+                            : isActive
+                            ? 'rgba(255,255,255,0.25)'
+                            : 'rgba(0,0,0,0.06)',
+                          color: isExcluded
+                            ? 'inherit'
+                            : isActive
+                            ? '#ffffff'
+                            : 'inherit',
+                        }}
+                      >
+                        {item.count}
+                      </span>
+                    </button>
+                  </Tooltip>
+
+                  {/* Quick Exclude/Hide Button */}
+                  <Tooltip
+                    content={
+                      isExcluded
+                        ? `Đang ẩn các việc có thẻ #${item.name}. Bấm để hiển thị lại.`
+                        : `Ẩn tất cả công việc có gắn thẻ #${item.name}`
+                    }
+                  >
+                    <button
+                      type="button"
+                      onClick={(e) => handleToggleExcludeTag(item.name, e)}
+                      aria-label={isExcluded ? `Bỏ ẩn thẻ #${item.name}` : `Ẩn thẻ #${item.name}`}
+                      className={`pr-2 pl-0.5 py-1.5 cursor-pointer transition-opacity rounded-r-xl flex items-center ${
+                        isExcluded
+                          ? 'opacity-100 hover:text-rose-700 dark:hover:text-rose-300'
+                          : 'opacity-40 group-hover:opacity-100 hover:text-rose-500'
+                      }`}
+                    >
+                      <EyeOff
+                        className={`w-3 h-3 ${
+                          isExcluded
+                            ? 'text-rose-500'
+                            : isActive
+                            ? 'text-white/80 hover:text-white'
+                            : 'text-slate-400 hover:text-rose-500'
+                        }`}
+                      />
+                    </button>
+                  </Tooltip>
+                </div>
               );
             })}
 
@@ -945,7 +1072,7 @@ export const TasksPage: React.FC = () => {
           </div>
 
           {/* Active compound filter summary banner */}
-          {(filter !== 'ALL' || selectedTags.length > 0 || searchQuery.trim() !== '' || effectiveHideCompleted) && (
+          {(filter !== 'ALL' || selectedTags.length > 0 || excludedTags.length > 0 || searchQuery.trim() !== '' || effectiveHideCompleted) && (
             <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/60 text-xs text-slate-500 dark:text-slate-400">
               <span className="font-semibold text-slate-700 dark:text-slate-300">Đang lọc kết hợp:</span>
               {searchQuery.trim() !== '' && (
@@ -1021,11 +1148,34 @@ export const TasksPage: React.FC = () => {
                   </span>
                 );
               })}
+              {excludedTags.map((tagName) => (
+                <span
+                  key={`exclude-${tagName}`}
+                  className="px-2.5 py-0.5 rounded-lg font-bold border border-dashed border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 flex items-center gap-1.5"
+                >
+                  <EyeOff className="w-3 h-3 text-rose-500 flex-shrink-0" />
+                  <span>Ẩn: #{tagName}</span>
+                  <Tooltip content={`Bỏ ẩn thẻ #${tagName}`}>
+                    <button
+                      type="button"
+                      onClick={(e) => handleToggleExcludeTag(tagName, e)}
+                      aria-label={`Bỏ ẩn thẻ #${tagName}`}
+                      className="p-0.5 rounded-full hover:bg-rose-200/50 dark:hover:bg-rose-900/50 transition-colors cursor-pointer"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Tooltip>
+                </span>
+              ))}
               <button
                 type="button"
                 onClick={() => {
                   setFilter('ALL');
                   setSelectedTags([]);
+                  setExcludedTags([]);
+                  try {
+                    localStorage.removeItem('flux_tasks_excluded_tags');
+                  } catch {}
                   setSearchQuery('');
                 }}
                 className="text-slate-400 hover:text-rose-500 text-[11px] underline ml-auto cursor-pointer"
@@ -1085,14 +1235,14 @@ export const TasksPage: React.FC = () => {
                 <>
                   <EmptyTasks width={170} height={135} />
                   <h3 className="font-bold text-sm text-slate-700 dark:text-slate-300">
-                    {filter === 'ALL' && selectedTags.length === 0
+                    {filter === 'ALL' && selectedTags.length === 0 && excludedTags.length === 0
                       ? 'Chưa có công việc nào trong danh sách'
                       : 'Không tìm thấy công việc nào khớp bộ lọc'}
                   </h3>
                   <p className="text-xs text-slate-400">
-                    {filter === 'ALL' && selectedTags.length === 0
+                    {filter === 'ALL' && selectedTags.length === 0 && excludedTags.length === 0
                       ? 'Tạo ngay công việc đầu tiên để lập kế hoạch và theo dõi năng suất cá nhân!'
-                      : 'Thử chuyển sang bộ lọc khác hoặc bỏ chọn thẻ để hiển thị thêm kết quả.'}
+                      : 'Thử chuyển sang bộ lọc khác hoặc bỏ chọn / bỏ ẩn thẻ để hiển thị thêm kết quả.'}
                   </p>
                   {tasks.length === 0 && (
                     <div className="pt-2">

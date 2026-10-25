@@ -58,6 +58,11 @@ export class TasksService {
       filterTags = [filterInput.tag.trim()];
     }
 
+    let filterExcludeTags: string[] = [];
+    if (filterInput?.excludeTags && filterInput.excludeTags.length > 0) {
+      filterExcludeTags = filterInput.excludeTags;
+    }
+
     const andConditions: any[] = [];
 
     if (filterTags.length === 1) {
@@ -69,6 +74,16 @@ export class TasksService {
     } else if (filterTags.length > 1) {
       andConditions.push({
         OR: filterTags.map((tag) => ({
+          tags: {
+            array_contains: tag,
+          },
+        })),
+      });
+    }
+
+    if (filterExcludeTags.length > 0) {
+      andConditions.push({
+        NOT: filterExcludeTags.map((tag) => ({
           tags: {
             array_contains: tag,
           },
@@ -100,7 +115,8 @@ export class TasksService {
       filterInput?.offset !== undefined ? Math.floor(skip / limit) + 1 : page;
 
     const sortedTagsKey = filterTags.slice().sort().join(',');
-    const cacheKey = `cache:tasks:${userId}:${filterInput?.filter || 'all'}:${sortedTagsKey}:${filterInput?.search || ''}:${filterInput?.hideCompleted ? 'hideDone' : 'allDone'}:${currentPage}:${limit}`;
+    const sortedExcludeTagsKey = filterExcludeTags.slice().sort().join(',');
+    const cacheKey = `cache:tasks:${userId}:${filterInput?.filter || 'all'}:${sortedTagsKey}:ex_${sortedExcludeTagsKey}:${filterInput?.search || ''}:${filterInput?.hideCompleted ? 'hideDone' : 'allDone'}:${currentPage}:${limit}`;
 
     return cacheService.remember(cacheKey, 60, async () => {
       const [total, items] = await Promise.all([
