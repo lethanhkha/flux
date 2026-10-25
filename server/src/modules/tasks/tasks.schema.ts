@@ -29,6 +29,17 @@ export const taskFilterSchema = z.object({
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
   filter: z.enum(['all', 'today', 'overdue', 'urgent', 'done', 'next7days']).optional().default('all'),
   tag: z.string().optional(),
+  tags: z
+    .union([z.string(), z.array(z.string())])
+    .optional()
+    .transform((val) => {
+      if (!val) return undefined;
+      if (Array.isArray(val)) return val.map((s) => s.trim()).filter(Boolean);
+      return val
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }),
   search: z.string().optional(),
   hideCompleted: z
     .union([z.boolean(), z.enum(['true', 'false'])])

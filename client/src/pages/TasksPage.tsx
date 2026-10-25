@@ -101,7 +101,17 @@ export const TasksPage: React.FC = () => {
     hasPrev: false,
   });
 
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const handleToggleTag = useCallback((tagName: string) => {
+    setSelectedTags((prev) => {
+      const exists = prev.some((t) => t.toLowerCase() === tagName.toLowerCase());
+      if (exists) {
+        return prev.filter((t) => t.toLowerCase() !== tagName.toLowerCase());
+      }
+      return [...prev, tagName];
+    });
+  }, []);
   const [newTaskTags, setNewTaskTags] = useState<string[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
@@ -231,7 +241,7 @@ export const TasksPage: React.FC = () => {
           page,
           limit,
           filter: filter.toLowerCase(),
-          tag: selectedTag || undefined,
+          tags: selectedTags.length > 0 ? selectedTags.join(',') : undefined,
           search: debouncedSearch.trim() || undefined,
           hideCompleted: effectiveHideCompleted ? true : undefined,
         },
@@ -281,7 +291,7 @@ export const TasksPage: React.FC = () => {
     } finally {
       if (!isSilent) setIsLoading(false);
     }
-  }, [viewMode, filter, selectedTag, debouncedSearch, effectiveHideCompleted]);
+  }, [viewMode, filter, selectedTags, debouncedSearch, effectiveHideCompleted]);
 
   useEffect(() => {
     fetchTags();
@@ -582,31 +592,29 @@ export const TasksPage: React.FC = () => {
     try {
       await apiClient.post('/tasks/tags/rename', { oldTag, newTag });
       toast.success(`Đã đổi tên thẻ #${oldTag} thành #${newTag}!`);
-      if (selectedTag === oldTag) {
-        setSelectedTag(newTag);
-      }
+      setSelectedTags((prev) =>
+        prev.map((t) => (t.toLowerCase() === oldTag.toLowerCase() ? newTag : t))
+      );
       await Promise.all([fetchTags(), fetchTasks(pagination.page, true)]);
       window.dispatchEvent(new CustomEvent('flux:refresh-data', { detail: { source: 'tasks-tag-rename' } }));
     } catch (err: any) {
       toast.error(getErrorMessage(err, 'Không thể đổi tên thẻ.'));
       throw err;
     }
-  }, [selectedTag, fetchTags, fetchTasks, pagination.page]);
+  }, [fetchTags, fetchTasks, pagination.page]);
 
   const handleDeleteTag = useCallback(async (tag: string) => {
     try {
       await apiClient.post('/tasks/tags/delete', { tag });
       toast.success(`Đã xóa thẻ #${tag} khỏi tất cả công việc!`);
-      if (selectedTag === tag) {
-        setSelectedTag(null);
-      }
+      setSelectedTags((prev) => prev.filter((t) => t.toLowerCase() !== tag.toLowerCase()));
       await Promise.all([fetchTags(), fetchTasks(1, true)]);
       window.dispatchEvent(new CustomEvent('flux:refresh-data', { detail: { source: 'tasks-tag-delete' } }));
     } catch (err: any) {
       toast.error(getErrorMessage(err, 'Không thể xóa thẻ.'));
       throw err;
     }
-  }, [selectedTag, fetchTags, fetchTasks]);
+  }, [fetchTags, fetchTasks]);
 
   const handleUpdateTagColor = useCallback(async (tag: string, color: string) => {
     try {
@@ -876,9 +884,9 @@ export const TasksPage: React.FC = () => {
             </span>
             <button
               type="button"
-              onClick={() => setSelectedTag(null)}
+              onClick={() => setSelectedTags([])}
               className={`px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer flex-shrink-0 border ${
-                selectedTag === null
+                selectedTags.length === 0
                   ? 'bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 border-transparent font-bold shadow-xs'
                   : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
@@ -887,13 +895,15 @@ export const TasksPage: React.FC = () => {
             </button>
 
             {availableTags.map((item) => {
-              const isActive = selectedTag === item.name;
+              const isActive = selectedTags.some(
+                (t) => t.toLowerCase() === item.name.toLowerCase()
+              );
               const color = item.color || '#6366F1';
               return (
                 <button
                   key={item.name}
                   type="button"
-                  onClick={() => setSelectedTag(isActive ? null : item.name)}
+                  onClick={() => handleToggleTag(item.name)}
                   className={`px-2.5 py-1.5 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0 border ${
                     isActive
                       ? 'text-white font-bold shadow-xs'
@@ -935,7 +945,7 @@ export const TasksPage: React.FC = () => {
           </div>
 
           {/* Active compound filter summary banner */}
-          {(filter !== 'ALL' || selectedTag !== null || searchQuery.trim() !== '' || effectiveHideCompleted) && (
+          {(filter !== 'ALL' || selectedTags.length > 0 || searchQuery.trim() !== '' || effectiveHideCompleted) && (
             <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/60 text-xs text-slate-500 dark:text-slate-400">
               <span className="font-semibold text-slate-700 dark:text-slate-300">Đang lọc kết hợp:</span>
               {searchQuery.trim() !== '' && (
@@ -981,27 +991,41 @@ export const TasksPage: React.FC = () => {
                     : 'Đã hoàn thành'}
                 </span>
               )}
-              {selectedTag && (
-                <span
-                  className="px-2.5 py-0.5 rounded-lg font-bold border flex items-center gap-1"
-                  style={{
-                    backgroundColor: `${getTagColor(selectedTag)}18`,
-                    borderColor: `${getTagColor(selectedTag)}35`,
-                    color: getTagColor(selectedTag),
-                  }}
-                >
+              {selectedTags.map((tagName) => {
+                const tagColor = getTagColor(tagName);
+                return (
                   <span
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{ backgroundColor: getTagColor(selectedTag) }}
-                  />
-                  #{selectedTag}
-                </span>
-              )}
+                    key={tagName}
+                    className="px-2.5 py-0.5 rounded-lg font-bold border flex items-center gap-1.5"
+                    style={{
+                      backgroundColor: `${tagColor}18`,
+                      borderColor: `${tagColor}35`,
+                      color: tagColor,
+                    }}
+                  >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: tagColor }}
+                    />
+                    <span>#{tagName}</span>
+                    <Tooltip content={`Bỏ lọc thẻ #${tagName}`}>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleTag(tagName)}
+                        aria-label={`Bỏ lọc thẻ #${tagName}`}
+                        className="p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Tooltip>
+                  </span>
+                );
+              })}
               <button
                 type="button"
                 onClick={() => {
                   setFilter('ALL');
-                  setSelectedTag(null);
+                  setSelectedTags([]);
                   setSearchQuery('');
                 }}
                 className="text-slate-400 hover:text-rose-500 text-[11px] underline ml-auto cursor-pointer"
@@ -1061,12 +1085,12 @@ export const TasksPage: React.FC = () => {
                 <>
                   <EmptyTasks width={170} height={135} />
                   <h3 className="font-bold text-sm text-slate-700 dark:text-slate-300">
-                    {filter === 'ALL' && !selectedTag
+                    {filter === 'ALL' && selectedTags.length === 0
                       ? 'Chưa có công việc nào trong danh sách'
                       : 'Không tìm thấy công việc nào khớp bộ lọc'}
                   </h3>
                   <p className="text-xs text-slate-400">
-                    {filter === 'ALL' && !selectedTag
+                    {filter === 'ALL' && selectedTags.length === 0
                       ? 'Tạo ngay công việc đầu tiên để lập kế hoạch và theo dõi năng suất cá nhân!'
                       : 'Thử chuyển sang bộ lọc khác hoặc bỏ chọn thẻ để hiển thị thêm kết quả.'}
                   </p>

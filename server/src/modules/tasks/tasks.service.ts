@@ -51,24 +51,43 @@ export class TasksService {
       where.status = { not: 'DONE' };
     }
 
-    if (filterInput?.tag) {
-      where.tags = {
-        array_contains: filterInput.tag,
-      };
+    let filterTags: string[] = [];
+    if (filterInput?.tags && filterInput.tags.length > 0) {
+      filterTags = filterInput.tags;
+    } else if (filterInput?.tag?.trim()) {
+      filterTags = [filterInput.tag.trim()];
+    }
+
+    const andConditions: any[] = [];
+
+    if (filterTags.length === 1) {
+      andConditions.push({
+        tags: {
+          array_contains: filterTags[0],
+        },
+      });
+    } else if (filterTags.length > 1) {
+      andConditions.push({
+        OR: filterTags.map((tag) => ({
+          tags: {
+            array_contains: tag,
+          },
+        })),
+      });
     }
 
     if (filterInput?.search?.trim()) {
       const q = filterInput.search.trim();
-      const searchCondition = [
-        { title: { contains: q, mode: 'insensitive' as const } },
-        { description: { contains: q, mode: 'insensitive' as const } },
-      ];
-      if (where.OR) {
-        where.AND = [{ OR: where.OR }, { OR: searchCondition }];
-        delete where.OR;
-      } else {
-        where.OR = searchCondition;
-      }
+      andConditions.push({
+        OR: [
+          { title: { contains: q, mode: 'insensitive' as const } },
+          { description: { contains: q, mode: 'insensitive' as const } },
+        ],
+      });
+    }
+
+    if (andConditions.length > 0) {
+      where.AND = andConditions;
     }
 
     const limit = Math.min(Math.max(filterInput?.limit ? Number(filterInput.limit) : 20, 1), 1000);
@@ -80,7 +99,8 @@ export class TasksService {
     const currentPage =
       filterInput?.offset !== undefined ? Math.floor(skip / limit) + 1 : page;
 
-    const cacheKey = `cache:tasks:${userId}:${filterInput?.filter || 'all'}:${filterInput?.tag || ''}:${filterInput?.search || ''}:${filterInput?.hideCompleted ? 'hideDone' : 'allDone'}:${currentPage}:${limit}`;
+    const sortedTagsKey = filterTags.slice().sort().join(',');
+    const cacheKey = `cache:tasks:${userId}:${filterInput?.filter || 'all'}:${sortedTagsKey}:${filterInput?.search || ''}:${filterInput?.hideCompleted ? 'hideDone' : 'allDone'}:${currentPage}:${limit}`;
 
     return cacheService.remember(cacheKey, 60, async () => {
       const [total, items] = await Promise.all([
