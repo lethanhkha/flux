@@ -51,8 +51,9 @@ export const TAB_ORDER: Record<string, number> = {
   '/dashboard': 0,
   '/finance': 1,
   '/tasks': 2,
-  '/notes': 3,
-  '/settings': 4,
+  '/reminders': 3,
+  '/notes': 4,
+  '/settings': 5,
 };
 
 export const tabDirectionVariants: Variants = {

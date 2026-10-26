@@ -1,21 +1,23 @@
 import { financeService } from '../finance/finance.service';
 import { tasksService } from '../tasks/tasks.service';
 import { notesService } from '../notes/notes.service';
+import { remindersService } from '../reminders/reminders.service';
 import { cacheService } from '../../services/cache.service';
 
 export class DashboardService {
   /**
-   * Aggregate 3 core widgets in a single roundtrip with 10-second SWR cache
+   * Aggregate 4 core widgets in a single roundtrip with 60-second SWR cache
    * Under heavy load (500 VUs), serves sub-2ms cached responses from RAM.
    */
   async getUnifiedDashboard(userId: string) {
     const cacheKey = `cache:dashboard:${userId}`;
 
     return cacheService.remember(cacheKey, 60, async () => {
-      const [financeSummary, priorityTasks, pinnedNotes] = await Promise.all([
+      const [financeSummary, priorityTasks, pinnedNotes, upcomingReminders] = await Promise.all([
         financeService.getFinanceSummary(userId),
         tasksService.getTopPriorityTasks(userId, 5),
         notesService.getPinnedNotes(userId, 3),
+        remindersService.getUpcomingRemindersForDashboard(userId, 5),
       ]);
 
       return {
@@ -28,6 +30,7 @@ export class DashboardService {
         },
         priorityTasks,
         pinnedNotes,
+        upcomingReminders,
       };
     });
   }

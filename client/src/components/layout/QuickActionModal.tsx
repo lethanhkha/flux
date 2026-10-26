@@ -4,6 +4,9 @@ import {
   Plus,
   Wallet,
   CheckSquare,
+  Bell,
+  Clock,
+  MapPin,
   FileText,
 } from 'lucide-react';
 import { apiClient, getErrorMessage } from '../../api/client';
@@ -14,12 +17,13 @@ import { TagSelect, TagOption } from '../notes/TagSelect';
 import { MarkdownEditor } from '../notes/MarkdownEditor';
 import { InfoTooltip } from '../common/Tooltip';
 import { CustomSelect } from '../common/CustomSelect';
+import { RemindBeforeSelect } from '../reminders/RemindBeforeSelect';
 import { PRIORITY_TOOLTIPS } from '../../lib/taskUtils';
 
 export interface QuickActionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  defaultTab?: 'transaction' | 'task' | 'note';
+  defaultTab?: 'transaction' | 'task' | 'reminder' | 'note';
 }
 
 interface WalletItem {
@@ -45,7 +49,7 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
   onClose,
   defaultTab = 'transaction',
 }) => {
-  const [activeTab, setActiveTab] = useState<'transaction' | 'task' | 'note'>(defaultTab);
+  const [activeTab, setActiveTab] = useState<'transaction' | 'task' | 'reminder' | 'note'>(defaultTab);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // --- 1. Transaction State ---
@@ -70,7 +74,21 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
   const [taskRecurrenceRule, setTaskRecurrenceRule] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('WEEKLY');
   const [taskTags, setTaskTags] = useState<string[]>([]);
 
-  // --- 3. Note State ---
+  // --- 3. Reminder State ---
+  const [reminderTitle, setReminderTitle] = useState('');
+  const [reminderScheduledAt, setReminderScheduledAt] = useState(() => {
+    const d = new Date(Date.now() + 3600000);
+    d.setMinutes(0, 0, 0);
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 16);
+  });
+  const [reminderRemindBefore, setReminderRemindBefore] = useState<number>(0);
+  const [reminderLocation, setReminderLocation] = useState('');
+  const [reminderDescription, setReminderDescription] = useState('');
+  const [availableReminderTags, setAvailableReminderTags] = useState<TagOption[]>([]);
+  const [reminderTags, setReminderTags] = useState<string[]>([]);
+
+  // --- 4. Note State ---
   const [availableNoteTags, setAvailableNoteTags] = useState<TagOption[]>([]);
   const [noteTitle, setNoteTitle] = useState('');
   const [noteTags, setNoteTags] = useState<string[]>(['chung']);
@@ -93,7 +111,8 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
       apiClient.get('/finance/categories').catch(() => null),
       apiClient.get('/tasks/tags').catch(() => null),
       apiClient.get('/notes/tags').catch(() => null),
-    ]).then(([walletsRes, categoriesRes, taskTagsRes, noteTagsRes]) => {
+      apiClient.get('/reminders/tags').catch(() => null),
+    ]).then(([walletsRes, categoriesRes, taskTagsRes, noteTagsRes, reminderTagsRes]) => {
       // Wallets
       if (walletsRes?.data?.data && Array.isArray(walletsRes.data.data)) {
         const mappedWallets: WalletItem[] = walletsRes.data.data.map((w: any) => ({
@@ -123,6 +142,11 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
       // Note tags
       if (noteTagsRes?.data?.data && Array.isArray(noteTagsRes.data.data)) {
         setAvailableNoteTags(noteTagsRes.data.data);
+      }
+
+      // Reminder tags
+      if (reminderTagsRes?.data?.data && Array.isArray(reminderTagsRes.data.data)) {
+        setAvailableReminderTags(reminderTagsRes.data.data);
       }
     });
   }, [isOpen]);
@@ -272,6 +296,48 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
     }
   };
 
+  const handleCreateReminder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reminderTitle.trim()) {
+      toast.error('Vui lòng nhập tiêu đề nhắc hẹn.');
+      return;
+    }
+    if (!reminderScheduledAt) {
+      toast.error('Vui lòng chọn thời gian diễn ra.');
+      return;
+    }
+
+    const scheduledDate = new Date(reminderScheduledAt);
+    if (isNaN(scheduledDate.getTime())) {
+      toast.error('Thời gian diễn ra không hợp lệ.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await apiClient.post('/reminders', {
+        title: reminderTitle.trim(),
+        scheduledAt: scheduledDate.toISOString(),
+        remindBefore: Number(reminderRemindBefore),
+        location: reminderLocation.trim() || null,
+        description: reminderDescription.trim() || null,
+        tags: reminderTags,
+      });
+
+      toast.success('Đã tạo lịch nhắc hẹn thành công!');
+      setReminderTitle('');
+      setReminderLocation('');
+      setReminderDescription('');
+      setReminderTags([]);
+      onClose();
+      window.dispatchEvent(new CustomEvent('flux:refresh-data'));
+    } catch (err: any) {
+      toast.error(getErrorMessage(err, 'Không thể tạo nhắc hẹn.'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const filteredCategories = categories.filter((c) => c.type === txType);
 
   return (
@@ -295,7 +361,7 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
               Thao Tác Nhanh
             </h3>
             <p className="text-[11px] text-slate-400">
-              Tạo mới giao dịch, công việc hoặc ghi chú vào không gian Flux
+              Tạo mới giao dịch, công việc, nhắc hẹn hoặc ghi chú vào không gian Flux
             </p>
           </div>
         </div>
@@ -311,42 +377,54 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
       </div>
 
       {/* Tab Switcher */}
-      <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-center mt-3">
+      <div className="grid grid-cols-4 gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-center mt-3">
         <button
           type="button"
           onClick={() => setActiveTab('transaction')}
-          className={`flex items-center justify-center gap-1.5 py-2 rounded-lg transition-all cursor-pointer ${
+          className={`flex items-center justify-center gap-1 py-2 rounded-lg transition-all cursor-pointer ${
             activeTab === 'transaction'
               ? 'bg-white dark:bg-slate-900 text-brand shadow-sm font-bold'
               : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
           }`}
         >
-          <Wallet className="w-3.5 h-3.5" />
-          <span>Giao Dịch</span>
+          <Wallet className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">Giao Dịch</span>
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('task')}
-          className={`flex items-center justify-center gap-1.5 py-2 rounded-lg transition-all cursor-pointer ${
+          className={`flex items-center justify-center gap-1 py-2 rounded-lg transition-all cursor-pointer ${
             activeTab === 'task'
               ? 'bg-white dark:bg-slate-900 text-brand shadow-sm font-bold'
               : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
           }`}
         >
-          <CheckSquare className="w-3.5 h-3.5" />
-          <span>Công Việc</span>
+          <CheckSquare className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">Công Việc</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('reminder')}
+          className={`flex items-center justify-center gap-1 py-2 rounded-lg transition-all cursor-pointer ${
+            activeTab === 'reminder'
+              ? 'bg-white dark:bg-slate-900 text-brand shadow-sm font-bold'
+              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+          }`}
+        >
+          <Bell className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">Nhắc Hẹn</span>
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('note')}
-          className={`flex items-center justify-center gap-1.5 py-2 rounded-lg transition-all cursor-pointer ${
+          className={`flex items-center justify-center gap-1 py-2 rounded-lg transition-all cursor-pointer ${
             activeTab === 'note'
               ? 'bg-white dark:bg-slate-900 text-brand shadow-sm font-bold'
               : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
           }`}
         >
-          <FileText className="w-3.5 h-3.5" />
-          <span>Ghi Chú</span>
+          <FileText className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">Ghi Chú</span>
         </button>
       </div>
 
@@ -627,7 +705,96 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
         </form>
       )}
 
-      {/* Tab 3: Ghi Chú (Matches NotesPage Add Modal) */}
+      {/* Tab 3: Nhắc Hẹn (Scheduled Exact-Time Event) */}
+      {activeTab === 'reminder' && (
+        <form onSubmit={handleCreateReminder} className="space-y-4 text-xs mt-4">
+          <div>
+            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+              Tiêu đề nhắc hẹn <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              value={reminderTitle}
+              onChange={(e) => setReminderTitle(e.target.value)}
+              placeholder="VD: 13h đi dự khai mạc, Khám sức khỏe, Họp tổng kết..."
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand font-medium text-xs"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5 text-brand" />
+                <span>Thời điểm diễn ra</span>
+              </label>
+              <input
+                type="datetime-local"
+                required
+                value={reminderScheduledAt}
+                onChange={(e) => setReminderScheduledAt(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand font-medium text-xs"
+              />
+            </div>
+
+            <div>
+              <RemindBeforeSelect
+                value={reminderRemindBefore}
+                onChange={setReminderRemindBefore}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300 flex items-center gap-1">
+              <MapPin className="w-3.5 h-3.5 text-brand" />
+              <span>Địa điểm hoặc Link họp trực tuyến (tùy chọn)</span>
+            </label>
+            <input
+              type="text"
+              value={reminderLocation}
+              onChange={(e) => setReminderLocation(e.target.value)}
+              placeholder="VD: Phòng họp A, hoặc https://meet.google.com/..."
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand font-medium text-xs"
+            />
+          </div>
+
+          <div>
+            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+              Ghi chú chuẩn bị
+            </label>
+            <textarea
+              rows={2}
+              value={reminderDescription}
+              onChange={(e) => setReminderDescription(e.target.value)}
+              placeholder="Nội dung cần lưu ý khi tới giờ..."
+              className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand font-medium text-xs resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+              Thẻ phân loại (Tags)
+            </label>
+            <TagSelect
+              availableTags={availableReminderTags}
+              selectedTags={reminderTags}
+              onChange={setReminderTags}
+              placeholder="Chọn hoặc nhập thẻ mới..."
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all cursor-pointer disabled:opacity-50"
+          >
+            {isSubmitting ? 'Đang tạo...' : 'Lên Lịch Nhắc Hẹn'}
+          </button>
+        </form>
+      )}
+
+      {/* Tab 4: Ghi Chú (Matches NotesPage Add Modal) */}
       {activeTab === 'note' && (
         <form onSubmit={handleCreateNote} className="space-y-4 text-xs mt-4">
           <div>

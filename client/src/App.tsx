@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AuthProvider } from './contexts/AuthContext';
+import { ReminderAlertProvider } from './contexts/ReminderAlertContext';
 import { PageTransition } from './components/motion/PageTransition';
 
 // Pages
@@ -14,6 +15,7 @@ import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { FinancePage } from './pages/FinancePage';
 import { TasksPage } from './pages/TasksPage';
+import { RemindersPage } from './pages/RemindersPage';
 import { NotesPage } from './pages/NotesPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
@@ -45,6 +47,7 @@ function AnimatedRoutes() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/finance" element={<FinancePage />} />
         <Route path="/tasks" element={<TasksPage />} />
+        <Route path="/reminders" element={<RemindersPage />} />
         <Route path="/notes" element={<NotesPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>
@@ -58,10 +61,12 @@ function AnimatedRoutes() {
 export function App() {
   return (
     <AuthProvider>
-      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <AnimatedRoutes />
-        <Toaster richColors position="top-right" closeButton />
-      </BrowserRouter>
+      <ReminderAlertProvider>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <AnimatedRoutes />
+          <Toaster richColors position="top-right" closeButton />
+        </BrowserRouter>
+      </ReminderAlertProvider>
     </AuthProvider>
   );
 }

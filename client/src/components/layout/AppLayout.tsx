@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Wallet,
   CheckSquare,
+  Bell,
   FileText,
   Settings,
   LogOut,
@@ -29,6 +30,7 @@ const getTabBasePath = (pathname: string): string => {
   if (base.startsWith('/dashboard')) return '/dashboard';
   if (base.startsWith('/finance')) return '/finance';
   if (base.startsWith('/tasks')) return '/tasks';
+  if (base.startsWith('/reminders')) return '/reminders';
   if (base.startsWith('/notes')) return '/notes';
   if (base.startsWith('/settings')) return '/settings';
   return base;
@@ -114,6 +116,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/finance', label: 'Tài Chính', icon: Wallet },
     { to: '/tasks', label: 'Công Việc', icon: CheckSquare },
+    { to: '/reminders', label: 'Nhắc Hẹn', icon: Bell },
     { to: '/notes', label: 'Ghi Chú', icon: FileText },
     { to: '/settings', label: 'Cài Đặt', icon: Settings },
   ];

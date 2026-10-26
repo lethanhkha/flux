@@ -6,6 +6,8 @@ import {
   Wallet,
   CheckCircle2,
   FileText,
+  Bell,
+  MapPin,
   ArrowUpRight,
   ArrowDownRight,
   ShieldCheck,
@@ -42,6 +44,15 @@ export const DashboardPage: React.FC = () => {
       rawDueDate?: string | null;
       due: string;
       subtasksCount?: { total: number; completed: number };
+    }>
+  >([]);
+  const [reminders, setReminders] = useState<
+    Array<{
+      id: string;
+      title: string;
+      scheduledAt: string;
+      location?: string | null;
+      status: string;
     }>
   >([]);
   const [pinnedNotes, setPinnedNotes] = useState<Array<{ id: string; title: string; snippet: string }>>([]);
@@ -90,6 +101,18 @@ export const DashboardPage: React.FC = () => {
               id: n.id,
               title: n.title,
               snippet: (n.content || '').replace(/#/g, '').slice(0, 100),
+            }))
+          );
+        }
+
+        if (Array.isArray(data.upcomingReminders)) {
+          setReminders(
+            data.upcomingReminders.map((r: any) => ({
+              id: r.id,
+              title: r.title,
+              scheduledAt: r.scheduledAt,
+              location: r.location || null,
+              status: r.status,
             }))
           );
         }
@@ -161,12 +184,12 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 3 Core Widgets Grid */}
+        {/* 4 Core Widgets Grid */}
         <motion.div
           variants={staggerContainer}
           initial="initial"
           animate="animate"
-          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5"
         >
           {/* Widget 1: Personal Finance */}
           <motion.div
@@ -336,6 +359,93 @@ export const DashboardPage: React.FC = () => {
               </span>
               <Tooltip content="Chuyển đến trang Quản lý công việc để xem toàn bộ danh sách hoặc bảng Kanban">
                 <Link to="/tasks" className="text-brand font-semibold hover:underline">
+                  Xem tất cả
+                </Link>
+              </Tooltip>
+            </div>
+          </motion.div>
+
+          {/* Widget 3: Upcoming Reminders (Exact-Time Events) */}
+          <motion.div
+            variants={staggerItem}
+            whileHover={{ y: -4, transition: springs.snappy }}
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 text-xs font-semibold">
+                  <Bell className="h-4 w-4 text-brand" />
+                  <span>Nhắc hẹn sắp tới</span>
+                  <InfoTooltip content="Lịch hẹn và sự kiện diễn ra vào các mốc giờ cụ thể. Hệ thống sẽ phát chuông báo khi đến giờ." />
+                </div>
+                <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md">
+                  {reminders.length} lịch hẹn
+                </span>
+              </div>
+
+              {reminders.length === 0 ? (
+                <div className="mt-4 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-800 text-center space-y-1.5">
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Không có lịch hẹn nào sắp tới ⏰</p>
+                  <p className="text-[11px] text-slate-400">Bạn chưa có sự kiện hoặc cuộc hẹn nào cần nhắc giờ.</p>
+                  <Link to="/reminders" className="inline-block pt-1 text-xs font-bold text-brand hover:underline">
+                    + Thêm nhắc hẹn
+                  </Link>
+                </div>
+              ) : (
+                <div className="mt-4 space-y-2.5">
+                  {reminders.map((r) => {
+                    const timeStr = new Date(r.scheduledAt).toLocaleTimeString('vi-VN', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    });
+                    const isToday =
+                      new Date(r.scheduledAt).toDateString() === new Date().toDateString();
+
+                    return (
+                      <Link
+                        key={r.id}
+                        to="/reminders"
+                        className="flex items-center justify-between text-xs p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
+                      >
+                        <div className="flex-1 min-w-0 pr-2">
+                          <div className="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-brand line-clamp-1 transition-colors">
+                            {r.title}
+                          </div>
+                          {r.location && (
+                            <div className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 line-clamp-1">
+                              <MapPin className="w-2.5 h-2.5 shrink-0" />
+                              <span>{r.location}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <span className="inline-block px-2 py-0.5 rounded bg-brand/10 text-brand font-mono font-bold text-[11px]">
+                            {timeStr}
+                          </span>
+                          {!isToday && (
+                            <div className="text-[9px] text-slate-400 mt-0.5">
+                              {new Date(r.scheduledAt).toLocaleDateString('vi-VN', {
+                                day: '2-digit',
+                                month: '2-digit',
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+              <span className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                <span>Báo chuông chuẩn xác</span>
+              </span>
+              <Tooltip content="Chuyển đến trang Quản lý Nhắc hẹn & Lịch trình">
+                <Link to="/reminders" className="text-brand font-semibold hover:underline">
                   Xem tất cả
                 </Link>
               </Tooltip>
