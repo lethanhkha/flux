@@ -195,3 +195,96 @@ export function getSubtaskProgressConfig(percentage: number): SubtaskProgressCon
     glowClass: 'shadow-sm shadow-emerald-500/25',
   };
 }
+
+export interface ScheduleDeadlineComparison {
+  status: 'after_due' | 'same_day' | 'before_due' | 'no_due';
+  badgeLabel: string;
+  tooltipText: string;
+  badgeClasses: string;
+  diffDays: number | null;
+  formattedDue: string | null;
+}
+
+/**
+ * Compares the day a task is scheduled against its actual final deadline (dueDate)
+ */
+export function getScheduleDeadlineComparison(
+  rawScheduledDate?: string | null,
+  rawDueDate?: string | null
+): ScheduleDeadlineComparison {
+  if (!rawDueDate) {
+    return {
+      status: 'no_due',
+      badgeLabel: 'Không hạn',
+      tooltipText: 'Công việc không có hạn chót cụ thể',
+      badgeClasses: 'text-slate-400 bg-slate-100 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700',
+      diffDays: null,
+      formattedDue: null,
+    };
+  }
+
+  const dueDate = new Date(rawDueDate);
+  if (isNaN(dueDate.getTime())) {
+    return {
+      status: 'no_due',
+      badgeLabel: 'Lỗi hạn',
+      tooltipText: 'Thời hạn công việc không hợp lệ',
+      badgeClasses: 'text-slate-400 bg-slate-100 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700',
+      diffDays: null,
+      formattedDue: null,
+    };
+  }
+
+  const formattedDue = dueDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+  const timeDue = dueDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
+  if (!rawScheduledDate) {
+    return {
+      status: 'before_due',
+      badgeLabel: `Hạn: ${formattedDue}`,
+      tooltipText: `Hạn chót: ${timeDue} ngày ${dueDate.toLocaleDateString('vi-VN')}`,
+      badgeClasses: 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800',
+      diffDays: null,
+      formattedDue,
+    };
+  }
+
+  const scheduledDate = new Date(rawScheduledDate);
+  const schedDay = new Date(scheduledDate.getFullYear(), scheduledDate.getMonth(), scheduledDate.getDate());
+  const dueDay = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+
+  const diffTime = schedDay.getTime() - dueDay.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays > 0) {
+    return {
+      status: 'after_due',
+      badgeLabel: `Trễ hạn ${diffDays}d`,
+      tooltipText: `Cảnh báo: Ngày xếp làm (${schedDay.toLocaleDateString('vi-VN')}) SAU hạn chót (${formattedDue} ${timeDue})`,
+      badgeClasses: 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-900 font-bold',
+      diffDays,
+      formattedDue,
+    };
+  }
+
+  if (diffDays === 0) {
+    return {
+      status: 'same_day',
+      badgeLabel: `Đúng hạn (${formattedDue})`,
+      tooltipText: `Ngày làm việc trùng với ngày hạn chót (${timeDue} ${formattedDue})`,
+      badgeClasses: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900 font-semibold',
+      diffDays: 0,
+      formattedDue,
+    };
+  }
+
+  const daysAhead = Math.abs(diffDays);
+  return {
+    status: 'before_due',
+    badgeLabel: `Hạn: ${formattedDue}`,
+    tooltipText: `Làm trước hạn chót ${daysAhead} ngày (Hạn: ${timeDue} ${formattedDue})`,
+    badgeClasses: 'text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700',
+    diffDays,
+    formattedDue,
+  };
+}

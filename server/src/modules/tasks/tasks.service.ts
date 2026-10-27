@@ -51,6 +51,20 @@ export class TasksService {
       where.status = { not: 'DONE' };
     }
 
+    if (filterInput?.scheduledStatus === 'unscheduled') {
+      where.scheduledDate = null;
+    } else if (filterInput?.scheduledStatus === 'scheduled') {
+      where.scheduledDate = { not: null };
+    }
+
+    if (filterInput?.startScheduledDate || filterInput?.endScheduledDate) {
+      where.scheduledDate = {
+        ...(where.scheduledDate && typeof where.scheduledDate === 'object' ? where.scheduledDate : {}),
+        ...(filterInput.startScheduledDate ? { gte: new Date(filterInput.startScheduledDate) } : {}),
+        ...(filterInput.endScheduledDate ? { lte: new Date(filterInput.endScheduledDate) } : {}),
+      };
+    }
+
     let filterTags: string[] = [];
     if (filterInput?.tags && filterInput.tags.length > 0) {
       filterTags = filterInput.tags;
@@ -116,7 +130,8 @@ export class TasksService {
 
     const sortedTagsKey = filterTags.slice().sort().join(',');
     const sortedExcludeTagsKey = filterExcludeTags.slice().sort().join(',');
-    const cacheKey = `cache:tasks:${userId}:${filterInput?.filter || 'all'}:${sortedTagsKey}:ex_${sortedExcludeTagsKey}:${filterInput?.search || ''}:${filterInput?.hideCompleted ? 'hideDone' : 'allDone'}:${currentPage}:${limit}`;
+    const scheduledPart = `${filterInput?.scheduledStatus || 'all'}_${filterInput?.startScheduledDate || ''}_${filterInput?.endScheduledDate || ''}`;
+    const cacheKey = `cache:tasks:${userId}:${filterInput?.filter || 'all'}:${scheduledPart}:${sortedTagsKey}:ex_${sortedExcludeTagsKey}:${filterInput?.search || ''}:${filterInput?.hideCompleted ? 'hideDone' : 'allDone'}:${currentPage}:${limit}`;
 
     return cacheService.remember(cacheKey, 60, async () => {
       const [total, items] = await Promise.all([
@@ -182,6 +197,7 @@ export class TasksService {
         status: input.status,
         priority: input.priority,
         dueDate: input.dueDate ? new Date(input.dueDate) : null,
+        scheduledDate: input.scheduledDate ? new Date(input.scheduledDate) : null,
         isRecurring: input.isRecurring,
         recurrenceRule: input.recurrenceRule,
         tags: input.tags || [],
@@ -219,6 +235,9 @@ export class TasksService {
     }
     if (input.dueDate !== undefined) {
       data.dueDate = input.dueDate ? new Date(input.dueDate) : null;
+    }
+    if (input.scheduledDate !== undefined) {
+      data.scheduledDate = input.scheduledDate ? new Date(input.scheduledDate) : null;
     }
     if (input.isRecurring === false) {
       data.recurrenceRule = null;

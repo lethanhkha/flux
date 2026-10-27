@@ -13,6 +13,10 @@ export const createTaskSchema = z.object({
     .union([z.string().datetime(), z.literal(''), z.null()])
     .optional()
     .transform((val) => (val === '' ? null : val)),
+  scheduledDate: z
+    .union([z.string().datetime(), z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal(''), z.null()])
+    .optional()
+    .transform((val) => (val === '' ? null : val)),
   isRecurring: z.boolean().default(false),
   recurrenceRule: z
     .union([z.enum(['DAILY', 'WEEKLY', 'MONTHLY']), z.literal(''), z.null()])
@@ -52,6 +56,9 @@ export const taskFilterSchema = z.object({
         .filter(Boolean);
     }),
   search: z.string().optional(),
+  scheduledStatus: z.enum(['all', 'scheduled', 'unscheduled']).optional(),
+  startScheduledDate: z.string().optional(),
+  endScheduledDate: z.string().optional(),
   hideCompleted: z
     .union([z.boolean(), z.enum(['true', 'false'])])
     .optional()

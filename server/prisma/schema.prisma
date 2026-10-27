@@ -105,6 +105,7 @@ model Task {
   status         TaskStatus   @default(TODO)
   priority       TaskPriority @default(MEDIUM)
   dueDate        DateTime?    @db.Timestamptz(6)
+  scheduledDate  DateTime?    @db.Timestamptz(6)
   isRecurring    Boolean      @default(false)
   recurrenceRule String?      @db.VarChar(50)
   completedAt    DateTime?    @db.Timestamptz(6)
@@ -115,8 +116,10 @@ model Task {
   subtasks       Subtask[]
 
   @@index([dueDate], map: "idx_tasks_dueDate")
+  @@index([scheduledDate], map: "idx_tasks_scheduledDate")
   @@index([status], map: "idx_tasks_status")
   @@index([userId], map: "idx_tasks_userId")
+  @@index([userId, scheduledDate], map: "idx_tasks_user_scheduled")
   @@index([userId, status, priority, dueDate], map: "idx_tasks_user_status_priority_due")
   @@index([userId, dueDate], map: "idx_tasks_user_due")
   @@map("tasks")

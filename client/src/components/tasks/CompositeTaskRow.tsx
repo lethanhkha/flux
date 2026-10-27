@@ -26,6 +26,8 @@ export interface TaskItem {
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
   dueDate: string;
   rawDueDate?: string | null;
+  scheduledDate?: string | null;
+  rawScheduledDate?: string | null;
   isRecurring: boolean;
   recurrenceRule?: string;
   rawRecurrenceRule?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | null;

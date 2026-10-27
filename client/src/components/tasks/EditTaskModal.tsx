@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit3, X, CheckSquare, Clock, Repeat, Loader2 } from 'lucide-react';
+import { Edit3, X, CheckSquare, Clock, Calendar, Repeat, Loader2 } from 'lucide-react';
 import { apiClient, getErrorMessage } from '../../api/client';
 import { toast } from 'sonner';
 import { Modal } from '../common/Modal';
@@ -18,6 +18,8 @@ export interface TaskItemData {
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
   dueDate: string;
   rawDueDate?: string | null;
+  scheduledDate?: string | null;
+  rawScheduledDate?: string | null;
   isRecurring: boolean;
   recurrenceRule?: string;
   rawRecurrenceRule?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | null;
@@ -46,6 +48,17 @@ const formatToDateTimeLocal = (dateStr?: string | null): string => {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
+const formatToDateInput = (dateStr?: string | null): string => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const year = d.getFullYear();
+  const month = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  return `${year}-${month}-${day}`;
+};
+
 export const EditTaskModal: React.FC<EditTaskModalProps> = ({
   isOpen,
   onClose,
@@ -58,6 +71,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
   const [editStatus, setEditStatus] = useState<'TODO' | 'IN_PROGRESS' | 'DONE'>('TODO');
   const [editPriority, setEditPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'>('MEDIUM');
   const [editDue, setEditDue] = useState('');
+  const [editScheduledDate, setEditScheduledDate] = useState('');
   const [editIsRecurring, setEditIsRecurring] = useState(false);
   const [editRecurrenceRule, setEditRecurrenceRule] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('WEEKLY');
   const [editTags, setEditTags] = useState<string[]>([]);
@@ -71,6 +85,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
       setEditStatus(task.status || 'TODO');
       setEditPriority(task.priority || 'MEDIUM');
       setEditDue(formatToDateTimeLocal(task.rawDueDate));
+      setEditScheduledDate(formatToDateInput(task.rawScheduledDate));
       setEditIsRecurring(Boolean(task.isRecurring));
       setEditRecurrenceRule(task.rawRecurrenceRule || 'WEEKLY');
       setEditTags(Array.isArray(task.tags) ? [...task.tags] : []);
@@ -107,6 +122,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
         status: editStatus,
         priority: editPriority,
         dueDate: editDue ? new Date(editDue).toISOString() : null,
+        scheduledDate: editScheduledDate ? new Date(`${editScheduledDate}T00:00:00.000Z`).toISOString() : null,
         isRecurring: editIsRecurring,
         recurrenceRule: editIsRecurring ? editRecurrenceRule : null,
         tags: editTags,
@@ -230,29 +246,57 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
           </div>
         </div>
 
-        {/* Due Date with Quick Clear Button */}
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5 text-brand" />
-              <span>Hạn chót hoàn thành</span>
-            </label>
-            {editDue && (
-              <button
-                type="button"
-                onClick={() => setEditDue('')}
-                className="text-[11px] text-rose-500 hover:underline cursor-pointer"
-              >
-                Xóa hạn chót
-              </button>
-            )}
+        {/* Due Date & Scheduled Date (Plan Date) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Due Date with Quick Clear Button */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5 text-brand" />
+                <span>Hạn chót hoàn thành</span>
+              </label>
+              {editDue && (
+                <button
+                  type="button"
+                  onClick={() => setEditDue('')}
+                  className="text-[11px] text-rose-500 hover:underline cursor-pointer"
+                >
+                  Xóa hạn chót
+                </button>
+              )}
+            </div>
+            <input
+              type="datetime-local"
+              value={editDue}
+              onChange={(e) => setEditDue(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 font-medium"
+            />
           </div>
-          <input
-            type="datetime-local"
-            value={editDue}
-            onChange={(e) => setEditDue(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 font-medium"
-          />
+
+          {/* Scheduled Date (Day to work on task) */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+                <span>Ngày dự kiến làm</span>
+              </label>
+              {editScheduledDate && (
+                <button
+                  type="button"
+                  onClick={() => setEditScheduledDate('')}
+                  className="text-[11px] text-rose-500 hover:underline cursor-pointer"
+                >
+                  Bỏ xếp ngày
+                </button>
+              )}
+            </div>
+            <input
+              type="date"
+              value={editScheduledDate}
+              onChange={(e) => setEditScheduledDate(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 font-medium"
+            />
+          </div>
         </div>
 
         {/* Recurring Engine Toggle */}

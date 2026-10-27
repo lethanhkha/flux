@@ -5,6 +5,8 @@ import {
   Plus,
   Layers,
   List,
+  CalendarDays,
+  Calendar,
   X,
   Tag,
   Settings,
@@ -32,6 +34,7 @@ import { KanbanCompositeCard } from '../components/tasks/KanbanCompositeCard';
 import { SimpleTaskRow } from '../components/tasks/SimpleTaskRow';
 import { KanbanTaskCard } from '../components/tasks/KanbanTaskCard';
 import { TaskDeleteUndoToast } from '../components/tasks/TaskDeleteUndoToast';
+import { WeeklyPlannerView } from '../components/tasks/planner/WeeklyPlannerView';
 
 interface TaskItem {
   id: string;
@@ -41,6 +44,8 @@ interface TaskItem {
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
   dueDate: string;
   rawDueDate?: string | null;
+  scheduledDate?: string | null;
+  rawScheduledDate?: string | null;
   isRecurring: boolean;
   recurrenceRule?: string;
   rawRecurrenceRule?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | null;
@@ -58,7 +63,7 @@ interface PendingDeleteTask {
 type TaskFilterKey = 'ALL' | 'TODAY' | 'OVERDUE' | 'URGENT' | 'DONE';
 
 export const TasksPage: React.FC = () => {
-  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'kanban' | 'planner'>('list');
   const [filter, setFilter] = useState<TaskFilterKey>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 300);
@@ -161,6 +166,7 @@ export const TasksPage: React.FC = () => {
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'>('MEDIUM');
   const [newTaskDue, setNewTaskDue] = useState(() => new Date(Date.now() + 86400000).toISOString().slice(0, 16));
+  const [newTaskScheduledDate, setNewTaskScheduledDate] = useState<string>('');
   const [newTaskIsRecurring, setNewTaskIsRecurring] = useState(false);
   const [newTaskRecurrenceRule, setNewTaskRecurrenceRule] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('WEEKLY');
   const [newTaskSubtasks, setNewTaskSubtasks] = useState<string[]>([]);
@@ -279,7 +285,7 @@ export const TasksPage: React.FC = () => {
   const fetchTasks = useCallback(async (page = 1, isSilent = false) => {
     try {
       if (!isSilent) setIsLoading(true);
-      const limit = viewMode === 'kanban' ? 60 : 20;
+      const limit = viewMode === 'list' ? 20 : 100;
       const res = await apiClient.get('/tasks', {
         params: {
           page,
@@ -311,6 +317,10 @@ export const TasksPage: React.FC = () => {
               })
             : 'Không có hạn',
           rawDueDate: t.dueDate || null,
+          scheduledDate: t.scheduledDate
+            ? new Date(t.scheduledDate).toLocaleDateString('vi-VN')
+            : null,
+          rawScheduledDate: t.scheduledDate || null,
           isRecurring: t.isRecurring,
           recurrenceRule:
             t.recurrenceRule === 'DAILY'
@@ -576,6 +586,12 @@ export const TasksPage: React.FC = () => {
           })
         : 'Không có hạn',
       rawDueDate: newTaskDue ? new Date(newTaskDue).toISOString() : null,
+      scheduledDate: newTaskScheduledDate
+        ? new Date(newTaskScheduledDate).toLocaleDateString('vi-VN')
+        : null,
+      rawScheduledDate: newTaskScheduledDate
+        ? new Date(`${newTaskScheduledDate}T00:00:00.000Z`).toISOString()
+        : null,
       isRecurring: newTaskIsRecurring,
       recurrenceRule: newTaskIsRecurring
         ? newTaskRecurrenceRule === 'DAILY'
@@ -605,6 +621,9 @@ export const TasksPage: React.FC = () => {
         description: newTaskDescription.trim() || undefined,
         priority: newTaskPriority,
         dueDate: newTaskDue ? new Date(newTaskDue).toISOString() : undefined,
+        scheduledDate: newTaskScheduledDate
+          ? new Date(`${newTaskScheduledDate}T00:00:00.000Z`).toISOString()
+          : undefined,
         isRecurring: newTaskIsRecurring,
         recurrenceRule: newTaskIsRecurring ? newTaskRecurrenceRule : undefined,
         status: 'TODO',
@@ -619,6 +638,7 @@ export const TasksPage: React.FC = () => {
       }
       setNewTaskTitle('');
       setNewTaskDescription('');
+      setNewTaskScheduledDate('');
       setNewTaskIsRecurring(false);
       setNewTaskTags([]);
       setNewTaskSubtasks([]);
@@ -830,6 +850,18 @@ export const TasksPage: React.FC = () => {
                 >
                   <Layers className="w-4 h-4" />
                   <span>Kanban</span>
+                </button>
+              </Tooltip>
+              <Tooltip content="Chế độ kế hoạch theo ngày (kéo thả xếp lịch làm việc)">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('planner')}
+                  className={`p-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer transition-all ${
+                    viewMode === 'planner' ? 'bg-white dark:bg-slate-900 text-brand shadow-sm font-bold' : 'text-slate-500'
+                  }`}
+                >
+                  <CalendarDays className="w-4 h-4" />
+                  <span>Kế Hoạch Tuần</span>
                 </button>
               </Tooltip>
             </div>
@@ -1522,14 +1554,34 @@ export const TasksPage: React.FC = () => {
           )
         )}
 
-        {/* Tasks Pagination Control */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <PaginationControl
-            pagination={pagination}
-            onPageChange={(p) => fetchTasks(p)}
-            isLoading={isLoading}
+        {/* Weekly Planner View */}
+        {viewMode === 'planner' && (
+          <WeeklyPlannerView
+            tasks={tasks}
+            setTasks={setTasks}
+            onToggleStatus={toggleTaskStatus}
+            onEditTask={handleOpenEditTask}
+            onDeleteTask={handleDeleteTask}
+            onOpenAddModalWithDate={(date) => {
+              const pad = (n: number) => n.toString().padStart(2, '0');
+              const dateKey = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+              setNewTaskScheduledDate(dateKey);
+              setIsAddModalOpen(true);
+            }}
+            getTagColor={getTagColor}
           />
-        </div>
+        )}
+
+        {/* Tasks Pagination Control */}
+        {viewMode === 'list' && (
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+            <PaginationControl
+              pagination={pagination}
+              onPageChange={(p) => fetchTasks(p)}
+              isLoading={isLoading}
+            />
+          </div>
+        )}
 
         {/* Add Task Modal (Now using fixed Portal Modal) */}
         <Modal
@@ -1601,7 +1653,18 @@ export const TasksPage: React.FC = () => {
                 </p>
               </div>
               <div>
-                <label className="font-semibold block mb-1">Hạn chót</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-semibold block">Hạn chót</label>
+                  {newTaskDue && (
+                    <button
+                      type="button"
+                      onClick={() => setNewTaskDue('')}
+                      className="text-[10px] text-rose-500 hover:underline cursor-pointer"
+                    >
+                      Xóa hạn
+                    </button>
+                  )}
+                </div>
                 <input
                   type="datetime-local"
                   value={newTaskDue}
@@ -1609,6 +1672,34 @@ export const TasksPage: React.FC = () => {
                   className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs"
                 />
               </div>
+            </div>
+
+            {/* Scheduled Date (Ngày xếp lịch làm việc) */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="font-semibold block text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>Ngày dự kiến làm việc (Phân bổ lịch)</span>
+                </label>
+                {newTaskScheduledDate && (
+                  <button
+                    type="button"
+                    onClick={() => setNewTaskScheduledDate('')}
+                    className="text-[10px] text-rose-500 hover:underline cursor-pointer"
+                  >
+                    Bỏ xếp ngày
+                  </button>
+                )}
+              </div>
+              <input
+                type="date"
+                value={newTaskScheduledDate}
+                onChange={(e) => setNewTaskScheduledDate(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 font-medium"
+              />
+              <p className="text-[10px] text-slate-400 mt-1">
+                Để trống nếu muốn đưa vào &quot;Hộp việc chưa xếp&quot; để kéo thả xếp lịch sau.
+              </p>
             </div>
 
             {/* Recurring toggle */}
