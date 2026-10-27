@@ -135,7 +135,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             <nav className="hidden md:flex items-center gap-1.5" aria-label="Điều hướng chính">
               {navLinks.map((link) => {
                 const Icon = link.icon;
-                const isActive = location.pathname === link.to;
+                const isActive = currentTab === link.to;
                 return (
                   <Link
                     key={link.to}
@@ -226,21 +226,25 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       {/* 4. Mobile Bottom Navigation Bar (Thumb Zone with Safe-Area) */}
       <nav
         aria-label="Điều hướng di động"
-        className="md:hidden sticky bottom-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-4 pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] flex items-center justify-around"
+        className="md:hidden sticky bottom-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-3 py-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] flex items-center justify-around"
       >
         {navLinks.map((link) => {
           const Icon = link.icon;
-          const isActive = location.pathname === link.to;
+          const isActive = currentTab === link.to;
           return (
             <Link
               key={link.to}
               to={link.to}
-              className={`flex flex-col items-center gap-1 min-w-[56px] min-h-[44px] justify-center py-1 px-2 rounded-xl text-[10px] font-semibold transition-colors focus-ring ${
-                isActive ? 'text-brand font-bold bg-brand/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+              aria-label={link.label}
+              title={link.label}
+              className={`flex items-center justify-center w-11 h-11 rounded-2xl transition-all duration-150 active:scale-95 focus-ring ${
+                isActive
+                  ? 'text-brand bg-brand/10 dark:bg-brand/20 shadow-sm shadow-brand/10'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50'
               }`}
             >
               <Icon className="w-5 h-5" />
-              <span>{link.label}</span>
+              <span className="sr-only">{link.label}</span>
             </Link>
           );
         })}
