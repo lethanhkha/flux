@@ -23,7 +23,21 @@ export const createTaskSchema = z.object({
     .optional()
     .transform((val) => (val === '' ? null : val)),
   tags: z.array(z.string().trim()).default([]),
-  subtasks: z.array(z.string().trim().min(1)).optional().default([]),
+  subtasks: z
+    .array(
+      z.union([
+        z.string().trim().min(1),
+        z.object({
+          title: z.string().trim().min(1),
+          dueDate: z
+            .union([z.string().datetime(), z.literal(''), z.null()])
+            .optional()
+            .transform((val) => (val === '' ? null : val)),
+        }),
+      ])
+    )
+    .optional()
+    .default([]),
 });
 
 export const updateTaskSchema = createTaskSchema.partial();
@@ -90,6 +104,10 @@ export const createSubtaskSchema = z.object({
     .min(1, 'Tiêu đề việc con không được để trống')
     .max(255, 'Tiêu đề không được vượt quá 255 ký tự')
     .trim(),
+  dueDate: z
+    .union([z.string().datetime(), z.literal(''), z.null()])
+    .optional()
+    .transform((val) => (val === '' ? null : val)),
 });
 
 export const updateSubtaskSchema = z.object({
@@ -99,6 +117,10 @@ export const updateSubtaskSchema = z.object({
     .max(255, 'Tiêu đề không được vượt quá 255 ký tự')
     .trim()
     .optional(),
+  dueDate: z
+    .union([z.string().datetime(), z.literal(''), z.null()])
+    .optional()
+    .transform((val) => (val === '' ? null : val)),
   isCompleted: z.boolean().optional(),
 });
 

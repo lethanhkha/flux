@@ -339,6 +339,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
         <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
           <SubtaskList
             taskId={task.id}
+            parentDueDate={editDue || task.rawDueDate}
             subtasks={subtasks}
             onSubtasksChange={setSubtasks}
             disabled={isSubmitting}

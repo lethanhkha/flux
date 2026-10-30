@@ -31,7 +31,7 @@ import { Tooltip, InfoTooltip } from '../components/common/Tooltip';
 import { CustomSelect } from '../components/common/CustomSelect';
 import { SearchInput } from '../components/common/SearchInput';
 import { useDebounce } from '../hooks/useDebounce';
-import { PRIORITY_TOOLTIPS } from '../lib/taskUtils';
+import { PRIORITY_TOOLTIPS, getRemainingDaysInfo } from '../lib/taskUtils';
 import { SubtaskItem } from '../components/tasks/SubtaskList';
 import { CompositeTaskRow } from '../components/tasks/CompositeTaskRow';
 import { KanbanCompositeCard } from '../components/tasks/KanbanCompositeCard';
@@ -192,8 +192,10 @@ export const TasksPage: React.FC = () => {
   const [newTaskScheduledDate, setNewTaskScheduledDate] = useState<string>('');
   const [newTaskIsRecurring, setNewTaskIsRecurring] = useState(false);
   const [newTaskRecurrenceRule, setNewTaskRecurrenceRule] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('WEEKLY');
-  const [newTaskSubtasks, setNewTaskSubtasks] = useState<string[]>([]);
+  const [newTaskSubtasks, setNewTaskSubtasks] = useState<Array<{ title: string; dueDate?: string | null }>>([]);
   const [draftSubtaskInput, setDraftSubtaskInput] = useState('');
+  const [draftSubtaskDue, setDraftSubtaskDue] = useState('');
+  const [showDraftDuePicker, setShowDraftDuePicker] = useState(false);
   const draftSubtaskInputRef = useRef<HTMLInputElement>(null);
   const pendingDeletionsRef = useRef<Map<string, PendingDeleteTask>>(new Map());
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -278,13 +280,16 @@ export const TasksPage: React.FC = () => {
     e?.preventDefault();
     const clean = draftSubtaskInput.trim();
     if (!clean) return;
-    setNewTaskSubtasks((prev) => [...prev, clean]);
+    const isoDue = draftSubtaskDue ? new Date(draftSubtaskDue).toISOString() : null;
+    setNewTaskSubtasks((prev) => [...prev, { title: clean, dueDate: isoDue }]);
     setDraftSubtaskInput('');
+    setDraftSubtaskDue('');
+    setShowDraftDuePicker(false);
     draftSubtaskInputRef.current?.focus();
     setTimeout(() => {
       draftSubtaskInputRef.current?.focus();
     }, 0);
-  }, [draftSubtaskInput]);
+  }, [draftSubtaskInput, draftSubtaskDue]);
 
   const handleRemoveDraftSubtask = useCallback((index: number) => {
     setNewTaskSubtasks((prev) => prev.filter((_, idx) => idx !== index));
@@ -590,9 +595,12 @@ export const TasksPage: React.FC = () => {
     if (!newTaskTitle.trim()) return;
 
     // Capture any pending draft subtask input
-    const finalSubtaskTitles = [...newTaskSubtasks];
+    const finalSubtasks = [...newTaskSubtasks];
     if (draftSubtaskInput.trim()) {
-      finalSubtaskTitles.push(draftSubtaskInput.trim());
+      finalSubtasks.push({
+        title: draftSubtaskInput.trim(),
+        dueDate: draftSubtaskDue ? new Date(draftSubtaskDue).toISOString() : null,
+      });
     }
 
     setIsSubmitting(true);
@@ -626,10 +634,11 @@ export const TasksPage: React.FC = () => {
         : undefined,
       rawRecurrenceRule: newTaskIsRecurring ? newTaskRecurrenceRule : null,
       tags: [...newTaskTags],
-      subtasks: finalSubtaskTitles.map((title, idx) => ({
+      subtasks: finalSubtasks.map((st, idx) => ({
         id: `draft-${idx}`,
         taskId: tempId,
-        title,
+        title: st.title,
+        dueDate: st.dueDate || null,
         isCompleted: false,
         orderIndex: idx,
       })),
@@ -652,7 +661,7 @@ export const TasksPage: React.FC = () => {
         recurrenceRule: newTaskIsRecurring ? newTaskRecurrenceRule : undefined,
         status: 'TODO',
         tags: newTaskTags,
-        subtasks: finalSubtaskTitles,
+        subtasks: finalSubtasks,
       });
       if (res.data.data?.id) {
         const created = res.data.data;
@@ -667,6 +676,8 @@ export const TasksPage: React.FC = () => {
       setNewTaskTags([]);
       setNewTaskSubtasks([]);
       setDraftSubtaskInput('');
+      setDraftSubtaskDue('');
+      setShowDraftDuePicker(false);
       fetchTags();
       window.dispatchEvent(new CustomEvent('flux:refresh-data'));
     } catch (err: any) {
@@ -1859,22 +1870,53 @@ export const TasksPage: React.FC = () => {
 
               {/* List of draft subtasks */}
               {newTaskSubtasks.length > 0 && (
-                <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
-                  {newTaskSubtasks.map((st, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-200"
-                    >
-                      <span className="truncate flex-1">{idx + 1}. {st}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveDraftSubtask(idx)}
-                        className="p-0.5 text-slate-400 hover:text-rose-500 rounded cursor-pointer"
+                <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                  {newTaskSubtasks.map((st, idx) => {
+                    const dueInfo = st.dueDate ? getRemainingDaysInfo(st.dueDate, 'TODO') : null;
+                    return (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-200"
                       >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1 flex-wrap">
+                          <span className="font-medium truncate">{idx + 1}. {st.title}</span>
+                          {dueInfo && (
+                            <span
+                              className={`text-[10px] px-1.5 py-0.2 rounded border font-medium flex items-center gap-1 flex-shrink-0 ${dueInfo.colorClasses}`}
+                            >
+                              <Clock className="w-2.5 h-2.5" />
+                              <span>{dueInfo.shortLabel}</span>
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveDraftSubtask(idx)}
+                          className="p-0.5 text-slate-400 hover:text-rose-500 rounded cursor-pointer flex-shrink-0"
+                          title="Xóa việc con dự kiến"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Selected Draft Due Date Pill Chip */}
+              {draftSubtaskDue && (
+                <div className="flex items-center gap-1.5 text-[11px] text-brand bg-brand/10 border border-brand/20 px-2.5 py-1 rounded-lg w-fit">
+                  <Clock className="w-3 h-3 text-brand" />
+                  <span className="font-semibold">Hạn:</span>
+                  <span>{new Date(draftSubtaskDue).toLocaleString('vi-VN')}</span>
+                  <button
+                    type="button"
+                    onClick={() => setDraftSubtaskDue('')}
+                    className="p-0.5 text-slate-400 hover:text-rose-500 cursor-pointer ml-1"
+                    title="Xóa hạn"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
                 </div>
               )}
 
@@ -1894,6 +1936,22 @@ export const TasksPage: React.FC = () => {
                   placeholder="Gõ việc con và nhấn Enter..."
                   className="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-brand font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
                 />
+
+                {/* Calendar Button for Draft Subtask */}
+                <Tooltip content={showDraftDuePicker ? 'Ẩn chọn hạn' : 'Gán hạn cho việc con'}>
+                  <button
+                    type="button"
+                    onClick={() => setShowDraftDuePicker(!showDraftDuePicker)}
+                    className={`p-1.5 rounded-xl border transition-colors cursor-pointer flex items-center justify-center ${
+                      showDraftDuePicker || draftSubtaskDue
+                        ? 'bg-brand/10 border-brand text-brand'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400 hover:border-slate-300'
+                    }`}
+                  >
+                    <Calendar className="w-3.5 h-3.5" />
+                  </button>
+                </Tooltip>
+
                 <button
                   type="button"
                   onClick={handleAddDraftSubtask}
@@ -1904,6 +1962,65 @@ export const TasksPage: React.FC = () => {
                   <span>Thêm</span>
                 </button>
               </div>
+
+              {/* Draft Due Picker & Quick Presets */}
+              {showDraftDuePicker && (
+                <div className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 text-xs">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <input
+                      type="datetime-local"
+                      value={draftSubtaskDue}
+                      onChange={(e) => setDraftSubtaskDue(e.target.value)}
+                      className="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-brand font-medium"
+                    />
+                    <div className="flex items-center gap-1 text-[11px] flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const d = new Date();
+                          d.setHours(18, 0, 0, 0);
+                          const pad = (n: number) => n.toString().padStart(2, '0');
+                          setDraftSubtaskDue(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T18:00`);
+                        }}
+                        className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-brand hover:text-white transition-colors cursor-pointer font-medium"
+                      >
+                        Hôm nay (18:00)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const d = new Date();
+                          d.setDate(d.getDate() + 1);
+                          d.setHours(18, 0, 0, 0);
+                          const pad = (n: number) => n.toString().padStart(2, '0');
+                          setDraftSubtaskDue(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T18:00`);
+                        }}
+                        className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-brand hover:text-white transition-colors cursor-pointer font-medium"
+                      >
+                        Ngày mai (18:00)
+                      </button>
+                      {newTaskDue && (
+                        <button
+                          type="button"
+                          onClick={() => setDraftSubtaskDue(newTaskDue)}
+                          className="px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-600 hover:text-white transition-colors cursor-pointer font-medium"
+                        >
+                          Cùng hạn việc chính
+                        </button>
+                      )}
+                      {draftSubtaskDue && (
+                        <button
+                          type="button"
+                          onClick={() => setDraftSubtaskDue('')}
+                          className="px-2 py-0.5 rounded text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer font-medium"
+                        >
+                          Xóa hạn
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <button

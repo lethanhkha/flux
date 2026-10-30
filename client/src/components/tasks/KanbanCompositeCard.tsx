@@ -259,6 +259,24 @@ export const KanbanCompositeCard = React.memo<KanbanCompositeCardProps>(({
               >
                 {st.title}
               </span>
+
+              {st.dueDate && (() => {
+                const dueInfo = getRemainingDaysInfo(st.dueDate, st.isCompleted ? 'DONE' : 'TODO');
+                return (
+                  <Tooltip content={`Hạn chót: ${dueInfo.formattedDue}`}>
+                    <span
+                      className={`text-[9px] px-1 py-0.2 rounded border font-medium flex-shrink-0 flex items-center gap-0.5 ${
+                        st.isCompleted
+                          ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700'
+                          : dueInfo.colorClasses
+                      }`}
+                    >
+                      <Clock className="w-2 h-2" />
+                      <span>{dueInfo.shortLabel}</span>
+                    </span>
+                  </Tooltip>
+                );
+              })()}
             </div>
           ))}
         </div>

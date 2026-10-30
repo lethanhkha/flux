@@ -370,16 +370,36 @@ export const CompositeTaskRow = React.memo<CompositeTaskRowProps>(({
                     </span>
                   </div>
 
-                  {/* Status Indicator */}
-                  {st.isCompleted ? (
-                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md flex-shrink-0 flex items-center gap-1">
-                      <span>✓ Đã xong</span>
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-medium text-slate-400 group-hover:text-slate-500 flex-shrink-0">
-                      Chờ thực hiện
-                    </span>
-                  )}
+                  {/* Status Indicator & Due Date Badge */}
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {st.dueDate && (() => {
+                      const dueInfo = getRemainingDaysInfo(st.dueDate, st.isCompleted ? 'DONE' : 'TODO');
+                      return (
+                        <Tooltip content={`Hạn chót việc con: ${dueInfo.formattedDue}`}>
+                          <span
+                            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium border ${
+                              st.isCompleted
+                                ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700'
+                                : dueInfo.colorClasses
+                            }`}
+                          >
+                            <Clock className="w-2.5 h-2.5 flex-shrink-0" />
+                            <span>{dueInfo.shortLabel}</span>
+                          </span>
+                        </Tooltip>
+                      );
+                    })()}
+
+                    {st.isCompleted ? (
+                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <span>✓ Đã xong</span>
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-medium text-slate-400 group-hover:text-slate-500">
+                        Chờ thực hiện
+                      </span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

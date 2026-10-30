@@ -235,10 +235,19 @@ export class TasksService {
     const subtaskData =
       input.subtasks && input.subtasks.length > 0
         ? {
-            create: input.subtasks.map((stTitle, idx) => ({
-              title: stTitle.trim(),
-              orderIndex: idx,
-            })),
+            create: input.subtasks.map((stItem, idx) => {
+              if (typeof stItem === 'string') {
+                return {
+                  title: stItem.trim(),
+                  orderIndex: idx,
+                };
+              }
+              return {
+                title: stItem.title.trim(),
+                dueDate: stItem.dueDate ? new Date(stItem.dueDate) : null,
+                orderIndex: idx,
+              };
+            }),
           }
         : undefined;
 
@@ -674,6 +683,7 @@ export class TasksService {
         taskId,
         title: input.title.trim(),
         orderIndex: nextOrder,
+        dueDate: input.dueDate ? new Date(input.dueDate) : null,
       },
     });
 
@@ -698,6 +708,9 @@ export class TasksService {
     const data: any = {};
     if (input.title !== undefined) {
       data.title = input.title.trim();
+    }
+    if (input.dueDate !== undefined) {
+      data.dueDate = input.dueDate ? new Date(input.dueDate) : null;
     }
     if (input.isCompleted !== undefined) {
       data.isCompleted = input.isCompleted;
