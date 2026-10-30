@@ -17,6 +17,13 @@ export class RemindersService {
    */
   async createReminder(userId: string, input: CreateReminderInput) {
     const scheduledAt = new Date(input.scheduledAt);
+    const cleanTags = Array.from(
+      new Set(
+        (input.tags ?? [])
+          .map((t: string) => (typeof t === 'string' ? t.trim().toLowerCase().replace(/^#/, '') : ''))
+          .filter(Boolean)
+      )
+    );
 
     const reminder = await prisma.reminder.create({
       data: {
@@ -28,7 +35,7 @@ export class RemindersService {
         location: input.location,
         isRecurring: input.isRecurring ?? false,
         recurrenceRule: input.recurrenceRule,
-        tags: input.tags ?? [],
+        tags: cleanTags,
         status: 'SCHEDULED',
       },
     });
@@ -92,29 +99,43 @@ export class RemindersService {
 
     const andConditions: any[] = where.AND || [];
 
-    if (filterTags.length === 1) {
-      andConditions.push({
+    // Helper to generate case variations for a tag to ensure case-insensitive matching in Postgres JSON
+    const buildTagConditions = (rawTag: string) => {
+      const clean = rawTag.trim().toLowerCase().replace(/^#/, '');
+      const trimmed = rawTag.trim().replace(/^#/, '');
+      const variants = Array.from(
+        new Set([
+          clean,
+          trimmed,
+          trimmed.toUpperCase(),
+          clean.charAt(0).toUpperCase() + clean.slice(1),
+        ])
+      ).filter(Boolean);
+      return variants.map((variant) => ({
         tags: {
-          array_contains: filterTags[0],
+          array_contains: variant,
         },
-      });
+      }));
+    };
+
+    if (filterTags.length === 1) {
+      const variants = buildTagConditions(filterTags[0]);
+      if (variants.length === 1) {
+        andConditions.push(variants[0]);
+      } else {
+        andConditions.push({ OR: variants });
+      }
     } else if (filterTags.length > 1) {
+      const allVariants = filterTags.flatMap((tag) => buildTagConditions(tag));
       andConditions.push({
-        OR: filterTags.map((tag) => ({
-          tags: {
-            array_contains: tag,
-          },
-        })),
+        OR: allVariants,
       });
     }
 
     if (filterExcludeTags.length > 0) {
+      const allExcludeVariants = filterExcludeTags.flatMap((tag) => buildTagConditions(tag));
       andConditions.push({
-        NOT: filterExcludeTags.map((tag) => ({
-          tags: {
-            array_contains: tag,
-          },
-        })),
+        NOT: allExcludeVariants,
       });
     }
 
@@ -221,7 +242,15 @@ export class RemindersService {
     if (input.status !== undefined) data.status = input.status;
     if (input.isRecurring !== undefined) data.isRecurring = input.isRecurring;
     if (input.recurrenceRule !== undefined) data.recurrenceRule = input.recurrenceRule;
-    if (input.tags !== undefined) data.tags = input.tags;
+    if (input.tags !== undefined) {
+      data.tags = Array.from(
+        new Set(
+          (input.tags ?? [])
+            .map((t: string) => (typeof t === 'string' ? t.trim().toLowerCase().replace(/^#/, '') : ''))
+            .filter(Boolean)
+        )
+      );
+    }
 
     const updated = await prisma.reminder.update({
       where: { id },

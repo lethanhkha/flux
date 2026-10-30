@@ -83,11 +83,13 @@ export const TransactionList = React.memo<TransactionListProps>(({
   onPageChange,
 }) => {
   const categoryBarRef = useRef<HTMLDivElement>(null);
+  const categoryContainerRef = useRef<HTMLDivElement>(null);
 
   // Smooth mouse-wheel horizontal scrolling for category chips
   useEffect(() => {
     const el = categoryBarRef.current;
-    if (!el) return;
+    const container = categoryContainerRef.current;
+    if (!el || !container) return;
 
     const handleWheel = (e: WheelEvent) => {
       if (el.scrollWidth > el.clientWidth && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
@@ -104,8 +106,8 @@ export const TransactionList = React.memo<TransactionListProps>(({
       }
     };
 
-    el.addEventListener('wheel', handleWheel, { passive: false });
-    return () => el.removeEventListener('wheel', handleWheel);
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
   }, []);
 
   // Compute active wallet name for insights
@@ -356,59 +358,72 @@ export const TransactionList = React.memo<TransactionListProps>(({
 
       {/* 4. Category Filter Chips Bar */}
       <div
-        ref={categoryBarRef}
-        className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar-x pb-2 pt-0.5 text-xs scroll-smooth"
+        ref={categoryContainerRef}
+        className="flex items-center gap-2 text-xs min-w-0"
       >
-        <span className="text-xs text-slate-400 font-semibold flex items-center gap-1 pl-1 flex-shrink-0">
-          <Tag className="w-3.5 h-3.5 text-brand" /> Danh mục:
-        </span>
-        <Tooltip content="Xem tất cả các danh mục giao dịch">
-          <button
-            type="button"
-            onClick={() => onSelectCategory('ALL')}
-            className={`px-3 py-1 rounded-xl text-xs transition-all cursor-pointer flex-shrink-0 ${
-              selectedCategory === 'ALL'
-                ? 'bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 font-bold shadow-xs'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-            }`}
-          >
-            Tất cả ({transactions.length})
-          </button>
-        </Tooltip>
-        {categories.map((cat) => {
-          const count = transactions.filter((tx) => tx.category === cat.name).length;
-          const isActive = selectedCategory === cat.name;
-          return (
-            <Tooltip key={cat.id} content={`Lọc các khoản thuộc danh mục "${cat.name}"`}>
-              <button
-                type="button"
-                onClick={() => onSelectCategory(isActive ? 'ALL' : cat.name)}
-                className={`px-2.5 py-1 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0 ${
-                  isActive
-                    ? 'bg-brand text-white font-bold shadow-xs'
-                    : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-brand/10 hover:text-brand'
-                }`}
+        {/* Fixed "Danh mục:" Label */}
+        <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-semibold shrink-0 select-none pl-1 py-1">
+          <Tag className="w-3.5 h-3.5 text-brand shrink-0" />
+          <span className="whitespace-nowrap">Danh mục:</span>
+        </div>
+
+        {/* Scrollable Category Chips Container */}
+        <div
+          ref={categoryBarRef}
+          className="flex-1 min-w-0 flex items-center gap-1.5 overflow-x-auto custom-scrollbar-x pb-2 pt-0.5 text-xs scroll-smooth"
+        >
+          <Tooltip content="Xem tất cả các danh mục giao dịch" wrapperClassName="shrink-0">
+            <button
+              type="button"
+              onClick={() => onSelectCategory('ALL')}
+              className={`px-3 py-1 rounded-xl text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+                selectedCategory === 'ALL'
+                  ? 'bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 font-bold shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+              }`}
+            >
+              Tất cả ({transactions.length})
+            </button>
+          </Tooltip>
+          {categories.map((cat) => {
+            const count = transactions.filter((tx) => tx.category === cat.name).length;
+            const isActive = selectedCategory === cat.name;
+            return (
+              <Tooltip
+                key={cat.id}
+                content={`Lọc các khoản thuộc danh mục "${cat.name}"`}
+                wrapperClassName="shrink-0"
               >
-                <span
-                  className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: cat.color || '#6366F1' }}
-                />
-                <span>{cat.name}</span>
-                {count > 0 && (
+                <button
+                  type="button"
+                  onClick={() => onSelectCategory(isActive ? 'ALL' : cat.name)}
+                  className={`px-2.5 py-1 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
+                    isActive
+                      ? 'bg-brand text-white font-bold shadow-xs'
+                      : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-brand/10 hover:text-brand'
+                  }`}
+                >
                   <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                      isActive
-                        ? 'bg-white/20 text-white'
-                        : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
-                    }`}
-                  >
-                    {count}
-                  </span>
-                )}
-              </button>
-            </Tooltip>
-          );
-        })}
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ backgroundColor: cat.color || '#6366F1' }}
+                  />
+                  <span className="whitespace-nowrap">{cat.name}</span>
+                  {count > 0 && (
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full shrink-0 font-medium ${
+                        isActive
+                          ? 'bg-white/20 text-white'
+                          : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  )}
+                </button>
+              </Tooltip>
+            );
+          })}
+        </div>
       </div>
 
       {/* 5. Smart Filter Insights Card */}

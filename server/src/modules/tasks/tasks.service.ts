@@ -79,29 +79,43 @@ export class TasksService {
 
     const andConditions: any[] = [];
 
-    if (filterTags.length === 1) {
-      andConditions.push({
+    // Helper to generate case variations for a tag to ensure case-insensitive matching in Postgres JSON
+    const buildTagConditions = (rawTag: string) => {
+      const clean = rawTag.trim().toLowerCase().replace(/^#/, '');
+      const trimmed = rawTag.trim().replace(/^#/, '');
+      const variants = Array.from(
+        new Set([
+          clean,
+          trimmed,
+          trimmed.toUpperCase(),
+          clean.charAt(0).toUpperCase() + clean.slice(1),
+        ])
+      ).filter(Boolean);
+      return variants.map((variant) => ({
         tags: {
-          array_contains: filterTags[0],
+          array_contains: variant,
         },
-      });
+      }));
+    };
+
+    if (filterTags.length === 1) {
+      const variants = buildTagConditions(filterTags[0]);
+      if (variants.length === 1) {
+        andConditions.push(variants[0]);
+      } else {
+        andConditions.push({ OR: variants });
+      }
     } else if (filterTags.length > 1) {
+      const allVariants = filterTags.flatMap((tag) => buildTagConditions(tag));
       andConditions.push({
-        OR: filterTags.map((tag) => ({
-          tags: {
-            array_contains: tag,
-          },
-        })),
+        OR: allVariants,
       });
     }
 
     if (filterExcludeTags.length > 0) {
+      const allExcludeVariants = filterExcludeTags.flatMap((tag) => buildTagConditions(tag));
       andConditions.push({
-        NOT: filterExcludeTags.map((tag) => ({
-          tags: {
-            array_contains: tag,
-          },
-        })),
+        NOT: allExcludeVariants,
       });
     }
 
@@ -189,6 +203,14 @@ export class TasksService {
           }
         : undefined;
 
+    const cleanTags = Array.from(
+      new Set(
+        (input.tags || [])
+          .map((t: string) => (typeof t === 'string' ? t.trim().toLowerCase().replace(/^#/, '') : ''))
+          .filter(Boolean)
+      )
+    );
+
     const task = await prisma.task.create({
       data: {
         userId,
@@ -200,7 +222,7 @@ export class TasksService {
         scheduledDate: input.scheduledDate ? new Date(input.scheduledDate) : null,
         isRecurring: input.isRecurring,
         recurrenceRule: input.recurrenceRule,
-        tags: input.tags || [],
+        tags: cleanTags,
         subtasks: subtaskData,
       },
       include: {
@@ -227,6 +249,15 @@ export class TasksService {
     }
 
     const data: any = { ...input };
+    if (input.tags !== undefined) {
+      data.tags = Array.from(
+        new Set(
+          (input.tags || [])
+            .map((t: string) => (typeof t === 'string' ? t.trim().toLowerCase().replace(/^#/, '') : ''))
+            .filter(Boolean)
+        )
+      );
+    }
     if (input.title !== undefined) {
       data.title = input.title.trim();
     }
