@@ -5,6 +5,7 @@ import {
   Calendar as CalendarIcon,
   Inbox,
   SlidersHorizontal,
+  EyeOff,
 } from 'lucide-react';
 import {
   startOfWeek,
@@ -12,6 +13,7 @@ import {
   addDays,
   subDays,
   isSameDay,
+  isSameWeek,
   isToday as checkIsToday,
   format,
   differenceInCalendarDays,
@@ -78,8 +80,36 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
   const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | 'unscheduled' | null>(null);
 
+  // Option to hide past days of the current week
+  const [hidePastDays, setHidePastDays] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('flux_planner_hide_past_days') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleHidePastDays = useCallback(() => {
+    setHidePastDays((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('flux_planner_hide_past_days', String(next));
+      } catch {
+        // Safe ignore
+      }
+      return next;
+    });
+  }, []);
+
   // Calculate day columns based on active preset & reference date
-  const { rangeStart, rangeEnd, dayList } = useMemo(() => {
+  const {
+    rangeStart,
+    rangeEnd,
+    dayList,
+    hiddenPastDayKeys,
+    hiddenDayLabels,
+    isCurrentWeek,
+  } = useMemo(() => {
     let start: Date;
     let end: Date;
 
@@ -99,28 +129,56 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
     }
 
     const count = Math.min(differenceInCalendarDays(end, start) + 1, 14);
-    const list: { date: Date; dateKey: string; isToday: boolean }[] = [];
+    const fullList: { date: Date; dateKey: string; isToday: boolean }[] = [];
     const pad = (n: number) => n.toString().padStart(2, '0');
 
     for (let i = 0; i < count; i++) {
       const d = addDays(start, i);
       const dateKey = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-      list.push({
+      fullList.push({
         date: d,
         dateKey,
         isToday: checkIsToday(d),
       });
     }
 
-    return { rangeStart: start, rangeEnd: end, dayList: list };
-  }, [currentReferenceDate, activePreset, customRange]);
+    const today = new Date();
+    const isThisWeek = isSameWeek(currentReferenceDate, today, { weekStartsOn: 1 });
+
+    const hiddenKeys = new Set<string>();
+    const hiddenLabels: string[] = [];
+
+    // Filter out past days of current week if hidePastDays is enabled
+    const visibleList = fullList.filter((item) => {
+      const isPastDayOfCurrentWeek =
+        isThisWeek && differenceInCalendarDays(item.date, today) < 0;
+
+      if (hidePastDays && isPastDayOfCurrentWeek) {
+        hiddenKeys.add(item.dateKey);
+        const dayOfWeek = item.date.getDay();
+        const shortName = dayOfWeek === 0 ? 'CN' : `T${dayOfWeek + 1}`;
+        hiddenLabels.push(shortName);
+        return false;
+      }
+      return true;
+    });
+
+    return {
+      rangeStart: start,
+      rangeEnd: end,
+      dayList: visibleList,
+      hiddenPastDayKeys: hiddenKeys,
+      hiddenDayLabels: hiddenLabels,
+      isCurrentWeek: isThisWeek,
+    };
+  }, [currentReferenceDate, activePreset, customRange, hidePastDays]);
 
   // Group tasks into unscheduled vs each day
   const { unscheduledTasks, dayTasksMap } = useMemo(() => {
     const unscheduled: TaskItem[] = [];
     const dayMap = new Map<string, TaskItem[]>();
 
-    // Initialize day map keys
+    // Initialize day map keys for visible days
     dayList.forEach((d) => {
       dayMap.set(d.dateKey, []);
     });
@@ -138,6 +196,8 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
           const existing = dayMap.get(key);
           if (existing) {
             existing.push(t);
+          } else if (hiddenPastDayKeys.has(key)) {
+            // Task is scheduled on a hidden past day of current week: do NOT push to unscheduled
           } else {
             // Scheduled outside the active view range
             unscheduled.push(t);
@@ -147,7 +207,7 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
     });
 
     return { unscheduledTasks: unscheduled, dayTasksMap: dayMap };
-  }, [tasks, dayList]);
+  }, [tasks, dayList, hiddenPastDayKeys]);
 
   // Navigation handlers
   const handlePrevWeek = () => {
@@ -410,6 +470,27 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
             </button>
           </Tooltip>
 
+          {/* Hide past days toggle button */}
+          <Tooltip content="Ẩn các ngày đã qua của tuần hiện tại (ví dụ: Thứ 2 - Thứ 4 khi hôm nay là Thứ 5)">
+            <button
+              type="button"
+              onClick={toggleHidePastDays}
+              className={`px-3 py-1.5 rounded-2xl border text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-all ${
+                hidePastDays && isCurrentWeek
+                  ? 'border-brand bg-brand/10 text-brand font-bold shadow-xs'
+                  : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand/40 hover:text-brand'
+              }`}
+            >
+              <EyeOff className="w-3.5 h-3.5" />
+              <span>Ẩn ngày đã qua</span>
+              {hiddenDayLabels.length > 0 && hidePastDays && isCurrentWeek && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-brand text-white font-bold leading-none">
+                  {hiddenDayLabels.length}
+                </span>
+              )}
+            </button>
+          </Tooltip>
+
           {/* Toggle Backlog Button (when collapsed) */}
           {isBacklogCollapsed && (
             <Tooltip content="Mở hộp việc chưa xếp lịch">
@@ -425,6 +506,25 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
           )}
         </div>
       </div>
+
+      {/* Banner hint when past days of the current week are hidden */}
+      {hiddenDayLabels.length > 0 && hidePastDays && isCurrentWeek && (
+        <div className="flex items-center justify-between px-4 py-2 rounded-2xl bg-brand/5 dark:bg-brand/10 border border-brand/20 text-xs text-brand">
+          <div className="flex items-center gap-2">
+            <EyeOff className="w-4 h-4 shrink-0" />
+            <span>
+              Đang ẩn <strong>{hiddenDayLabels.length} ngày</strong> đã qua của tuần này ({hiddenDayLabels.join(', ')}).
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={toggleHidePastDays}
+            className="text-xs font-bold underline hover:text-brand-hover cursor-pointer"
+          >
+            Hiện lại tất cả ngày
+          </button>
+        </div>
+      )}
 
       {/* Main Board Layout: Split between Backlog & Days Grid */}
       <div className="flex items-start gap-3.5 overflow-hidden">

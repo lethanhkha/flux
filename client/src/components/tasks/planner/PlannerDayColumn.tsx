@@ -57,7 +57,7 @@ export const PlannerDayColumn: React.FC<PlannerDayColumnProps> = ({
       onDragOver={(e) => onDragOver(e, dateKey)}
       onDragLeave={onDragLeave}
       onDrop={(e) => onDrop(e, dateKey)}
-      className={`flex flex-col min-w-[210px] w-full rounded-3xl border transition-all duration-200 select-none ${
+      className={`flex flex-col min-w-[210px] flex-1 w-full rounded-3xl border transition-all duration-200 select-none ${
         isDragOver
           ? 'bg-brand/5 border-2 border-dashed border-brand ring-4 ring-brand/10 shadow-md'
           : isToday

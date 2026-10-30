@@ -125,13 +125,15 @@ export class RemindersService {
     const page = Math.max(1, Number(filterInput?.page) || 1);
     const limit = Math.min(100, Math.max(1, Number(filterInput?.limit) || 20));
     const skip = (page - 1) * limit;
+    const isPastFilter = filterInput?.filter === 'past';
+    const orderBy = { scheduledAt: (isPastFilter ? 'desc' : 'asc') as 'asc' | 'desc' };
 
     const [items, total] = await Promise.all([
       prisma.reminder.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { scheduledAt: 'asc' },
+        orderBy,
       }),
       prisma.reminder.count({ where }),
     ]);

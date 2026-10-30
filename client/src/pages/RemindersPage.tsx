@@ -26,6 +26,8 @@ import { ConfirmModal } from '../components/common/ConfirmModal';
 import { SearchInput } from '../components/common/SearchInput';
 import { useDebounce } from '../hooks/useDebounce';
 import { PaginationControl, PaginationMeta } from '../components/common/PaginationControl';
+import { format, isToday, isTomorrow, isYesterday } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 type FilterType = 'today' | 'upcoming' | 'past' | 'all';
 
@@ -256,6 +258,55 @@ export const RemindersPage: React.FC = () => {
     fetchTags();
     checkDueReminders();
   };
+
+  const isPast = filter === 'past';
+  const gridDayGroups = useMemo(() => {
+    const sorted = [...reminders].sort((a, b) => {
+      const timeA = new Date(a.scheduledAt).getTime();
+      const timeB = new Date(b.scheduledAt).getTime();
+      return isPast ? timeB - timeA : timeA - timeB;
+    });
+
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const map = new Map<string, { date: Date; items: ReminderItem[] }>();
+
+    sorted.forEach((item) => {
+      const d = new Date(item.scheduledAt);
+      const key = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const existing = map.get(key);
+      if (existing) {
+        existing.items.push(item);
+      } else {
+        map.set(key, { date: d, items: [item] });
+      }
+    });
+
+    return Array.from(map.entries()).map(([dateKey, { date, items }]) => {
+      const str = format(date, 'EEEE, dd/MM/yyyy', { locale: vi });
+      const dateLabel = str.charAt(0).toUpperCase() + str.slice(1);
+      const relativeLabel = isToday(date)
+        ? 'Hôm nay'
+        : isTomorrow(date)
+        ? 'Ngày mai'
+        : isYesterday(date)
+        ? 'Hôm qua'
+        : null;
+
+      const dayItems = [...items].sort((a, b) => {
+        const timeA = new Date(a.scheduledAt).getTime();
+        const timeB = new Date(b.scheduledAt).getTime();
+        return isPast ? timeB - timeA : timeA - timeB;
+      });
+
+      return {
+        dateKey,
+        date,
+        dateLabel,
+        relativeLabel,
+        items: dayItems,
+      };
+    });
+  }, [reminders, isPast]);
 
   return (
     <div className="space-y-6">
@@ -557,6 +608,7 @@ export const RemindersPage: React.FC = () => {
       ) : viewMode === 'timeline' ? (
         <ReminderTimeline
           reminders={reminders}
+          filter={filter}
           tagColorMap={tagColorMap}
           onEdit={handleEdit}
           onDelete={handleDeletePrompt}
@@ -564,17 +616,45 @@ export const RemindersPage: React.FC = () => {
           onSnooze={handleSnooze}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {reminders.map((reminder) => (
-            <ReminderCard
-              key={reminder.id}
-              reminder={reminder}
-              tagColorMap={tagColorMap}
-              onEdit={handleEdit}
-              onDelete={handleDeletePrompt}
-              onComplete={handleComplete}
-              onSnooze={handleSnooze}
-            />
+        <div className="space-y-8">
+          {gridDayGroups.map((day) => (
+            <div key={day.dateKey} className="space-y-3">
+              <div className="flex items-center gap-2 border-b border-slate-200/80 dark:border-slate-800/80 pb-2">
+                <Calendar className="w-4 h-4 text-brand" />
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 capitalize">
+                  {day.dateLabel}
+                </h3>
+                {day.relativeLabel && (
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      day.relativeLabel === 'Hôm nay'
+                        ? 'bg-brand text-white shadow-xs'
+                        : day.relativeLabel === 'Ngày mai'
+                        ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                        : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    {day.relativeLabel}
+                  </span>
+                )}
+                <span className="text-xs text-slate-400 dark:text-slate-500 ml-auto">
+                  {day.items.length} lịch hẹn
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {day.items.map((reminder) => (
+                  <ReminderCard
+                    key={reminder.id}
+                    reminder={reminder}
+                    tagColorMap={tagColorMap}
+                    onEdit={handleEdit}
+                    onDelete={handleDeletePrompt}
+                    onComplete={handleComplete}
+                    onSnooze={handleSnooze}
+                  />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
