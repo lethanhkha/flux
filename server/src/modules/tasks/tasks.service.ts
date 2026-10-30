@@ -142,10 +142,49 @@ export class TasksService {
     const currentPage =
       filterInput?.offset !== undefined ? Math.floor(skip / limit) + 1 : page;
 
+    const sortBy = filterInput?.sortBy || 'default';
+    const sortOrder = filterInput?.sortOrder || 'asc';
+
+    let orderBy: any[];
+    if (sortBy === 'dueDate') {
+      orderBy = [
+        { completedAt: { sort: 'asc', nulls: 'first' } },
+        { dueDate: { sort: sortOrder, nulls: 'last' } },
+        { priority: 'desc' },
+        { createdAt: 'desc' },
+      ];
+    } else if (sortBy === 'priority') {
+      orderBy = [
+        { completedAt: { sort: 'asc', nulls: 'first' } },
+        { priority: sortOrder },
+        { dueDate: { sort: 'asc', nulls: 'last' } },
+        { createdAt: 'desc' },
+      ];
+    } else if (sortBy === 'createdAt') {
+      orderBy = [
+        { completedAt: { sort: 'asc', nulls: 'first' } },
+        { createdAt: sortOrder },
+        { priority: 'desc' },
+      ];
+    } else if (sortBy === 'title') {
+      orderBy = [
+        { completedAt: { sort: 'asc', nulls: 'first' } },
+        { title: sortOrder },
+      ];
+    } else {
+      // Smart Default: active tasks first, highest priority first, then nearest due date, then newest
+      orderBy = [
+        { completedAt: { sort: 'asc', nulls: 'first' } },
+        { priority: 'desc' },
+        { dueDate: { sort: 'asc', nulls: 'last' } },
+        { createdAt: 'desc' },
+      ];
+    }
+
     const sortedTagsKey = filterTags.slice().sort().join(',');
     const sortedExcludeTagsKey = filterExcludeTags.slice().sort().join(',');
     const scheduledPart = `${filterInput?.scheduledStatus || 'all'}_${filterInput?.startScheduledDate || ''}_${filterInput?.endScheduledDate || ''}`;
-    const cacheKey = `cache:tasks:${userId}:${filterInput?.filter || 'all'}:${scheduledPart}:${sortedTagsKey}:ex_${sortedExcludeTagsKey}:${filterInput?.search || ''}:${filterInput?.hideCompleted ? 'hideDone' : 'allDone'}:${currentPage}:${limit}`;
+    const cacheKey = `cache:tasks:${userId}:${filterInput?.filter || 'all'}:${scheduledPart}:${sortedTagsKey}:ex_${sortedExcludeTagsKey}:${filterInput?.search || ''}:${filterInput?.hideCompleted ? 'hideDone' : 'allDone'}:${sortBy}_${sortOrder}:${currentPage}:${limit}`;
 
     return cacheService.remember(cacheKey, 60, async () => {
       const [total, items] = await Promise.all([
@@ -157,7 +196,7 @@ export class TasksService {
               orderBy: { orderIndex: 'asc' },
             },
           },
-          orderBy: [{ status: 'asc' }, { dueDate: 'asc' }, { priority: 'desc' }],
+          orderBy,
           take: limit,
           skip,
         }),

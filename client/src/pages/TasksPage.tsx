@@ -14,6 +14,10 @@ import {
   Eye,
   EyeOff,
   RotateCcw,
+  ArrowUpDown,
+  Clock,
+  Flame,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PaginationControl, PaginationMeta } from '../components/common/PaginationControl';
@@ -89,6 +93,25 @@ export const TasksPage: React.FC = () => {
 
   // When user explicitly selects 'DONE' filter pill, show completed tasks
   const effectiveHideCompleted = filter === 'DONE' ? false : hideCompleted;
+
+  // Sorting state with localStorage persistence
+  const [sortBy, setSortBy] = useState<string>(() => {
+    try {
+      return localStorage.getItem('flux_tasks_sort_by') || 'default';
+    } catch {
+      return 'default';
+    }
+  });
+
+  const handleSortChange = useCallback((val: string) => {
+    setSortBy(val);
+    try {
+      localStorage.setItem('flux_tasks_sort_by', val);
+    } catch {
+      // Safe ignore
+    }
+  }, []);
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -295,6 +318,7 @@ export const TasksPage: React.FC = () => {
           excludeTags: excludedTags.length > 0 ? excludedTags.join(',') : undefined,
           search: debouncedSearch.trim() || undefined,
           hideCompleted: effectiveHideCompleted ? true : undefined,
+          sortBy: sortBy !== 'default' ? sortBy : undefined,
         },
       });
 
@@ -346,7 +370,7 @@ export const TasksPage: React.FC = () => {
     } finally {
       if (!isSilent) setIsLoading(false);
     }
-  }, [viewMode, filter, selectedTags, excludedTags, debouncedSearch, effectiveHideCompleted]);
+  }, [viewMode, filter, selectedTags, excludedTags, debouncedSearch, effectiveHideCompleted, sortBy]);
 
   useEffect(() => {
     fetchTags();
@@ -892,8 +916,52 @@ export const TasksPage: React.FC = () => {
               ariaLabel="Tìm kiếm công việc"
             />
 
-            {/* Focus Mode: Hide / Show Completed Tasks Toggle */}
-            <div className="flex items-center gap-2 self-start sm:self-auto">
+            {/* Right: Sort Selector + Focus Mode: Hide / Show Completed Tasks Toggle */}
+            <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+              {/* Sort Selector Dropdown */}
+              <div className="w-full sm:w-56">
+                <CustomSelect
+                  value={sortBy}
+                  onChange={handleSortChange}
+                  size="sm"
+                  icon={<ArrowUpDown className="w-3.5 h-3.5 text-brand" />}
+                  options={[
+                    {
+                      value: 'default',
+                      label: 'Ưu tiên & Hạn chót (Mặc định)',
+                      icon: <Sparkles className="w-3.5 h-3.5 text-amber-500" />,
+                      description: 'Khẩn cấp lên đầu, hạn chót gần nhất',
+                    },
+                    {
+                      value: 'dueDate',
+                      label: 'Hạn chót gần nhất',
+                      icon: <Clock className="w-3.5 h-3.5 text-brand" />,
+                      description: 'Sắp hết hạn xếp lên trước',
+                    },
+                    {
+                      value: 'priority',
+                      label: 'Mức ưu tiên cao nhất',
+                      icon: <Flame className="w-3.5 h-3.5 text-rose-500" />,
+                      description: 'Khẩn cấp > Cao > Trung bình > Thấp',
+                    },
+                    {
+                      value: 'createdAt',
+                      label: 'Mới tạo gần đây',
+                      icon: <Calendar className="w-3.5 h-3.5 text-emerald-500" />,
+                      description: 'Công việc tạo mới nhất lên trước',
+                    },
+                    {
+                      value: 'title',
+                      label: 'Tên việc (A-Z)',
+                      icon: <List className="w-3.5 h-3.5 text-indigo-500" />,
+                      description: 'Sắp xếp theo thứ tự bảng chữ cái',
+                    },
+                  ]}
+                  ariaLabel="Sắp xếp danh sách công việc"
+                />
+              </div>
+
+              {/* Focus Mode: Hide / Show Completed Tasks Toggle */}
               <Tooltip
                 content={
                   effectiveHideCompleted
