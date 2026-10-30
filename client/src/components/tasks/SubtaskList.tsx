@@ -454,11 +454,11 @@ export const SubtaskList = React.memo<SubtaskListProps>(({
                           <button
                             type="button"
                             onClick={(e) => startEditing(st, e)}
-                            className="hidden group-hover:inline-flex items-center gap-1 text-[10px] text-slate-400 hover:text-brand px-1.5 py-0.5 rounded border border-dashed border-slate-200 dark:border-slate-800 hover:border-brand/40 transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1 text-[10px] text-brand hover:text-brand-hover bg-brand/10 hover:bg-brand/15 px-2 py-0.5 rounded-md border border-brand/20 font-semibold cursor-pointer transition-colors"
                             title="Đặt hạn chót cho việc con này"
                           >
-                            <Calendar className="w-2.5 h-2.5" />
-                            <span>+ Hạn chót</span>
+                            <Calendar className="w-3 h-3 text-brand" />
+                            <span>+ Đặt hạn</span>
                           </button>
                         )}
                       </div>
@@ -582,20 +582,20 @@ export const SubtaskList = React.memo<SubtaskListProps>(({
           </div>
 
           {/* Toggle Due Date Picker Button */}
-          <Tooltip content={showDuePicker ? 'Ẩn bộ chọn hạn chót' : 'Gán hạn chót cho việc con này'}>
-            <button
-              type="button"
-              onClick={() => setShowDuePicker(!showDuePicker)}
-              disabled={disabled}
-              className={`p-2 rounded-xl border transition-colors cursor-pointer flex items-center gap-1 ${
-                showDuePicker || newDueDate
-                  ? 'bg-brand/10 border-brand text-brand font-semibold'
-                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300 dark:hover:border-slate-700'
-              }`}
-            >
-              <Calendar className="w-4 h-4" />
-            </button>
-          </Tooltip>
+          <button
+            type="button"
+            onClick={() => setShowDuePicker(!showDuePicker)}
+            disabled={disabled}
+            className={`px-2.5 py-2 rounded-xl border transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-semibold ${
+              showDuePicker || newDueDate
+                ? 'bg-brand/15 border-brand text-brand'
+                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300'
+            }`}
+            title="Gán hạn chót cho việc con sắp thêm"
+          >
+            <Calendar className="w-3.5 h-3.5 text-brand" />
+            <span>{newDueDate ? 'Đã gán hạn' : 'Hạn chót'}</span>
+          </button>
 
           {/* Submit Button */}
           <button
@@ -615,6 +615,49 @@ export const SubtaskList = React.memo<SubtaskListProps>(({
             )}
             <span>Thêm</span>
           </button>
+        </div>
+
+        {/* Quick Presets Bar Always Visible */}
+        <div className="flex items-center gap-1.5 flex-wrap text-[11px] text-slate-500 pt-0.5">
+          <span className="font-medium flex items-center gap-1 text-slate-500">
+            <Clock className="w-3 h-3 text-brand" /> Hạn việc con sắp thêm:
+          </span>
+          <button
+            type="button"
+            onClick={setPresetToday}
+            className={`px-2 py-0.5 rounded-md transition-colors cursor-pointer font-medium ${
+              newDueDate && newDueDate.endsWith('T18:00') && newDueDate.startsWith(new Date().toISOString().slice(0, 10))
+                ? 'bg-brand text-white font-semibold'
+                : 'bg-slate-100 dark:bg-slate-800 hover:bg-brand hover:text-white text-slate-700 dark:text-slate-300'
+            }`}
+          >
+            Hôm nay (18:00)
+          </button>
+          <button
+            type="button"
+            onClick={setPresetTomorrow}
+            className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-brand hover:text-white transition-colors cursor-pointer font-medium text-slate-700 dark:text-slate-300"
+          >
+            Ngày mai (18:00)
+          </button>
+          {parentDueDate && (
+            <button
+              type="button"
+              onClick={setPresetParentDue}
+              className="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-600 hover:text-white transition-colors cursor-pointer font-medium"
+            >
+              Cùng hạn việc chính
+            </button>
+          )}
+          {newDueDate && (
+            <button
+              type="button"
+              onClick={() => setNewDueDate('')}
+              className="px-2 py-0.5 rounded-md text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer font-medium"
+            >
+              Xóa hạn
+            </button>
+          )}
         </div>
 
         {/* Due Date Picker Panel & Quick Presets */}
