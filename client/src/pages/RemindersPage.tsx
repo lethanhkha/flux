@@ -23,6 +23,7 @@ import { ReminderTimeline } from '../components/reminders/ReminderTimeline';
 import { EditReminderModal } from '../components/reminders/EditReminderModal';
 import { ReminderTagModal, ReminderTagItem } from '../components/reminders/ReminderTagModal';
 import { ConfirmModal } from '../components/common/ConfirmModal';
+import { Tooltip } from '../components/common/Tooltip';
 import { SearchInput } from '../components/common/SearchInput';
 import { useDebounce } from '../hooks/useDebounce';
 import { PaginationControl, PaginationMeta } from '../components/common/PaginationControl';
@@ -493,86 +494,91 @@ export const RemindersPage: React.FC = () => {
       </div>
 
       {/* 3.5. Tag Filter Bar */}
-      <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar-x pb-1 pt-0.5 text-xs">
-        <span className="text-xs text-slate-400 font-semibold flex items-center gap-1 pl-1 shrink-0 mr-1">
+      <div className="flex items-center gap-2 pb-1 pt-0.5 text-xs min-w-0">
+        {/* Fixed Left Label */}
+        <span className="text-xs text-slate-400 font-semibold flex items-center gap-1 pl-1 shrink-0 select-none">
           <Tag className="w-3.5 h-3.5 text-brand" /> Thẻ:
         </span>
 
-        <button
-          type="button"
-          onClick={() => setSelectedTags([])}
-          className={`px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer shrink-0 border ${
-            selectedTags.length === 0
-              ? 'bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 border-transparent font-bold shadow-xs'
-              : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
-        >
-          Tất cả thẻ
-        </button>
-
-        {availableTags.map((item) => {
-          const cleanName = item.name.toLowerCase().trim();
-          const isActive = selectedTags.some((t) => t.toLowerCase() === cleanName);
-          const color = item.color || '#6366F1';
-
-          return (
-            <button
-              key={item.name}
-              type="button"
-              onClick={() => handleToggleTag(item.name)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 shrink-0 border cursor-pointer ${
-                isActive
-                  ? 'text-white font-bold shadow-xs'
-                  : 'text-slate-700 dark:text-slate-300 hover:scale-[1.02]'
-              }`}
-              style={{
-                backgroundColor: isActive ? color : `${color}15`,
-                borderColor: isActive ? color : `${color}35`,
-              }}
-            >
-              <span
-                className="w-2 h-2 rounded-full shrink-0"
-                style={{ backgroundColor: isActive ? '#FFFFFF' : color }}
-              />
-              <span>#{item.name}</span>
-              {item.count !== undefined && item.count > 0 && (
-                <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                    isActive
-                      ? 'bg-white/25 text-white'
-                      : 'bg-slate-200/60 dark:bg-slate-800 text-slate-500'
-                  }`}
-                >
-                  {item.count}
-                </span>
-              )}
-            </button>
-          );
-        })}
-
-        {/* Clear Tags Filter */}
-        {selectedTags.length > 0 && (
+        {/* Scrollable Middle Container */}
+        <div className="flex-1 min-w-0 flex items-center gap-1.5 overflow-x-auto custom-scrollbar-x pb-1 pt-0.5 text-xs scroll-smooth">
           <button
             type="button"
             onClick={() => setSelectedTags([])}
-            className="px-2.5 py-1.5 rounded-xl text-xs text-rose-500 hover:text-rose-600 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 transition-all flex items-center gap-1 cursor-pointer shrink-0"
-            title="Xóa bộ lọc thẻ"
+            className={`px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer shrink-0 border ${
+              selectedTags.length === 0
+                ? 'bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 border-transparent font-bold shadow-xs'
+                : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
           >
-            <X className="w-3 h-3" />
-            <span>Xóa lọc thẻ ({selectedTags.length})</span>
+            Tất cả thẻ
           </button>
-        )}
 
-        {/* Manage Tags Button */}
-        <button
-          type="button"
-          onClick={() => setIsTagModalOpen(true)}
-          className="px-2.5 py-1.5 rounded-xl text-xs border border-dashed border-slate-300 dark:border-slate-700 text-slate-500 hover:text-brand hover:border-brand transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ml-auto"
-          title="Quản lý thẻ phân loại, đổi màu sắc và tên thẻ"
-        >
-          <Settings className="w-3.5 h-3.5" />
-          <span>Quản Lý Thẻ</span>
-        </button>
+          {availableTags.map((item) => {
+            const cleanName = item.name.toLowerCase().trim();
+            const isActive = selectedTags.some((t) => t.toLowerCase() === cleanName);
+            const color = item.color || '#6366F1';
+
+            return (
+              <button
+                key={item.name}
+                type="button"
+                onClick={() => handleToggleTag(item.name)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 shrink-0 border cursor-pointer ${
+                  isActive
+                    ? 'text-white font-bold shadow-xs'
+                    : 'text-slate-700 dark:text-slate-300 hover:scale-[1.02]'
+                }`}
+                style={{
+                  backgroundColor: isActive ? color : `${color}15`,
+                  borderColor: isActive ? color : `${color}35`,
+                }}
+              >
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: isActive ? '#FFFFFF' : color }}
+                />
+                <span>#{item.name}</span>
+                {item.count !== undefined && item.count > 0 && (
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                      isActive
+                        ? 'bg-white/25 text-white'
+                        : 'bg-slate-200/60 dark:bg-slate-800 text-slate-500'
+                    }`}
+                  >
+                    {item.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+
+          {/* Clear Tags Filter */}
+          {selectedTags.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setSelectedTags([])}
+              className="px-2.5 py-1.5 rounded-xl text-xs text-rose-500 hover:text-rose-600 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 transition-all flex items-center gap-1 cursor-pointer shrink-0"
+              title="Xóa bộ lọc thẻ"
+            >
+              <X className="w-3 h-3" />
+              <span>Xóa lọc thẻ ({selectedTags.length})</span>
+            </button>
+          )}
+        </div>
+
+        {/* Fixed Right Button */}
+        <Tooltip content="Quản lý thẻ phân loại, đổi màu sắc và tên thẻ" wrapperClassName="shrink-0">
+          <button
+            type="button"
+            onClick={() => setIsTagModalOpen(true)}
+            className="px-2.5 py-1.5 rounded-xl text-xs border border-dashed border-slate-300 dark:border-slate-700 text-slate-500 hover:text-brand hover:border-brand transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+          >
+            <Settings className="w-3.5 h-3.5" />
+            <span>Quản Lý Thẻ</span>
+          </button>
+        </Tooltip>
       </div>
 
       {/* 4. Main Reminders Content */}

@@ -720,6 +720,7 @@ export const FinancePage: React.FC = () => {
           periodLabel={periodLabel}
           onClearAllFilters={handleClearAllFilters}
           onOpenAddTx={handleOpenAddTx}
+          onOpenCategoryModal={handleOpenCategoryModal}
           onExportCSV={handleExportCSV}
           onOpenEditTx={handleOpenEditTx}
           onRequestDeleteTx={handleRequestDeleteTx}

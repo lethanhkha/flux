@@ -7,6 +7,7 @@ import {
   RotateCcw,
   Wallet as WalletIcon,
   CalendarDays,
+  Settings,
 } from 'lucide-react';
 import {
   TransactionItem,
@@ -48,6 +49,7 @@ interface TransactionListProps {
   onClearAllFilters?: () => void;
   onOpenAddTx: () => void;
   onExportCSV: () => void;
+  onOpenCategoryModal?: () => void;
   onOpenEditTx: (tx: TransactionItem) => void;
   onRequestDeleteTx: (tx: TransactionItem, e?: React.MouseEvent) => void;
   isLoading?: boolean;
@@ -75,6 +77,7 @@ export const TransactionList = React.memo<TransactionListProps>(({
   periodLabel = 'kỳ này',
   onClearAllFilters,
   onOpenAddTx,
+  onOpenCategoryModal,
   onExportCSV,
   onOpenEditTx,
   onRequestDeleteTx,
@@ -424,6 +427,20 @@ export const TransactionList = React.memo<TransactionListProps>(({
             );
           })}
         </div>
+
+        {/* Fixed Right Button: Quản Lý Danh Mục */}
+        {onOpenCategoryModal && (
+          <Tooltip content="Quản lý đổi tên, màu sắc hoặc thêm bớt danh mục thu chi" wrapperClassName="shrink-0">
+            <button
+              type="button"
+              onClick={onOpenCategoryModal}
+              className="px-2.5 py-1.5 rounded-xl text-xs border border-dashed border-slate-300 dark:border-slate-700 text-slate-500 hover:text-brand hover:border-brand transition-all flex items-center gap-1 cursor-pointer shrink-0"
+            >
+              <Settings className="w-3 h-3" />
+              <span>Quản Lý Danh Mục</span>
+            </button>
+          </Tooltip>
+        )}
       </div>
 
       {/* 5. Smart Filter Insights Card */}

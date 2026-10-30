@@ -12,6 +12,7 @@ import {
   Edit3,
   Check,
   Sparkles,
+  Settings,
 } from 'lucide-react';
 import { ConfirmModal } from '../components/common/ConfirmModal';
 import { Modal } from '../components/common/Modal';
@@ -384,16 +385,6 @@ export const NotesPage: React.FC = () => {
               </Tooltip>
             </div>
 
-            <Tooltip content="Quản lý danh sách thẻ, đổi tên hoặc tùy chỉnh màu sắc thẻ ghi chú">
-              <button
-                onClick={() => setIsTagManagerOpen(true)}
-                className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
-              >
-                <Tag className="w-3.5 h-3.5 text-brand" />
-                <span>Quản Lý Thẻ</span>
-              </button>
-            </Tooltip>
-
             <Tooltip content="Tạo tài liệu ghi chú mới với trình soạn thảo Markdown đa năng">
               <button
                 onClick={() => setIsAddModalOpen(true)}
@@ -407,72 +398,97 @@ export const NotesPage: React.FC = () => {
         </div>
 
         {/* Search & Tag Filter Bar */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-          <SearchInput
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Tìm kiếm nội dung ghi chú (Full-Text Search)..."
-            isLoading={isLoading}
-            className="flex-1 max-w-md"
-          />
+        <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Tìm kiếm nội dung ghi chú (Full-Text Search)..."
+              isLoading={isLoading}
+              className="flex-1 max-w-md"
+            />
+          </div>
 
-          <div
-            ref={tagBarRef}
-            className="flex items-center gap-2 overflow-x-auto custom-scrollbar-x pb-2.5 pt-0.5 text-xs scroll-smooth max-w-full"
-          >
-            <button
-              onClick={() => setSelectedTag('ALL')}
-              className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 flex-shrink-0 ${
-                selectedTag === 'ALL'
-                  ? 'bg-brand text-white border-brand font-bold'
-                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand/40'
-              }`}
+          {/* Quick Tags Filter Bar with smooth mouse-wheel horizontal scroll */}
+          <div className="flex items-center gap-2 pb-1 pt-0.5 text-xs min-w-0">
+            {/* Fixed Left Label */}
+            <span className="text-xs text-slate-400 font-semibold flex items-center gap-1 pl-1 shrink-0 select-none">
+              <Tag className="w-3.5 h-3.5 text-brand" /> Thẻ:
+            </span>
+
+            {/* Scrollable Middle Container */}
+            <div
+              ref={tagBarRef}
+              className="flex-1 min-w-0 flex items-center gap-1.5 overflow-x-auto custom-scrollbar-x pb-1 pt-0.5 text-xs scroll-smooth"
             >
-              <span>Tất Cả</span>
-              <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+              <button
+                type="button"
+                onClick={() => setSelectedTag('ALL')}
+                className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
                   selectedTag === 'ALL'
-                    ? 'bg-white/20 text-white'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                    ? 'bg-brand text-white border-brand font-bold shadow-xs'
+                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand/40'
                 }`}
               >
-                {pagination.total}
-              </span>
-            </button>
-            {availableTags.map((tag) => {
-              const isActive = selectedTag === tag.name;
-              const color = tag.color || '#6366F1';
-              return (
-                <button
-                  key={tag.name}
-                  onClick={() => setSelectedTag(isActive ? 'ALL' : tag.name)}
-                  className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 flex-shrink-0 ${
-                    isActive
-                      ? 'text-white font-bold shadow-xs'
-                      : 'text-slate-700 dark:text-slate-300 hover:scale-[1.02]'
+                <span>Tất Cả</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    selectedTag === 'ALL'
+                      ? 'bg-white/20 text-white'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
                   }`}
-                  style={{
-                    backgroundColor: isActive ? color : `${color}15`,
-                    borderColor: isActive ? color : `${color}35`,
-                  }}
                 >
-                  <span
-                    className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: isActive ? '#ffffff' : color }}
-                  />
-                  <span>#{tag.name}</span>
-                  <span
-                    className="text-[10px] px-1.5 py-0.2 rounded-full font-medium"
+                  {pagination.total}
+                </span>
+              </button>
+              {availableTags.map((tag) => {
+                const isActive = selectedTag === tag.name;
+                const color = tag.color || '#6366F1';
+                return (
+                  <button
+                    key={tag.name}
+                    type="button"
+                    onClick={() => setSelectedTag(isActive ? 'ALL' : tag.name)}
+                    className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
+                      isActive
+                        ? 'text-white font-bold shadow-xs'
+                        : 'text-slate-700 dark:text-slate-300 hover:scale-[1.02]'
+                    }`}
                     style={{
-                      backgroundColor: isActive ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.06)',
-                      color: isActive ? '#ffffff' : 'inherit',
+                      backgroundColor: isActive ? color : `${color}15`,
+                      borderColor: isActive ? color : `${color}35`,
                     }}
                   >
-                    {tag.count}
-                  </span>
-                </button>
-              );
-            })}
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: isActive ? '#ffffff' : color }}
+                    />
+                    <span>#{tag.name}</span>
+                    <span
+                      className="text-[10px] px-1.5 py-0.2 rounded-full font-medium"
+                      style={{
+                        backgroundColor: isActive ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.06)',
+                        color: isActive ? '#ffffff' : 'inherit',
+                      }}
+                    >
+                      {tag.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Fixed Right Button */}
+            <Tooltip content="Quản lý thẻ phân loại, đổi màu sắc và tên thẻ" wrapperClassName="shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsTagManagerOpen(true)}
+                className="px-2.5 py-1.5 rounded-xl text-xs border border-dashed border-slate-300 dark:border-slate-700 text-slate-500 hover:text-brand hover:border-brand transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <Settings className="w-3.5 h-3.5" />
+                <span>Quản Lý Thẻ</span>
+              </button>
+            </Tooltip>
           </div>
         </div>
 

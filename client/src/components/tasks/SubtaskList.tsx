@@ -412,113 +412,113 @@ export const SubtaskList = React.memo<SubtaskListProps>(({
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span
-                          onDoubleClick={(e) => startEditing(st, e)}
-                          className={`text-xs block truncate select-text cursor-pointer ${
-                            st.isCompleted
-                              ? 'line-through text-slate-400 dark:text-slate-500'
-                              : 'text-slate-700 dark:text-slate-200'
-                          }`}
-                          title="Bấm đúp chuột để chỉnh sửa"
-                        >
-                          {st.title}
-                        </span>
-
-                        {/* Due Date Badge */}
-                        {dueInfo ? (
-                          <Tooltip
-                            content={
-                              isLateThanParentWarning
-                                ? `Hạn: ${dueInfo.formattedDue} (Lưu ý: Hạn việc con đang muộn hơn hạn công việc chính)`
-                                : `Hạn chót: ${dueInfo.formattedDue}`
-                            }
-                          >
-                            <button
-                              type="button"
-                              onClick={(e) => startEditing(st, e)}
-                              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium border transition-colors cursor-pointer ${
-                                st.isCompleted
-                                  ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700'
-                                  : dueInfo.colorClasses
-                              }`}
-                            >
-                              <Clock className="w-2.5 h-2.5 flex-shrink-0" />
-                              <span>{dueInfo.shortLabel}</span>
-                              {isLateThanParentWarning && (
-                                <AlertCircle className="w-2.5 h-2.5 text-amber-500 flex-shrink-0" />
-                              )}
-                            </button>
-                          </Tooltip>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={(e) => startEditing(st, e)}
-                            className="inline-flex items-center gap-1 text-[10px] text-brand hover:text-brand-hover bg-brand/10 hover:bg-brand/15 px-2 py-0.5 rounded-md border border-brand/20 font-semibold cursor-pointer transition-colors"
-                            title="Đặt hạn chót cho việc con này"
-                          >
-                            <Calendar className="w-3 h-3 text-brand" />
-                            <span>+ Đặt hạn</span>
-                          </button>
-                        )}
-                      </div>
+                      <span
+                        onDoubleClick={(e) => startEditing(st, e)}
+                        className={`text-xs block truncate select-text cursor-pointer ${
+                          st.isCompleted
+                            ? 'line-through text-slate-400 dark:text-slate-500'
+                            : 'text-slate-700 dark:text-slate-200'
+                        }`}
+                        title="Bấm đúp chuột để chỉnh sửa"
+                      >
+                        {st.title}
+                      </span>
                     )}
                   </div>
 
-                  {/* Action Buttons (Hover or active) */}
+                  {/* Action Buttons & Due Date (Hover or active) */}
                   {editingId !== st.id && (
-                    <div className="flex items-center gap-0.5 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                      {/* Move Up */}
-                      <Tooltip content="Chuyển lên trên">
-                        <button
-                          type="button"
-                          disabled={idx === 0 || disabled}
-                          onClick={(e) => handleMoveOrder(idx, 'UP', e)}
-                          aria-label="Chuyển lên"
-                          className="p-1 rounded text-slate-400 hover:text-brand hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed"
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {/* Nút đặt hạn / Badge hạn chót nằm ngay bên trái nút Chuyển lên trên */}
+                      {dueInfo ? (
+                        <Tooltip
+                          content={
+                            isLateThanParentWarning
+                              ? `Hạn: ${dueInfo.formattedDue} (Lưu ý: Hạn việc con đang muộn hơn hạn công việc chính)`
+                              : `Hạn chót: ${dueInfo.formattedDue}`
+                          }
                         >
-                          <ChevronUp className="w-3.5 h-3.5" />
-                        </button>
-                      </Tooltip>
-
-                      {/* Move Down */}
-                      <Tooltip content="Chuyển xuống dưới">
+                          <button
+                            type="button"
+                            onClick={(e) => startEditing(st, e)}
+                            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium border transition-colors cursor-pointer mr-0.5 ${
+                              st.isCompleted
+                                ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700'
+                                : dueInfo.colorClasses
+                            }`}
+                          >
+                            <Clock className="w-2.5 h-2.5 flex-shrink-0" />
+                            <span>{dueInfo.shortLabel}</span>
+                            {isLateThanParentWarning && (
+                              <AlertCircle className="w-2.5 h-2.5 text-amber-500 flex-shrink-0" />
+                            )}
+                          </button>
+                        </Tooltip>
+                      ) : (
                         <button
                           type="button"
-                          disabled={idx === subtasks.length - 1 || disabled}
-                          onClick={(e) => handleMoveOrder(idx, 'DOWN', e)}
-                          aria-label="Chuyển xuống"
-                          className="p-1 rounded text-slate-400 hover:text-brand hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed"
-                        >
-                          <ChevronDown className="w-3.5 h-3.5" />
-                        </button>
-                      </Tooltip>
-
-                      {/* Edit title & due date */}
-                      <Tooltip content="Sửa tiêu đề & hạn chót">
-                        <button
-                          type="button"
-                          disabled={disabled}
                           onClick={(e) => startEditing(st, e)}
-                          aria-label="Chỉnh sửa"
-                          className="p-1 rounded text-slate-400 hover:text-brand hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                          className="inline-flex items-center gap-1 text-[10px] text-brand hover:text-brand-hover bg-brand/10 hover:bg-brand/15 px-2 py-0.5 rounded-md border border-brand/20 font-semibold cursor-pointer transition-colors mr-0.5 opacity-90 sm:opacity-0 group-hover:opacity-100"
+                          title="Đặt hạn chót cho việc con này"
                         >
-                          <Edit2 className="w-3.5 h-3.5" />
+                          <Calendar className="w-3 h-3 text-brand" />
+                          <span>+ Đặt hạn</span>
                         </button>
-                      </Tooltip>
+                      )}
 
-                      {/* Delete */}
-                      <Tooltip content="Xóa việc con này">
-                        <button
-                          type="button"
-                          disabled={disabled}
-                          onClick={(e) => handleDeleteSubtask(st.id, e)}
-                          aria-label="Xóa việc con"
-                          className="p-1 rounded text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </Tooltip>
+                      <div className="flex items-center gap-0.5 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                        {/* Move Up */}
+                        <Tooltip content="Chuyển lên trên">
+                          <button
+                            type="button"
+                            disabled={idx === 0 || disabled}
+                            onClick={(e) => handleMoveOrder(idx, 'UP', e)}
+                            aria-label="Chuyển lên"
+                            className="p-1 rounded text-slate-400 hover:text-brand hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed"
+                          >
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          </button>
+                        </Tooltip>
+
+                        {/* Move Down */}
+                        <Tooltip content="Chuyển xuống dưới">
+                          <button
+                            type="button"
+                            disabled={idx === subtasks.length - 1 || disabled}
+                            onClick={(e) => handleMoveOrder(idx, 'DOWN', e)}
+                            aria-label="Chuyển xuống"
+                            className="p-1 rounded text-slate-400 hover:text-brand hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed"
+                          >
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          </button>
+                        </Tooltip>
+
+                        {/* Edit title & due date */}
+                        <Tooltip content="Sửa tiêu đề & hạn chót">
+                          <button
+                            type="button"
+                            disabled={disabled}
+                            onClick={(e) => startEditing(st, e)}
+                            aria-label="Chỉnh sửa"
+                            className="p-1 rounded text-slate-400 hover:text-brand hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                        </Tooltip>
+
+                        {/* Delete */}
+                        <Tooltip content="Xóa việc con này">
+                          <button
+                            type="button"
+                            disabled={disabled}
+                            onClick={(e) => handleDeleteSubtask(st.id, e)}
+                            aria-label="Xóa việc con"
+                            className="p-1 rounded text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </Tooltip>
+                      </div>
                     </div>
                   )}
                 </div>
