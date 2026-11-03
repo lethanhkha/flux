@@ -78,10 +78,10 @@ export const PlannerUnscheduledColumn: React.FC<PlannerUnscheduledColumnProps> =
         onDragOver={(e) => onDragOver(e, 'unscheduled')}
         onDragLeave={onDragLeave}
         onDrop={(e) => onDrop(e, 'unscheduled')}
-        className={`w-12 flex-shrink-0 flex flex-col items-center justify-between py-4 rounded-3xl border transition-all duration-200 select-none cursor-pointer ${
+        className={`w-12 flex-shrink-0 flex flex-col items-center justify-between py-4 rounded-xl border transition-[background-color,border-color] duration-150 select-none cursor-pointer ${
           isDragOver
-            ? 'bg-brand/10 border-2 border-dashed border-brand ring-4 ring-brand/10'
-            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-xs hover:border-brand/40'
+            ? 'bg-muted/80 border-foreground ring-2 ring-foreground/20'
+            : 'bg-card border-border shadow-xs hover:border-foreground/30'
         }`}
         onClick={onToggleCollapse}
       >
@@ -89,23 +89,23 @@ export const PlannerUnscheduledColumn: React.FC<PlannerUnscheduledColumnProps> =
           <Tooltip content="Mở rộng Hộp việc chưa xếp">
             <button
               type="button"
-              className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-brand transition-colors cursor-pointer"
+              className="p-1 rounded-md bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
           </Tooltip>
-          <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+          <span className="w-2 h-2 rounded-full bg-amber-500" />
         </div>
 
-        <div className="[writing-mode:vertical-rl] rotate-180 text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2 py-4">
+        <div className="[writing-mode:vertical-rl] rotate-180 text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2 py-4">
           <Inbox className="w-3.5 h-3.5 rotate-90" />
           <span>Hộp việc chưa xếp</span>
-          <span className="px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] text-brand font-bold rotate-90">
+          <span className="px-1.5 py-0.5 rounded bg-muted text-[10px] text-foreground font-medium rotate-90 tabular-nums">
             {tasks.length}
           </span>
         </div>
 
-        <div className="text-[9px] text-slate-400 font-medium px-1 text-center">
+        <div className="text-[9px] text-muted-foreground font-normal px-1 text-center">
           {isDragOver ? 'Thả vào' : ''}
         </div>
       </div>
@@ -117,29 +117,29 @@ export const PlannerUnscheduledColumn: React.FC<PlannerUnscheduledColumnProps> =
       onDragOver={(e) => onDragOver(e, 'unscheduled')}
       onDragLeave={onDragLeave}
       onDrop={(e) => onDrop(e, 'unscheduled')}
-      className={`w-72 sm:w-80 flex-shrink-0 flex flex-col rounded-3xl border transition-all duration-200 select-none ${
+      className={`w-72 sm:w-80 flex-shrink-0 flex flex-col rounded-xl border transition-[background-color,border-color] duration-150 select-none ${
         isDragOver
-          ? 'bg-brand/5 border-2 border-dashed border-brand ring-4 ring-brand/10 shadow-md'
-          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-xs'
+          ? 'bg-muted/60 border-foreground ring-2 ring-foreground/20 shadow-xs'
+          : 'bg-card border-border shadow-xs'
       }`}
     >
       {/* Column Header */}
-      <div className="p-3.5 border-b border-slate-100 dark:border-slate-800 space-y-2.5">
+      <div className="p-3 border-b border-border space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
-              <Inbox className="w-4 h-4" />
+            <div className="w-6 h-6 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-medium">
+              <Inbox className="w-3.5 h-3.5" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-bold text-xs text-slate-800 dark:text-slate-100">
+                <span className="font-medium text-xs text-foreground">
                   Chưa xếp lịch
                 </span>
-                <span className="px-1.5 py-0.2 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] text-slate-600 dark:text-slate-400 font-bold">
+                <span className="px-1.5 py-0.2 rounded bg-muted text-[10px] text-muted-foreground font-medium tabular-nums">
                   {tasks.length}
                 </span>
               </div>
-              <div className="text-[10px] text-slate-400 font-medium">
+              <div className="text-[10px] text-muted-foreground font-normal">
                 Kéo việc sang các ngày để phân bổ
               </div>
             </div>
@@ -150,7 +150,7 @@ export const PlannerUnscheduledColumn: React.FC<PlannerUnscheduledColumnProps> =
               <button
                 type="button"
                 onClick={onQuickAdd}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-brand hover:bg-brand/10 transition-colors cursor-pointer"
+                className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>
@@ -159,9 +159,9 @@ export const PlannerUnscheduledColumn: React.FC<PlannerUnscheduledColumnProps> =
               <button
                 type="button"
                 onClick={onToggleCollapse}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-3.5 h-3.5" />
               </button>
             </Tooltip>
           </div>
@@ -169,13 +169,13 @@ export const PlannerUnscheduledColumn: React.FC<PlannerUnscheduledColumnProps> =
 
         {/* Local Search inside Backlog */}
         <div className="relative">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm việc trong hộp..."
-            className="w-full pl-8 pr-3 py-1.5 text-[11px] rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-brand"
+            placeholder="Tìm việc trong hộp…"
+            className="w-full pl-8 pr-3 py-1 text-[11px] rounded-md border border-border bg-muted/40 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           />
         </div>
 
@@ -184,10 +184,10 @@ export const PlannerUnscheduledColumn: React.FC<PlannerUnscheduledColumnProps> =
           <button
             type="button"
             onClick={() => setFilterMode('all')}
-            className={`px-2 py-0.5 rounded-lg font-medium transition-all cursor-pointer ${
+            className={`px-2 py-0.5 rounded font-medium transition-colors cursor-pointer tabular-nums ${
               filterMode === 'all'
-                ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-bold'
-                : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'bg-foreground text-background font-medium'
+                : 'text-muted-foreground hover:bg-muted'
             }`}
           >
             Tất cả ({tasks.length})
@@ -195,10 +195,10 @@ export const PlannerUnscheduledColumn: React.FC<PlannerUnscheduledColumnProps> =
           <button
             type="button"
             onClick={() => setFilterMode('has_due')}
-            className={`px-2 py-0.5 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1 ${
+            className={`px-2 py-0.5 rounded font-medium transition-colors cursor-pointer flex items-center gap-1 ${
               filterMode === 'has_due'
-                ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-bold'
-                : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'bg-foreground text-background font-medium'
+                : 'text-muted-foreground hover:bg-muted'
             }`}
           >
             <Clock className="w-2.5 h-2.5" />
@@ -207,10 +207,10 @@ export const PlannerUnscheduledColumn: React.FC<PlannerUnscheduledColumnProps> =
           <button
             type="button"
             onClick={() => setFilterMode('urgent')}
-            className={`px-2 py-0.5 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1 ${
+            className={`px-2 py-0.5 rounded font-medium transition-colors cursor-pointer flex items-center gap-1 ${
               filterMode === 'urgent'
-                ? 'bg-rose-500 text-white font-bold'
-                : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'bg-destructive text-destructive-foreground font-medium'
+                : 'text-muted-foreground hover:bg-muted'
             }`}
           >
             <AlertCircle className="w-2.5 h-2.5" />
@@ -220,14 +220,14 @@ export const PlannerUnscheduledColumn: React.FC<PlannerUnscheduledColumnProps> =
       </div>
 
       {/* Task List / Drop Area */}
-      <div className="flex-1 p-2.5 space-y-2.5 min-h-[380px] overflow-y-auto max-h-[calc(100vh-280px)]">
+      <div className="flex-1 p-2 space-y-2 min-h-[380px] overflow-y-auto max-h-[calc(100vh-280px)]">
         {filteredTasks.length === 0 ? (
-          <div className="h-full min-h-[160px] rounded-2xl border-2 border-dashed border-slate-200/70 dark:border-slate-800/70 flex flex-col items-center justify-center p-4 text-center text-slate-400">
-            <Inbox className="w-6 h-6 mb-1.5 opacity-50" />
-            <span className="text-[11px] font-semibold">
+          <div className="h-full min-h-[160px] rounded-lg border border-dashed border-border flex flex-col items-center justify-center p-4 text-center text-muted-foreground">
+            <Inbox className="w-5 h-5 mb-1.5 opacity-50" />
+            <span className="text-[11px] font-medium">
               {isDragOver ? 'Thả để hủy xếp ngày' : 'Không có công việc'}
             </span>
-            <span className="text-[9px] text-slate-400 mt-0.5">
+            <span className="text-[9px] text-muted-foreground mt-0.5">
               Tất cả công việc đã được phân bổ vào các ngày!
             </span>
           </div>

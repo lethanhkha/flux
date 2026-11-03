@@ -58,12 +58,12 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3.5">
             <div
-              className={`h-11 w-11 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform ${
+              className={`h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
                 isDanger
-                  ? 'bg-rose-500/10 text-rose-500 ring-8 ring-rose-500/5'
+                  ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
                   : isWarning
-                  ? 'bg-amber-500/10 text-amber-500 ring-8 ring-amber-500/5'
-                  : 'bg-brand/10 text-brand ring-8 ring-brand/5'
+                  ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                  : 'bg-foreground/10 text-foreground border border-border'
               }`}
             >
               {isDanger ? (
@@ -110,7 +110,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             type="button"
             disabled={isLoading}
             onClick={onClose}
-            className="flex-1 py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-all disabled:opacity-50 cursor-pointer"
+            className="flex-1 py-2 px-3.5 rounded-lg border border-border bg-background hover:bg-muted text-foreground font-medium text-xs transition-[background-color,border-color] disabled:opacity-50 cursor-pointer focus-ring"
           >
             {cancelText}
           </button>
@@ -119,18 +119,18 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             type="button"
             disabled={isLoading}
             onClick={onConfirm}
-            className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-xs text-white shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 ${
+            className={`flex-1 py-2 px-3.5 rounded-lg font-medium text-xs text-white transition-[background-color,opacity] disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 focus-ring ${
               isDanger
-                ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/25'
+                ? 'bg-rose-600 hover:bg-rose-700'
                 : isWarning
-                ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/25'
-                : 'bg-brand hover:bg-brand-hover shadow-brand/25'
+                ? 'bg-amber-600 hover:bg-amber-700'
+                : 'bg-foreground hover:bg-foreground/90 text-background'
             }`}
           >
             {isLoading ? (
               <>
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Đang xử lý...</span>
+                <span>Đang xử lý…</span>
               </>
             ) : (
               <span>{confirmText}</span>

@@ -130,14 +130,14 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
       ariaLabelledBy="edit-tx-modal-title"
       maxWidth="md"
     >
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between pb-3 border-b border-border/60">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center font-bold">
+            <div className="h-7 w-7 rounded-md border border-border bg-muted flex items-center justify-center font-bold text-foreground">
               <Edit3 className="w-4 h-4" />
             </div>
             <div>
-              <h3 id="edit-tx-modal-title" className="font-bold text-base">Chỉnh Sửa Giao Dịch</h3>
-              <p className="text-[11px] text-slate-400">
+              <h3 id="edit-tx-modal-title" className="font-semibold text-base text-foreground">Chỉnh Sửa Giao Dịch</h3>
+              <p className="text-[11px] text-muted-foreground">
                 Số dư các ví liên quan sẽ được tự động tính toán lại
               </p>
             </div>
@@ -146,9 +146,9 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Đóng chỉnh sửa giao dịch"
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-[background-color] cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
@@ -158,10 +158,10 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
             <button
               type="button"
               onClick={() => setEditTxType('EXPENSE')}
-              className={`py-2 rounded-xl font-bold transition-all cursor-pointer text-center text-xs ${
+              className={`py-2 rounded-md font-medium text-xs transition-[color,background-color,border-color] cursor-pointer text-center border ${
                 editTxType === 'EXPENSE'
-                  ? 'bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700'
+                  ? 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400 font-semibold'
+                  : 'bg-muted/40 border-border/60 text-muted-foreground hover:text-foreground'
               }`}
             >
               Chi tiền (-)
@@ -169,10 +169,10 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
             <button
               type="button"
               onClick={() => setEditTxType('INCOME')}
-              className={`py-2 rounded-xl font-bold transition-all cursor-pointer text-center text-xs ${
+              className={`py-2 rounded-md font-medium text-xs transition-[color,background-color,border-color] cursor-pointer text-center border ${
                 editTxType === 'INCOME'
-                  ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700'
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-semibold'
+                  : 'bg-muted/40 border-border/60 text-muted-foreground hover:text-foreground'
               }`}
             >
               Thu tiền (+)
@@ -180,10 +180,10 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
             <button
               type="button"
               onClick={() => setEditTxType('TRANSFER')}
-              className={`py-2 rounded-xl font-bold transition-all cursor-pointer text-center text-xs ${
+              className={`py-2 rounded-md font-medium text-xs transition-[color,background-color,border-color] cursor-pointer text-center border ${
                 editTxType === 'TRANSFER'
-                  ? 'bg-brand/10 border border-brand/30 text-brand'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700'
+                  ? 'border-border bg-foreground text-background font-semibold'
+                  : 'bg-muted/40 border-border/60 text-muted-foreground hover:text-foreground'
               }`}
             >
               Chuyển khoản
@@ -195,7 +195,7 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <div className="flex items-center gap-1.5 mb-1.5">
-                  <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                  <label className="font-medium block text-foreground">
                     Ví nguồn (Trừ tiền)
                   </label>
                   <InfoTooltip content="Ví tiền sẽ bị khấu trừ khoản chuyển này." />
@@ -209,12 +209,12 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
                     color: w.color,
                     badge: formatCurrency(w.balance),
                   }))}
-                  icon={<WalletIcon className="w-4 h-4 text-brand" />}
+                  icon={<WalletIcon className="w-4 h-4 text-muted-foreground" />}
                 />
               </div>
               <div>
                 <div className="flex items-center gap-1.5 mb-1.5">
-                  <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                  <label className="font-medium block text-foreground">
                     Ví đích (Cộng tiền)
                   </label>
                   <InfoTooltip content="Ví tiền sẽ được ghi nhận cộng thêm khoản chuyển này." />
@@ -228,14 +228,14 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
                     color: w.color,
                     badge: formatCurrency(w.balance),
                   }))}
-                  icon={<WalletIcon className="w-4 h-4 text-brand" />}
+                  icon={<WalletIcon className="w-4 h-4 text-muted-foreground" />}
                 />
               </div>
             </div>
           ) : (
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
-                <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                <label className="font-medium block text-foreground">
                   Chọn Ví
                 </label>
                 <InfoTooltip content="Ví thực hiện giao dịch thu hoặc chi này." />
@@ -249,7 +249,7 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
                   color: w.color,
                   badge: formatCurrency(w.balance),
                 }))}
-                icon={<WalletIcon className="w-4 h-4 text-brand" />}
+                icon={<WalletIcon className="w-4 h-4 text-muted-foreground" />}
               />
             </div>
           )}
@@ -258,7 +258,7 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
-                <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                <label className="font-medium block text-foreground">
                   Số tiền (VND)
                 </label>
                 <InfoTooltip content="Số tiền giao dịch đã cập nhật (> 0)." />
@@ -268,16 +268,16 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
                 required
                 min="1"
                 step="any"
-                placeholder="VD: 47857"
+                placeholder="VD: 50000"
                 value={editTxAmount}
                 onChange={(e) => setEditTxAmount(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-base font-extrabold tabular-nums focus:outline-none focus:ring-2 focus:ring-brand"
+                className="w-full px-3 py-2 rounded-md border border-input bg-background text-base font-bold tabular-nums focus-ring"
               />
             </div>
 
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
-                <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                <label className="font-medium block text-foreground">
                   Ngày giao dịch
                 </label>
                 <InfoTooltip content="Ngày phát sinh giao dịch." />
@@ -287,7 +287,7 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
                 required
                 value={editTxDate}
                 onChange={(e) => setEditTxDate(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium focus:outline-none focus:ring-2 focus:ring-brand"
+                className="w-full px-3 py-2 rounded-md border border-input bg-background font-medium focus-ring"
               />
             </div>
           </div>
@@ -296,7 +296,7 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
           {editTxType !== 'TRANSFER' && (
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
-                <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                <label className="font-medium block text-foreground">
                   Danh mục
                 </label>
                 <InfoTooltip content="Phân loại thu chi của giao dịch này." />
@@ -309,7 +309,7 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
                   label: c.name,
                   color: c.color,
                 }))}
-                icon={<TagIcon className="w-4 h-4 text-brand" />}
+                icon={<TagIcon className="w-4 h-4 text-muted-foreground" />}
               />
             </div>
           )}
@@ -317,7 +317,7 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
           {/* Note */}
           <div>
             <div className="flex items-center gap-1.5 mb-1.5">
-              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+              <label className="font-medium block text-foreground">
                 Ghi chú
               </label>
               <InfoTooltip content="Nội dung hoặc ghi chú giải thích giao dịch (tùy chọn)." />
@@ -326,8 +326,8 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
               type="text"
               value={editTxNote}
               onChange={(e) => setEditTxNote(e.target.value)}
-              placeholder="VD: Ăn tối với bạn, thanh toán hóa đơn..."
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+              placeholder="VD: Ăn tối với bạn, thanh toán hóa đơn…"
+              className="w-full px-3 py-2 rounded-md border border-input bg-background font-normal focus-ring"
             />
           </div>
 
@@ -335,16 +335,16 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-all cursor-pointer"
+              className="flex-1 h-10 rounded-md border border-border bg-secondary hover:bg-muted text-foreground font-medium text-xs transition-[background-color] cursor-pointer"
             >
               Hủy bỏ
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all cursor-pointer disabled:opacity-50"
+              className="flex-1 h-10 rounded-md bg-foreground text-background font-medium text-xs hover:opacity-90 active:scale-[0.99] transition-[opacity,transform] cursor-pointer disabled:opacity-50"
             >
-              {isSubmitting ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+              {isSubmitting ? 'Đang lưu…' : 'Lưu Thay Đổi'}
             </button>
           </div>
         </form>

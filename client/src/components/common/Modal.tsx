@@ -71,7 +71,7 @@ export const Modal: React.FC<ModalProps> = ({
           onClick={() => {
             if (!disableClose) onClose();
           }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm cursor-pointer"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs cursor-pointer overscroll-none"
         >
           <motion.div
             variants={modalDialogVariants}
@@ -79,7 +79,7 @@ export const Modal: React.FC<ModalProps> = ({
             animate="animate"
             exit="exit"
             onClick={(e) => e.stopPropagation()}
-            className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full p-6 shadow-2xl space-y-5 cursor-default max-h-[calc(100vh-2rem)] overflow-y-auto ${maxWidthMap[maxWidth] || maxWidth} ${className}`}
+            className={`bg-card text-card-foreground border border-border rounded-xl w-full p-6 shadow-xl space-y-5 cursor-default max-h-[calc(100vh-2rem)] overflow-y-auto overscroll-contain ${maxWidthMap[maxWidth] || maxWidth} ${className}`}
           >
             {children}
           </motion.div>

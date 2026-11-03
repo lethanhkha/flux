@@ -172,27 +172,27 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="VD: Kế hoạch tuần tới, Ý tưởng dự án..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-2 focus:ring-brand font-medium text-slate-900 dark:text-slate-100"
+                  placeholder="VD: Kế hoạch tuần tới, Ý tưởng dự án…"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-muted/40 text-xs focus:outline-none focus:ring-1 focus:ring-ring font-normal text-foreground"
                 />
               </div>
 
               {/* Tags */}
               <div>
-                <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+                <label className="font-medium block mb-1 text-foreground">
                   Thẻ phân loại (Tags)
                 </label>
                 <TagSelect
                   availableTags={availableTags}
                   selectedTags={tags}
                   onChange={setTags}
-                  placeholder="Chọn hoặc nhập thẻ mới..."
+                  placeholder="Chọn hoặc nhập thẻ mới…"
                 />
               </div>
 
               {/* Pin toggle */}
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
-                <label className="flex items-center gap-2 cursor-pointer font-semibold text-slate-700 dark:text-slate-300 select-none">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border">
+                <label className="flex items-center gap-2 cursor-pointer font-medium text-foreground select-none">
                   <input
                     type="checkbox"
                     checked={isPinned}
@@ -239,24 +239,24 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors cursor-pointer disabled:opacity-50"
+                className="px-4 py-2.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground font-medium text-xs transition-colors cursor-pointer disabled:opacity-50"
               >
-                Hủy Bỏ
+                Hủy bỏ
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-lg bg-foreground text-background font-medium text-xs hover:bg-foreground/90 transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Đang lưu...</span>
+                    <span>Đang lưu…</span>
                   </>
                 ) : (
                   <>
                     <Check className="w-3.5 h-3.5" />
-                    <span>Lưu Ghi Chú</span>
+                    <span>Lưu ghi chú</span>
                   </>
                 )}
               </button>
@@ -266,17 +266,17 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
           {/* Right Column: Markdown Editor Workspace */}
           <div className="lg:col-span-7 flex flex-col space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+              <label className="font-medium block text-foreground">
                 Nội dung ghi chú (Markdown)
               </label>
-              <span className="text-[10px] text-slate-400 lg:hidden">
+              <span className="text-[10px] text-muted-foreground lg:hidden tabular-nums">
                 {wordCount} từ · {charCount} ký tự
               </span>
             </div>
             <MarkdownEditor
               value={content}
               onChange={setContent}
-              placeholder="Nhập nội dung ghi chú (hỗ trợ tiêu đề, danh sách, công việc, trích dẫn, khối code, bảng...)"
+              placeholder="Nhập nội dung ghi chú (hỗ trợ tiêu đề, danh sách, công việc, trích dẫn, khối code, bảng…)"
               minHeightClass="min-h-[200px] lg:min-h-[460px]"
               maxHeightPreviewClass="max-h-[350px] lg:max-h-[460px]"
             />
@@ -284,29 +284,29 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
         </div>
 
         {/* Mobile/Tablet Action Buttons (Shown below editor on screen < LG) */}
-        <div className="lg:hidden pt-3 flex items-center justify-end gap-2.5 border-t border-slate-100 dark:border-slate-800">
+        <div className="lg:hidden pt-3 flex items-center justify-end gap-2.5 border-t border-border">
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors cursor-pointer disabled:opacity-50"
+            className="px-4 py-2.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground font-medium text-xs transition-colors cursor-pointer disabled:opacity-50"
           >
-            Hủy Bỏ
+            Hủy bỏ
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex-1 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="flex-1 py-2.5 rounded-lg bg-foreground text-background font-medium text-xs hover:bg-foreground/90 transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
             {isSubmitting ? (
               <>
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Đang lưu...</span>
+                <span>Đang lưu…</span>
               </>
             ) : (
               <>
                 <Check className="w-3.5 h-3.5" />
-                <span>Lưu Ghi Chú Vào CSDL</span>
+                <span>Lưu ghi chú</span>
               </>
             )}
           </button>

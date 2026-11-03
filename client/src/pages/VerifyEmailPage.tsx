@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Sparkles, Mail, CheckCircle2, ArrowRight, RefreshCw, Edit2, Check, ExternalLink } from 'lucide-react';
+import { Mail, CheckCircle2, ArrowRight, RefreshCw, Edit2, Check, ExternalLink } from 'lucide-react';
 import { apiClient, getErrorMessage } from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
+import { FluxLogo } from '../components/brand/FluxLogo';
 import { toast } from 'sonner';
 
 export const VerifyEmailPage: React.FC = () => {
@@ -105,11 +106,9 @@ export const VerifyEmailPage: React.FC = () => {
       setErrorMsg(null);
 
       try {
-        const res = await verifyEmail(targetEmail, codeToSubmit);
+        await verifyEmail(targetEmail, codeToSubmit);
         setIsSuccess(true);
-        toast.success(res.message || 'Kích hoạt tài khoản thành công!');
-
-        // Automatically navigate to dashboard after a short pleasant delay
+        toast.success('Xác thực tài khoản thành công!');
         setTimeout(() => {
           navigate('/dashboard');
         }, 1500);
@@ -127,44 +126,28 @@ export const VerifyEmailPage: React.FC = () => {
     [verifyEmail, navigate]
   );
 
-  // Auto verify if query code was present in URL link
+  // Auto trigger verification if email & code were present in URL search params
   useEffect(() => {
-    if (queryCode && queryEmail) {
-      if (queryCode.length === 6 && /^\d+$/.test(queryCode)) {
-        setDigits(queryCode.split(''));
-        submitCode(queryEmail, queryCode);
-      }
+    if (queryEmail && queryCode && queryCode.length === 6) {
+      const arr = queryCode.split('').slice(0, 6);
+      setDigits(arr);
+      submitCode(queryEmail, queryCode);
     }
-  }, [queryCode, queryEmail, submitCode]);
+  }, [queryEmail, queryCode, submitCode]);
 
   const handleResend = async () => {
     if (!email) {
-      toast.error('Vui lòng nhập địa chỉ Gmail để gửi lại mã.');
-      return;
-    }
-
-    if (!email.toLowerCase().endsWith('@gmail.com')) {
-      toast.error('Hệ thống chỉ hỗ trợ địa chỉ Gmail (@gmail.com).');
-      return;
-    }
-
-    if (cooldown > 0) {
-      toast.info(`Vui lòng chờ ${cooldown} giây trước khi gửi lại.`);
+      toast.error('Vui lòng nhập email trước khi gửi lại mã.');
       return;
     }
 
     setIsResending(true);
-    setErrorMsg(null);
-
     try {
       await apiClient.post('/auth/resend-verification', { email });
+      toast.success('Mã OTP xác thực mới đã được gửi vào Gmail của bạn!');
       setCooldown(60);
-      setDigits(['', '', '', '', '', '']);
-      inputRefs.current[0]?.focus();
-      toast.success('Mã kích hoạt 6 chữ số mới đã được gửi vào hộp thư Gmail của bạn!');
     } catch (err: any) {
-      const msg = getErrorMessage(err, 'Không thể gửi lại mã kích hoạt.');
-      toast.error(msg);
+      toast.error(getErrorMessage(err, 'Không thể gửi lại mã xác thực.'));
     } finally {
       setIsResending(false);
     }
@@ -188,86 +171,83 @@ export const VerifyEmailPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 font-sans flex flex-col selection:bg-brand selection:text-white page-enter">
+    <div className="min-h-screen bg-background text-foreground font-sans flex flex-col selection:bg-foreground selection:text-background page-enter">
       {/* Header */}
-      <header className="py-6 px-4 max-w-7xl mx-auto w-full flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2.5">
-          <div className="h-9 w-9 rounded-xl bg-brand flex items-center justify-center text-white shadow-sm shadow-brand/30">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-brand to-indigo-600 bg-clip-text text-transparent">
-            Flux
-          </span>
+      <header className="py-4 px-4 max-w-7xl mx-auto w-full flex items-center justify-between border-b border-border/50">
+        <Link to="/" className="flex items-center gap-2.5 focus-ring rounded-md">
+          <FluxLogo variant="compact" size="sm" />
         </Link>
-        <Link to="/login" className="text-xs text-slate-500 hover:text-brand font-semibold">
-          Quay lại Đăng nhập
+        <Link to="/login" className="text-xs text-muted-foreground hover:text-foreground font-medium">
+          Quay lại đăng nhập
         </Link>
       </header>
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-md space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none space-y-6 text-center">
+        <div className="w-full max-w-sm space-y-5">
+          <div className="bg-card text-card-foreground border border-border rounded-xl p-6 sm:p-7 shadow-sm space-y-5 text-center">
             {isSuccess ? (
-              <div className="space-y-4 py-4 animate-in fade-in zoom-in-95 duration-300">
-                <div className="h-16 w-16 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto shadow-sm">
-                  <CheckCircle2 className="w-10 h-10" />
+              <div className="space-y-4 py-4 animate-in fade-in zoom-in-95 duration-200">
+                <div className="h-12 w-12 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/20">
+                  <CheckCircle2 className="w-6 h-6" aria-hidden="true" />
                 </div>
                 <div className="space-y-1">
-                  <h1 className="text-2xl font-bold tracking-tight">Kích hoạt tài khoản thành công!</h1>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
-                    Tài khoản của bạn đã được xác thực an toàn. Đang tự động chuyển hướng vào không gian làm việc...
+                  <h1 className="text-xl font-bold tracking-tight text-foreground">Kích hoạt tài khoản thành công!</h1>
+                  <p className="text-xs text-muted-foreground max-w-xs mx-auto leading-relaxed">
+                    Tài khoản đã được xác thực an toàn. Đang chuyển hướng vào không gian làm việc…
                   </p>
                 </div>
                 <div className="pt-2">
                   <button
+                    type="button"
                     onClick={() => navigate('/dashboard')}
-                    className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-sm shadow-md shadow-brand/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full py-2.5 rounded-lg bg-foreground hover:bg-foreground/90 text-background font-medium text-xs shadow-xs transition-[background-color,opacity] flex items-center justify-center gap-2 cursor-pointer focus-ring"
                   >
-                    <span>Vào Bảng Điều Khiển Ngay</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <span>Vào bảng điều khiển ngay</span>
+                    <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                 </div>
               </div>
             ) : (
               <>
-                <div className="h-14 w-14 rounded-2xl bg-brand/10 text-brand flex items-center justify-center mx-auto shadow-sm">
-                  <Mail className="w-7 h-7" />
+                <div className="h-10 w-10 rounded-lg bg-muted text-foreground flex items-center justify-center mx-auto border border-border">
+                  <Mail className="w-5 h-5" aria-hidden="true" />
                 </div>
 
-                <div className="space-y-2">
-                  <h1 className="text-2xl font-bold tracking-tight">Xác thực Email</h1>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
-                    Mã xác thực gồm 6 chữ số đã được gửi đến hộp thư Gmail của bạn. Vui lòng kiểm tra email và nhập mã vào bên dưới.
+                <div className="space-y-1">
+                  <h1 className="text-xl font-bold tracking-tight text-foreground">Xác thực Email</h1>
+                  <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
+                    Mã xác thực gồm 6 chữ số đã được gửi đến Gmail của bạn. Vui lòng kiểm tra và nhập mã bên dưới.
                   </p>
                 </div>
 
                 {/* Email Display & Inline Editor */}
-                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 text-xs">
+                <div className="p-2.5 rounded-lg bg-muted/40 border border-border text-xs">
                   {isEditingEmail ? (
                     <div className="flex items-center gap-2">
                       <input
                         type="email"
+                        spellCheck={false}
                         value={newEmailInput}
                         onChange={(e) => setNewEmailInput(e.target.value)}
                         placeholder="ten_cua_ban@gmail.com"
-                        className="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
+                        className="flex-1 px-2.5 py-1.5 rounded-md border border-border bg-background text-foreground text-xs focus-ring"
                         autoFocus
                       />
                       <button
                         type="button"
                         onClick={handleSaveEmail}
-                        className="px-3 py-1.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-semibold flex items-center gap-1 cursor-pointer"
+                        className="px-2.5 py-1.5 rounded-md bg-foreground text-background font-medium text-xs flex items-center gap-1 cursor-pointer focus-ring"
                       >
-                        <Check className="w-3.5 h-3.5" />
+                        <Check className="w-3 h-3" aria-hidden="true" />
                         <span>Lưu</span>
                       </button>
                     </div>
                   ) : (
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5 truncate">
-                        <span className="text-slate-400">Gửi đến:</span>
-                        <span className="font-semibold text-slate-800 dark:text-slate-200 truncate font-mono">
+                        <span className="text-muted-foreground">Gửi đến:</span>
+                        <span className="font-semibold text-foreground truncate font-mono">
                           {email || 'Chưa có email'}
                         </span>
                       </div>
@@ -277,9 +257,9 @@ export const VerifyEmailPage: React.FC = () => {
                           setNewEmailInput(email);
                           setIsEditingEmail(true);
                         }}
-                        className="text-brand hover:underline font-medium text-[11px] flex items-center gap-1 ml-2 flex-shrink-0 cursor-pointer"
+                        className="text-foreground hover:underline font-medium text-[11px] flex items-center gap-1 ml-2 flex-shrink-0 cursor-pointer"
                       >
-                        <Edit2 className="w-3 h-3" />
+                        <Edit2 className="w-3 h-3" aria-hidden="true" />
                         <span>Đổi email</span>
                       </button>
                     </div>
@@ -292,16 +272,20 @@ export const VerifyEmailPage: React.FC = () => {
                     href="https://mail.google.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300 text-xs font-medium transition-colors shadow-2xs"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md border border-border bg-background hover:bg-muted text-foreground text-xs font-medium transition-colors"
                   >
                     <span>Mở hộp thư Gmail</span>
-                    <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                    <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" aria-hidden="true" />
                   </a>
                 </div>
 
                 {/* Error Banner */}
                 {errorMsg && (
-                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-medium text-center">
+                  <div
+                    role="alert"
+                    aria-live="polite"
+                    className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-medium text-center"
+                  >
                     {errorMsg}
                   </div>
                 )}
@@ -312,10 +296,10 @@ export const VerifyEmailPage: React.FC = () => {
                     e.preventDefault();
                     submitCode(email, digits.join(''));
                   }}
-                  className="space-y-5"
+                  className="space-y-4"
                 >
                   <div
-                    className="flex items-center justify-center gap-2 sm:gap-3"
+                    className="flex items-center justify-center gap-2"
                     onPaste={handlePaste}
                   >
                     {digits.map((digit, idx) => (
@@ -328,7 +312,8 @@ export const VerifyEmailPage: React.FC = () => {
                         value={digit}
                         onChange={(e) => handleDigitChange(idx, e.target.value)}
                         onKeyDown={(e) => handleKeyDown(idx, e)}
-                        className="w-11 h-14 sm:w-12 sm:h-16 text-center text-xl sm:text-2xl font-bold font-mono rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand shadow-sm transition-all"
+                        aria-label={`Chữ số mã xác thực thứ ${idx + 1}`}
+                        className="w-10 h-12 text-center text-lg font-bold font-mono rounded-lg border border-border bg-background text-foreground focus-ring tabular-nums"
                       />
                     ))}
                   </div>
@@ -336,38 +321,38 @@ export const VerifyEmailPage: React.FC = () => {
                   <button
                     type="submit"
                     disabled={isVerifying || digits.join('').length !== 6}
-                    className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-sm shadow-md shadow-brand/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    className="w-full py-2.5 rounded-lg bg-foreground hover:bg-foreground/90 text-background font-medium text-xs shadow-xs transition-[background-color,opacity] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer focus-ring"
                   >
                     {isVerifying ? (
                       <div className="flex items-center gap-2">
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                        <span>Đang xác thực...</span>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                        <span>Đang xác thực…</span>
                       </div>
                     ) : (
                       <>
-                        <span>Xác Nhận Kích Hoạt</span>
-                        <ArrowRight className="w-4 h-4" />
+                        <span>Xác nhận kích hoạt</span>
+                        <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                       </>
                     )}
                   </button>
                 </form>
 
                 {/* Resend Cooldown Section */}
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+                <div className="pt-2 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
                   <span>Chưa nhận được email?</span>
                   {cooldown > 0 ? (
-                    <span className="text-slate-400 font-medium">
-                      Gửi lại sau <strong className="font-mono text-slate-600 dark:text-slate-300">{cooldown}s</strong>
+                    <span className="text-muted-foreground font-medium">
+                      Gửi lại sau <strong className="font-mono text-foreground">{cooldown}s</strong>
                     </span>
                   ) : (
                     <button
                       type="button"
                       onClick={handleResend}
                       disabled={isResending}
-                      className="text-brand font-semibold hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                      className="text-foreground font-semibold hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
                     >
-                      <RefreshCw className={`w-3.5 h-3.5 ${isResending ? 'animate-spin' : ''}`} />
-                      <span>{isResending ? 'Đang gửi...' : 'Gửi lại mã OTP'}</span>
+                      <RefreshCw className={`w-3.5 h-3.5 ${isResending ? 'animate-spin' : ''}`} aria-hidden="true" />
+                      <span>{isResending ? 'Đang gửi…' : 'Gửi lại mã OTP'}</span>
                     </button>
                   )}
                 </div>

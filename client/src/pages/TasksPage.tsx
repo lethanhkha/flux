@@ -16,8 +16,6 @@ import {
   RotateCcw,
   ArrowUpDown,
   Clock,
-  Flame,
-  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PaginationControl, PaginationMeta } from '../components/common/PaginationControl';
@@ -855,32 +853,28 @@ export const TasksPage: React.FC = () => {
   return (
     <div className="space-y-6">
         {/* Header Controls */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-card border border-border p-5 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/10 text-brand text-xs font-bold mb-2">
-              <CheckSquare className="w-3.5 h-3.5" />
-              <span>Tiêu Điểm & Mục Tiêu Hành Động</span>
-            </div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-              Làm Chủ Tiến Độ & Năng Suất
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              Công việc
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              To-do list thông minh với gắn thẻ phân loại, chu kỳ lặp lại và tối ưu hóa hiệu suất cá nhân
+            <p className="text-xs text-muted-foreground mt-1">
+              Quản lý mục tiêu, phân loại thẻ và theo dõi tiến độ thực hiện
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             {/* View Switcher */}
-            <div className="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold">
+            <div className="flex items-center p-0.5 rounded-md border border-border/40 bg-muted text-xs font-medium">
               <Tooltip content="Chế độ hiển thị danh sách chi tiết công việc">
                 <button
                   type="button"
                   onClick={() => setViewMode('list')}
-                  className={`p-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer transition-all ${
-                    viewMode === 'list' ? 'bg-white dark:bg-slate-900 text-brand shadow-sm font-bold' : 'text-slate-500'
+                  className={`p-1.5 rounded-sm flex items-center gap-1.5 cursor-pointer transition-[color,background-color] ${
+                    viewMode === 'list' ? 'bg-background text-foreground shadow-xs font-medium' : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  <List className="w-4 h-4" />
+                  <List className="w-3.5 h-3.5" />
                   <span>Danh Sách</span>
                 </button>
               </Tooltip>
@@ -888,11 +882,11 @@ export const TasksPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setViewMode('kanban')}
-                  className={`p-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer transition-all ${
-                    viewMode === 'kanban' ? 'bg-white dark:bg-slate-900 text-brand shadow-sm font-bold' : 'text-slate-500'
+                  className={`p-1.5 rounded-sm flex items-center gap-1.5 cursor-pointer transition-[color,background-color] ${
+                    viewMode === 'kanban' ? 'bg-background text-foreground shadow-xs font-medium' : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  <Layers className="w-4 h-4" />
+                  <Layers className="w-3.5 h-3.5" />
                   <span>Kanban</span>
                 </button>
               </Tooltip>
@@ -900,11 +894,11 @@ export const TasksPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setViewMode('planner')}
-                  className={`p-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer transition-all ${
-                    viewMode === 'planner' ? 'bg-white dark:bg-slate-900 text-brand shadow-sm font-bold' : 'text-slate-500'
+                  className={`p-1.5 rounded-sm flex items-center gap-1.5 cursor-pointer transition-[color,background-color] ${
+                    viewMode === 'planner' ? 'bg-background text-foreground shadow-xs font-medium' : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  <CalendarDays className="w-4 h-4" />
+                  <CalendarDays className="w-3.5 h-3.5" />
                   <span>Kế Hoạch Tuần</span>
                 </button>
               </Tooltip>
@@ -914,9 +908,9 @@ export const TasksPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(true)}
-                className="px-4 py-2 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/20 transition-all flex items-center gap-1.5 cursor-pointer"
+                className="h-8 px-3 rounded-md bg-foreground text-background font-medium text-xs hover:opacity-90 active:scale-[0.98] transition-[opacity,transform] flex items-center gap-1.5 cursor-pointer"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5" />
                 <span>Thêm Việc</span>
               </button>
             </Tooltip>
@@ -924,13 +918,13 @@ export const TasksPage: React.FC = () => {
         </div>
 
         {/* Filters & Tags Dual Stacked Bars */}
-        <div className="space-y-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-3xl shadow-xs">
+        <div className="space-y-3 bg-card border border-border p-4 rounded-lg">
           {/* Top Search Bar & Focus Mode Toggle */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <SearchInput
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="Tìm kiếm công việc theo tiêu đề hoặc mô tả..."
+              placeholder="Tìm kiếm công việc theo tiêu đề hoặc mô tả…"
               isLoading={isLoading}
               className="flex-1 max-w-md"
               ariaLabel="Tìm kiếm công việc"
@@ -944,36 +938,31 @@ export const TasksPage: React.FC = () => {
                   value={sortBy}
                   onChange={handleSortChange}
                   size="sm"
-                  icon={<ArrowUpDown className="w-3.5 h-3.5 text-brand" />}
+                  icon={<ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground" />}
                   options={[
                     {
                       value: 'default',
                       label: 'Ưu tiên & Hạn chót (Mặc định)',
-                      icon: <Sparkles className="w-3.5 h-3.5 text-amber-500" />,
                       description: 'Khẩn cấp lên đầu, hạn chót gần nhất',
                     },
                     {
                       value: 'dueDate',
                       label: 'Hạn chót gần nhất',
-                      icon: <Clock className="w-3.5 h-3.5 text-brand" />,
                       description: 'Sắp hết hạn xếp lên trước',
                     },
                     {
                       value: 'priority',
                       label: 'Mức ưu tiên cao nhất',
-                      icon: <Flame className="w-3.5 h-3.5 text-rose-500" />,
                       description: 'Khẩn cấp > Cao > Trung bình > Thấp',
                     },
                     {
                       value: 'createdAt',
                       label: 'Mới tạo gần đây',
-                      icon: <Calendar className="w-3.5 h-3.5 text-emerald-500" />,
                       description: 'Công việc tạo mới nhất lên trước',
                     },
                     {
                       value: 'title',
                       label: 'Tên việc (A-Z)',
-                      icon: <List className="w-3.5 h-3.5 text-indigo-500" />,
                       description: 'Sắp xếp theo thứ tự bảng chữ cái',
                     },
                   ]}
@@ -992,16 +981,16 @@ export const TasksPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleToggleHideCompleted}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer border ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-[color,background-color,border-color] cursor-pointer border ${
                     effectiveHideCompleted
-                      ? 'bg-brand/10 border-brand/40 text-brand font-bold shadow-xs'
-                      : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      ? 'border-border bg-foreground text-background'
+                      : 'border-border bg-secondary hover:bg-muted text-foreground'
                   }`}
                 >
                   {effectiveHideCompleted ? (
-                    <EyeOff className="w-3.5 h-3.5 text-brand" />
+                    <EyeOff className="w-3.5 h-3.5" />
                   ) : (
-                    <Eye className="w-3.5 h-3.5 text-slate-400" />
+                    <Eye className="w-3.5 h-3.5 text-muted-foreground" />
                   )}
                   <span>
                     {effectiveHideCompleted ? 'Đang ẩn việc đã xong' : 'Ẩn việc đã xong'}
@@ -1012,8 +1001,8 @@ export const TasksPage: React.FC = () => {
           </div>
 
           {/* Bar 1: Status & Priority Filter Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar-x pb-1 pt-0.5 text-xs scroll-smooth">
-            <span className="text-xs text-slate-400 font-semibold flex items-center gap-1 pl-1 flex-shrink-0 mr-1">
+          <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar-x pb-1 pt-0.5 text-xs scroll-smooth">
+            <span className="text-xs text-muted-foreground font-medium flex items-center gap-1 pl-1 flex-shrink-0 mr-1">
               Trạng thái:
             </span>
             {(['ALL', 'TODAY', 'OVERDUE', 'URGENT', 'DONE'] as const).map((key) => {
@@ -1021,10 +1010,10 @@ export const TasksPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setFilter(key)}
-                  className={`px-3.5 py-1.5 rounded-xl border transition-all cursor-pointer flex-shrink-0 ${
+                  className={`px-2.5 py-1 rounded-md border text-xs transition-[color,background-color,border-color] cursor-pointer flex-shrink-0 ${
                     filter === key
-                      ? 'bg-brand text-white border-brand font-bold shadow-sm'
-                      : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand/40'
+                      ? 'border-border bg-foreground text-background font-medium'
+                      : 'border-border/60 bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground'
                   }`}
                 >
                   {key === 'ALL' && `Tất cả (${pagination.total})`}
@@ -1315,42 +1304,42 @@ export const TasksPage: React.FC = () => {
         {/* List View */}
         {viewMode === 'list' && (
           isLoading ? (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-3">
+            <div className="bg-card border border-border rounded-xl p-4 shadow-xs space-y-3">
               {[1, 2, 3, 4].map((item) => (
                 <div
                   key={item}
-                  className="p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4 animate-pulse"
+                  className="p-3.5 rounded-lg border border-border flex items-center justify-between gap-4 animate-pulse"
                 >
                   <div className="flex items-center gap-3.5 flex-1">
-                    <div className="w-5 h-5 rounded-md bg-slate-200 dark:bg-slate-800" />
+                    <div className="w-5 h-5 rounded-md bg-muted" />
                     <div className="space-y-1.5 flex-1">
-                      <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3" />
-                      <div className="h-3 bg-slate-100 dark:bg-slate-850 rounded w-1/2" />
+                      <div className="h-4 bg-muted rounded w-1/3" />
+                      <div className="h-3 bg-muted/60 rounded w-1/2" />
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="h-5 w-16 bg-slate-200 dark:bg-slate-800 rounded-full" />
-                    <div className="h-4 w-20 bg-slate-100 dark:bg-slate-850 rounded" />
+                    <div className="h-5 w-16 bg-muted rounded-full" />
+                    <div className="h-4 w-20 bg-muted/60 rounded" />
                   </div>
                 </div>
               ))}
             </div>
           ) : displayedTasks.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-10 text-center space-y-4">
+            <div className="bg-card border border-border rounded-xl p-10 text-center space-y-4">
               {searchQuery.trim() !== '' ? (
                 <>
                   <EmptySearch width={140} height={110} />
-                  <h3 className="font-bold text-sm text-slate-700 dark:text-slate-300">
+                  <h3 className="font-semibold text-sm text-foreground">
                     Không tìm thấy công việc nào
                   </h3>
-                  <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                    Không có công việc nào khớp với từ khóa tìm kiếm &quot;{searchQuery}&quot;. Thử tìm kiếm với từ khóa khác hoặc xóa bộ lọc.
+                  <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                    Không có công việc nào khớp với từ khóa &quot;{searchQuery}&quot;. Thử tìm kiếm với từ khóa khác hoặc xóa bộ lọc.
                   </p>
                   <div className="pt-2">
                     <button
                       type="button"
                       onClick={() => setSearchQuery('')}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-foreground text-xs font-medium transition-colors cursor-pointer"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                       <span>Xóa từ khóa tìm kiếm</span>
@@ -1360,14 +1349,14 @@ export const TasksPage: React.FC = () => {
               ) : (
                 <>
                   <EmptyTasks width={170} height={135} />
-                  <h3 className="font-bold text-sm text-slate-700 dark:text-slate-300">
+                  <h3 className="font-semibold text-sm text-foreground">
                     {filter === 'ALL' && selectedTags.length === 0 && excludedTags.length === 0
                       ? 'Chưa có công việc nào trong danh sách'
                       : 'Không tìm thấy công việc nào khớp bộ lọc'}
                   </h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-muted-foreground">
                     {filter === 'ALL' && selectedTags.length === 0 && excludedTags.length === 0
-                      ? 'Tạo ngay công việc đầu tiên để lập kế hoạch và theo dõi năng suất cá nhân!'
+                      ? 'Tạo ngay công việc đầu tiên để lập kế hoạch và theo dõi năng suất cá nhân.'
                       : 'Thử chuyển sang bộ lọc khác hoặc bỏ chọn / bỏ ẩn thẻ để hiển thị thêm kết quả.'}
                   </p>
                   {tasks.length === 0 && (
@@ -1375,10 +1364,10 @@ export const TasksPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setIsAddModalOpen(true)}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold shadow-sm transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-foreground text-background text-xs font-medium hover:bg-foreground/90 transition-colors cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        <span>Tạo Công Việc Đầu Tiên</span>
+                        <span>Tạo công việc mới</span>
                       </button>
                     </div>
                   )}
@@ -1387,7 +1376,7 @@ export const TasksPage: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-3">
+              <div className="bg-card border border-border rounded-xl p-4 shadow-xs space-y-2.5">
                 {displayedTasks.map((t) => {
                   const hasSubtasks = Boolean(t.subtasks && t.subtasks.length > 0);
                   const isExpanded = expandedTaskIds.has(t.id);
@@ -1425,17 +1414,17 @@ export const TasksPage: React.FC = () => {
 
               {/* Gentle Focus Mode Banner */}
               {effectiveHideCompleted && (
-                <div className="py-2.5 px-4 rounded-2xl bg-brand/5 dark:bg-brand/10 border border-brand/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                  <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-                    <EyeOff className="w-3.5 h-3.5 text-brand flex-shrink-0" />
-                    <span className="font-medium">
+                <div className="py-2.5 px-4 rounded-lg bg-muted/50 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <EyeOff className="w-3.5 h-3.5 text-foreground flex-shrink-0" />
+                    <span className="font-normal">
                       Chế độ tập trung đang bật: Các công việc đã hoàn thành được ẩn để bạn xử lý việc còn tồn đọng.
                     </span>
                   </div>
                   <button
                     type="button"
                     onClick={handleToggleHideCompleted}
-                    className="text-brand hover:underline font-bold text-xs cursor-pointer self-start sm:self-auto flex items-center gap-1"
+                    className="text-foreground hover:underline font-medium text-xs cursor-pointer self-start sm:self-auto flex items-center gap-1"
                   >
                     <Eye className="w-3 h-3" />
                     <span>Hiện lại việc đã xong</span>
@@ -1449,19 +1438,19 @@ export const TasksPage: React.FC = () => {
         {/* Kanban Board View with HTML5 Drag & Drop */}
         {viewMode === 'kanban' && (
           searchQuery.trim() !== '' && tasks.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-10 text-center space-y-4">
+            <div className="bg-card border border-border rounded-xl p-10 text-center space-y-4">
               <EmptySearch width={140} height={110} />
-              <h3 className="font-bold text-sm text-slate-700 dark:text-slate-300">
+              <h3 className="font-semibold text-sm text-foreground">
                 Không tìm thấy công việc nào trong bảng Kanban
               </h3>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                 Không có công việc nào khớp với từ khóa tìm kiếm &quot;{searchQuery}&quot;. Thử tìm kiếm với từ khóa khác hoặc xóa bộ lọc.
               </p>
               <div className="pt-2">
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-foreground text-xs font-medium transition-colors cursor-pointer"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Xóa từ khóa tìm kiếm</span>
@@ -1470,16 +1459,16 @@ export const TasksPage: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="text-xs text-slate-400 flex items-center justify-between px-1">
-                <span>💡 Mẹo: Cầm chuột kéo thả thẻ công việc qua lại giữa các cột để đổi trạng thái tức thì.</span>
-                <span className="font-semibold text-slate-500">
+              <div className="text-xs text-muted-foreground flex items-center justify-between px-1">
+                <span>Kéo thả thẻ công việc giữa các cột để đổi trạng thái tức thì.</span>
+                <span className="font-medium text-foreground tabular-nums">
                   Đang hiển thị {tasks.length} công việc
                   {effectiveHideCompleted && ' (Đã thu gọn cột Hoàn thành)'}
                 </span>
               </div>
 
               <div
-                className={`grid grid-cols-1 gap-6 ${
+                className={`grid grid-cols-1 gap-4 ${
                   effectiveHideCompleted ? 'md:grid-cols-12' : 'md:grid-cols-3'
                 }`}
               >
@@ -1495,28 +1484,28 @@ export const TasksPage: React.FC = () => {
                         onDragOver={(e) => handleDragOver(e, status)}
                         onDragLeave={handleDragLeave}
                         onDrop={(e) => handleDrop(e, status)}
-                        className={`p-3 rounded-3xl border transition-all min-h-[360px] flex flex-col items-center justify-between text-center md:col-span-2 ${
+                        className={`p-3 rounded-xl border transition-[background-color,border-color] duration-150 min-h-[360px] flex flex-col items-center justify-between text-center md:col-span-2 ${
                           isDragOver
-                            ? 'bg-emerald-500/10 border-2 border-dashed border-emerald-500 ring-4 ring-emerald-500/20'
-                            : 'bg-slate-100/70 dark:bg-slate-900/40 border-dashed border-slate-200/80 dark:border-slate-800'
+                            ? 'bg-muted/80 border-foreground ring-2 ring-foreground/20'
+                            : 'bg-card/50 border-dashed border-border'
                         }`}
                       >
                         <div className="space-y-2.5 py-2 flex flex-col items-center">
-                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-xs" />
-                          <div className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider [writing-mode:vertical-rl] rotate-180 py-2">
-                            Đã Hoàn Thành ({columnTasks.length})
+                          <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                          <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider [writing-mode:vertical-rl] rotate-180 py-2 tabular-nums">
+                            Đã hoàn thành ({columnTasks.length})
                           </div>
                         </div>
 
                         <div className="space-y-2 py-3 flex flex-col items-center w-full">
-                          <div className="text-[10px] text-slate-400 font-medium px-1 leading-tight">
+                          <div className="text-[10px] text-muted-foreground font-normal px-1 leading-tight">
                             {isDragOver ? 'Thả để hoàn thành' : 'Kéo thả vào đây để hoàn tất'}
                           </div>
                           <Tooltip content="Mở rộng cột Đã hoàn thành">
                             <button
                               type="button"
                               onClick={handleToggleHideCompleted}
-                              className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:text-brand hover:border-brand transition-all cursor-pointer shadow-xs"
+                              className="p-1.5 rounded-lg bg-muted border border-border text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
                               aria-label="Mở rộng cột Đã hoàn thành"
                             >
                               <Eye className="w-4 h-4" />
@@ -1536,10 +1525,10 @@ export const TasksPage: React.FC = () => {
                       onDragOver={(e) => handleDragOver(e, status)}
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, status)}
-                      className={`p-4 rounded-3xl space-y-3 border transition-all min-h-[360px] flex flex-col ${colSpanClass} ${
+                      className={`p-3.5 rounded-xl space-y-3 border transition-[background-color,border-color] duration-150 min-h-[360px] flex flex-col ${colSpanClass} ${
                         isDragOver
-                          ? 'bg-brand/5 border-2 border-dashed border-brand ring-4 ring-brand/10'
-                          : 'bg-slate-100/70 dark:bg-slate-900/60 border-slate-200/60 dark:border-slate-800'
+                          ? 'bg-muted/60 border-foreground ring-2 ring-foreground/20 shadow-xs'
+                          : 'bg-card/60 border-border'
                       }`}
                     >
                       <div className="flex items-center justify-between px-2 font-bold text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400 pb-1 border-b border-slate-200/50 dark:border-slate-800/50">
@@ -1571,8 +1560,8 @@ export const TasksPage: React.FC = () => {
                             }`}
                           />
                         </div>
-                        <span className="h-5 w-5 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-700 dark:text-slate-300 shadow-xs">
-                          {isLoading ? '...' : columnTasks.length}
+                        <span className="h-5 w-5 rounded bg-muted flex items-center justify-center text-[10px] font-medium text-foreground tabular-nums">
+                          {isLoading ? '…' : columnTasks.length}
                         </span>
                       </div>
 
@@ -1710,19 +1699,19 @@ export const TasksPage: React.FC = () => {
                 required
                 value={newTaskTitle}
                 onChange={(e) => setNewTaskTitle(e.target.value)}
-                placeholder="VD: Kiểm tra và nộp báo cáo thuế..."
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
+                placeholder="VD: Kiểm tra và nộp báo cáo thuế…"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-muted/40 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
 
             <div>
-              <label className="font-semibold block mb-1">Mô tả chi tiết (Tùy chọn)</label>
+              <label className="font-medium block mb-1 text-foreground">Mô tả chi tiết (Tùy chọn)</label>
               <textarea
                 rows={2}
                 value={newTaskDescription}
                 onChange={(e) => setNewTaskDescription(e.target.value)}
-                placeholder="Nhập ghi chú hoặc yêu cầu công việc..."
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
+                placeholder="Nhập ghi chú hoặc yêu cầu công việc…"
+                className="w-full px-3.5 py-2 rounded-lg border border-border bg-muted/40 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
 
@@ -1839,7 +1828,7 @@ export const TasksPage: React.FC = () => {
                 availableTags={availableTags}
                 selectedTags={newTaskTags}
                 onChange={setNewTaskTags}
-                placeholder="Chọn hoặc gõ tên thẻ mới..."
+                placeholder="Chọn hoặc gõ tên thẻ mới…"
               />
 
               {/* Suggested tags */}
@@ -2019,7 +2008,7 @@ export const TasksPage: React.FC = () => {
                         handleAddDraftSubtask();
                       }
                     }}
-                    placeholder="Gõ việc con và nhấn Enter..."
+                    placeholder="Gõ việc con và nhấn Enter…"
                     className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-brand font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
                   />
 
@@ -2146,9 +2135,9 @@ export const TasksPage: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all disabled:opacity-50 cursor-pointer"
+              className="w-full py-2.5 rounded-lg bg-foreground text-background font-medium text-xs hover:bg-foreground/90 transition-colors disabled:opacity-50 cursor-pointer"
             >
-              {isSubmitting ? 'Đang tạo...' : 'Tạo Công Việc'}
+              {isSubmitting ? 'Đang tạo…' : 'Tạo công việc'}
             </button>
           </form>
         </Modal>

@@ -174,20 +174,20 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
       ariaLabelledBy="add-tx-modal-title"
       maxWidth="md"
     >
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between pb-3 border-b border-border/60">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center font-bold">
+            <div className="h-7 w-7 rounded-md border border-border bg-muted flex items-center justify-center font-bold text-foreground">
               <Plus className="w-4 h-4" />
             </div>
-            <h3 id="add-tx-modal-title" className="font-bold text-base">Ghi Nhận Giao Dịch</h3>
+            <h3 id="add-tx-modal-title" className="font-semibold text-base text-foreground">Ghi Nhận Giao Dịch</h3>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Đóng ghi nhận giao dịch"
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-[background-color] cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
@@ -197,10 +197,10 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             <button
               type="button"
               onClick={() => setTxType('EXPENSE')}
-              className={`py-2 rounded-xl font-bold transition-all cursor-pointer ${
+              className={`py-2 rounded-md font-medium text-xs transition-[color,background-color,border-color] cursor-pointer border ${
                 txType === 'EXPENSE'
-                  ? 'bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700'
+                  ? 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400 font-semibold'
+                  : 'bg-muted/40 border-border/60 text-muted-foreground hover:text-foreground'
               }`}
             >
               Khoản Chi Tiền (-)
@@ -208,10 +208,10 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             <button
               type="button"
               onClick={() => setTxType('INCOME')}
-              className={`py-2 rounded-xl font-bold transition-all cursor-pointer ${
+              className={`py-2 rounded-md font-medium text-xs transition-[color,background-color,border-color] cursor-pointer border ${
                 txType === 'INCOME'
-                  ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700'
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-semibold'
+                  : 'bg-muted/40 border-border/60 text-muted-foreground hover:text-foreground'
               }`}
             >
               Khoản Thu Tiền (+)
@@ -220,7 +220,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
           <div>
             <div className="flex items-center gap-1.5 mb-1.5">
-              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+              <label className="font-medium block text-foreground">
                 Chọn Ví
               </label>
               <InfoTooltip content="Chọn ví hoặc tài khoản nguồn để ghi nhận biến động số dư." />
@@ -234,14 +234,14 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 color: w.color,
                 badge: formatCurrency(w.balance),
               }))}
-              icon={<WalletIcon className="w-4 h-4 text-brand" />}
+              icon={<WalletIcon className="w-4 h-4 text-muted-foreground" />}
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
-                <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                <label className="font-medium block text-foreground">
                   Số tiền (VND)
                 </label>
                 <InfoTooltip content="Số tiền giao dịch thực tế tính bằng Việt Nam Đồng (> 0)." />
@@ -254,13 +254,13 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 placeholder="VD: 100000"
                 value={txAmount}
                 onChange={(e) => setTxAmount(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-base font-extrabold tabular-nums focus:outline-none focus:ring-2 focus:ring-brand font-medium"
+                className="w-full px-3 py-2 rounded-md border border-input bg-background text-base font-bold tabular-nums focus-ring"
               />
             </div>
 
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
-                <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                <label className="font-medium block text-foreground">
                   Ngày giao dịch
                 </label>
                 <InfoTooltip content="Ngày phát sinh khoản thu/chi để ghi nhận vào đúng chu kỳ báo cáo." />
@@ -270,32 +270,32 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 required
                 value={txDate}
                 onChange={(e) => setTxDate(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-semibold focus:outline-none focus:ring-2 focus:ring-brand"
+                className="w-full px-3 py-2 rounded-md border border-input bg-background font-medium focus-ring"
               />
             </div>
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1.5 text-slate-700 dark:text-slate-300">
+            <div className="flex items-center justify-between mb-1.5 text-foreground">
               <div className="flex items-center gap-1.5">
-                <label className="font-semibold">Danh mục</label>
+                <label className="font-medium">Danh mục</label>
                 <InfoTooltip content="Phân loại thu chi giúp bạn phân tích thói quen tài chính và kiểm soát ngân sách." />
               </div>
               <button
                 type="button"
                 onClick={onOpenCategoryModal}
-                className="text-brand hover:underline text-[11px] font-medium cursor-pointer"
+                className="text-muted-foreground hover:text-foreground text-[11px] font-medium cursor-pointer"
               >
                 + Quản lý danh mục
               </button>
             </div>
             {filteredCategories.length === 0 ? (
-              <div className="p-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs flex items-center justify-between">
-                <span className="text-slate-500">Chưa có danh mục cho khoản này.</span>
+              <div className="p-3 rounded-md border border-dashed border-border bg-muted/30 text-xs flex items-center justify-between">
+                <span className="text-muted-foreground">Chưa có danh mục cho khoản này.</span>
                 <button
                   type="button"
                   onClick={onOpenCategoryModal}
-                  className="font-bold text-brand hover:underline cursor-pointer"
+                  className="font-semibold text-foreground hover:underline cursor-pointer"
                 >
                   + Tạo danh mục ngay
                 </button>
@@ -309,14 +309,14 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                   label: c.name,
                   color: c.color,
                 }))}
-                icon={<TagIcon className="w-4 h-4 text-brand" />}
+                icon={<TagIcon className="w-4 h-4 text-muted-foreground" />}
               />
             )}
           </div>
 
           <div>
             <div className="flex items-center gap-1.5 mb-1.5">
-              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+              <label className="font-medium block text-foreground">
                 Ghi chú
               </label>
               <InfoTooltip content="Mô tả cụ thể giao dịch này để dễ nhớ hoặc tra cứu sau này (không bắt buộc)." />
@@ -325,17 +325,17 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               type="text"
               value={txNote}
               onChange={(e) => setTxNote(e.target.value)}
-              placeholder="VD: Ăn tối với bạn, thanh toán hóa đơn..."
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium"
+              placeholder="VD: Ăn tối với bạn, thanh toán hóa đơn…"
+              className="w-full px-3 py-2 rounded-md border border-input bg-background font-normal focus-ring"
             />
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all cursor-pointer disabled:opacity-50"
+            className="w-full h-10 rounded-md bg-foreground text-background font-medium text-xs hover:opacity-90 active:scale-[0.99] transition-[opacity,transform] cursor-pointer disabled:opacity-50"
           >
-            {isSubmitting ? 'Đang lưu...' : 'Lưu Giao Dịch'}
+            {isSubmitting ? 'Đang lưu…' : 'Lưu Giao Dịch'}
           </button>
         </form>
     </Modal>

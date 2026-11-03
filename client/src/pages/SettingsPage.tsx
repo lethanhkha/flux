@@ -130,41 +130,37 @@ export const SettingsPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
         {/* Header */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm space-y-1.5">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/10 text-brand text-xs font-bold mb-1">
-            <Shield className="w-3.5 h-3.5" />
-            <span>Trung Tâm An Toàn & Định Danh Số</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            Bảo Mật & Thiết Lập Hệ Thống
+        <div className="bg-card border border-border p-5 rounded-lg space-y-1">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Cài đặt
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Kiểm soát an toàn tuyệt đối, cấu hình xác thực đa yếu tố (2FA TOTP), quản lý phiên đăng nhập và định danh cá nhân
+          <p className="text-xs text-muted-foreground">
+            Quản lý hồ sơ cá nhân, cấu hình xác thực 2 bước (2FA) và bảo mật tài khoản
           </p>
         </div>
 
         {/* Profile Card */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-            <User className="w-5 h-5 text-brand" />
-            <h2 className="font-bold text-sm">Thông Tin Tài Khoản</h2>
+        <div className="bg-card border border-border rounded-lg p-5 space-y-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-border/60">
+            <User className="w-4 h-4 text-muted-foreground" />
+            <h2 className="font-semibold text-sm text-foreground">Thông Tin Tài Khoản</h2>
           </div>
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="h-14 w-14 rounded-2xl bg-brand/20 text-brand flex items-center justify-center font-extrabold text-xl">
+              <div className="h-12 w-12 rounded-lg border border-border bg-muted flex items-center justify-center font-bold text-lg text-foreground">
                 {user?.fullName?.charAt(0) || 'F'}
               </div>
               <div>
-                <div className="font-bold text-base text-slate-900 dark:text-slate-100">
+                <div className="font-semibold text-sm text-foreground">
                   {user?.fullName || 'Tài khoản Flux'}
                 </div>
-                <div className="text-xs text-slate-500">{user?.email || 'Chưa cập nhật email'}</div>
+                <div className="text-xs text-muted-foreground">{user?.email || 'Chưa cập nhật email'}</div>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-semibold">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full border border-border bg-muted text-muted-foreground font-medium">
                     Đã xác thực email
                   </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand/10 text-brand font-semibold">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full border border-border bg-muted text-muted-foreground font-medium">
                     Tài khoản chính thức
                   </span>
                 </div>
@@ -174,29 +170,29 @@ export const SettingsPage: React.FC = () => {
         </div>
 
         {/* Security & 2FA Section */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-5">
-          <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-            <Shield className="w-5 h-5 text-emerald-500" />
-            <h2 className="font-bold text-sm">Xác Thực 2 Bước (2FA)</h2>
+        <div className="bg-card border border-border rounded-lg p-5 space-y-5">
+          <div className="flex items-center gap-2 pb-2 border-b border-border/60">
+            <Shield className="w-4 h-4 text-muted-foreground" />
+            <h2 className="font-semibold text-sm text-foreground">Xác Thực 2 Bước (2FA)</h2>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3.5 rounded-md bg-muted/40 border border-border">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-xs text-slate-900 dark:text-slate-100">
+                <span className="font-medium text-xs text-foreground">
                   Ứng dụng xác thực Authenticator
                 </span>
                 {twoFactorEnabled ? (
-                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 font-bold">
+                  <span className="text-[10px] px-1.5 py-0.2 rounded font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                     Đang kích hoạt
                   </span>
                 ) : (
-                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-200 dark:bg-slate-800 text-slate-500 font-medium">
+                  <span className="text-[10px] px-1.5 py-0.2 rounded font-medium border border-border bg-muted text-muted-foreground">
                     Chưa kích hoạt
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-slate-500 max-w-lg">
+              <p className="text-[11px] text-muted-foreground max-w-lg">
                 Yêu cầu mã số 6 chữ số từ Google Authenticator hoặc 1Password mỗi khi đăng nhập trên thiết bị mới.
               </p>
             </div>
@@ -206,17 +202,17 @@ export const SettingsPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsDisable2FAModalOpen(true)}
-                  className="px-3.5 py-2 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 transition-all cursor-pointer"
+                  className="px-3 py-1.5 rounded-md text-xs font-medium text-rose-500 hover:bg-rose-500/10 border border-rose-500/30 transition-[background-color] cursor-pointer"
                 >
                   Tắt 2FA
                 </button>
               )}
               <button
                 onClick={handleOpen2FASetup}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-[opacity,transform] cursor-pointer ${
                   twoFactorEnabled
-                    ? 'border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    : 'bg-brand hover:bg-brand-hover text-white shadow-md shadow-brand/20'
+                    ? 'border border-border bg-secondary hover:bg-muted text-foreground'
+                    : 'bg-foreground text-background hover:opacity-90 active:scale-[0.98]'
                 }`}
               >
                 {twoFactorEnabled ? 'Cấu hình lại' : 'Kích Hoạt 2FA Ngay'}
@@ -225,46 +221,49 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           {/* Change Password */}
-          <div className="pt-2 space-y-4">
+          <div className="pt-2 space-y-3">
             <div className="flex items-center gap-2">
-              <KeyRound className="w-4 h-4 text-brand" />
-              <h3 className="font-bold text-xs">Đổi Mật Khẩu Đăng Nhập</h3>
+              <KeyRound className="w-3.5 h-3.5 text-muted-foreground" />
+              <h3 className="font-semibold text-xs text-foreground">Đổi Mật Khẩu Đăng Nhập</h3>
             </div>
 
             <form onSubmit={handleChangePassword} className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               <div>
-                <label className="font-semibold block mb-1">Mật khẩu hiện tại</label>
+                <label className="font-medium block mb-1 text-foreground">Mật khẩu hiện tại</label>
                 <input
                   type="password"
                   required
+                  autoComplete="current-password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-mono focus:outline-none focus:ring-2 focus:ring-brand transition-all"
+                  className="w-full px-3 py-2 rounded-md border border-input bg-background font-mono focus-ring"
                 />
               </div>
 
               <div>
-                <label className="font-semibold block mb-1">Mật khẩu mới</label>
+                <label className="font-medium block mb-1 text-foreground">Mật khẩu mới</label>
                 <input
                   type="password"
                   required
+                  autoComplete="new-password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Mật khẩu mới..."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-mono focus:outline-none focus:ring-2 focus:ring-brand transition-all"
+                  placeholder="Nhập mật khẩu mới…"
+                  className="w-full px-3 py-2 rounded-md border border-input bg-background font-mono focus-ring"
                 />
               </div>
 
               <div>
-                <label className="font-semibold block mb-1">Nhập lại mật khẩu</label>
+                <label className="font-medium block mb-1 text-foreground">Nhập lại mật khẩu</label>
                 <input
                   type="password"
                   required
+                  autoComplete="new-password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Xác nhận lại..."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-mono focus:outline-none focus:ring-2 focus:ring-brand transition-all"
+                  placeholder="Xác nhận mật khẩu mới…"
+                  className="w-full px-3 py-2 rounded-md border border-input bg-background font-mono focus-ring"
                 />
               </div>
 
@@ -272,9 +271,9 @@ export const SettingsPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isChangingPass}
-                  className="px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/20 transition-all cursor-pointer"
+                  className="h-9 px-4 rounded-md bg-foreground text-background font-medium text-xs hover:opacity-90 active:scale-[0.98] transition-[opacity,transform] cursor-pointer disabled:opacity-50"
                 >
-                  {isChangingPass ? 'Đang cập nhật...' : 'Cập Nhật Mật Khẩu Mới'}
+                  {isChangingPass ? 'Đang cập nhật…' : 'Cập Nhật Mật Khẩu Mới'}
                 </button>
               </div>
             </form>
@@ -282,47 +281,47 @@ export const SettingsPage: React.FC = () => {
         </div>
 
         {/* Active Sessions */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+        <div className="bg-card border border-border rounded-lg p-5 space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-border/60">
             <div className="flex items-center gap-2">
-              <Laptop className="w-5 h-5 text-brand" />
-              <h2 className="font-bold text-sm">Thiết Bị & Phiên Đăng Nhập Hoạt Động</h2>
+              <Laptop className="w-4 h-4 text-muted-foreground" />
+              <h2 className="font-semibold text-sm text-foreground">Thiết Bị & Phiên Đăng Nhập</h2>
             </div>
             <button
               onClick={() => toast.success('Đã thu hồi tất cả các phiên làm việc khác.')}
-              className="text-xs text-rose-500 hover:underline font-semibold cursor-pointer"
+              className="text-xs text-rose-500 hover:underline font-medium cursor-pointer"
             >
-              Đăng xuất khỏi tất cả thiết bị khác
+              Đăng xuất phiên khác
             </button>
           </div>
 
-          <div className="space-y-3 text-xs">
-            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div className="space-y-2.5 text-xs">
+            <div className="p-3 rounded-md bg-muted/30 border border-border flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-xl bg-brand/10 text-brand flex items-center justify-center">
-                  <Laptop className="w-5 h-5" />
+                <div className="h-8 w-8 rounded-md border border-border bg-background text-foreground flex items-center justify-center">
+                  <Laptop className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                  <div className="font-medium text-foreground flex items-center gap-2">
                     <span>Windows PC (Chrome 126)</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 font-bold">
+                    <span className="text-[10px] px-1.5 py-0.2 rounded border border-border bg-muted text-muted-foreground font-medium">
                       Thiết bị này
                     </span>
                   </div>
-                  <div className="text-[11px] text-slate-400">IP: 118.69.xxx.xxx • Hà Nội, Việt Nam</div>
+                  <div className="text-[11px] text-muted-foreground">IP: 118.69.xxx.xxx • Hà Nội, Việt Nam</div>
                 </div>
               </div>
-              <span className="text-[11px] text-emerald-500 font-semibold">Đang hoạt động</span>
+              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">Đang hoạt động</span>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 flex items-center justify-between opacity-80">
+            <div className="p-3 rounded-md bg-muted/30 border border-border flex items-center justify-between opacity-80">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
-                  <Smartphone className="w-5 h-5" />
+                <div className="h-8 w-8 rounded-md border border-border bg-background text-muted-foreground flex items-center justify-center">
+                  <Smartphone className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="font-bold text-slate-800 dark:text-slate-100">iPhone 15 Pro (Safari Mobile)</div>
-                  <div className="text-[11px] text-slate-400">IP: 14.232.xxx.xxx • Hoạt động 2 giờ trước</div>
+                  <div className="font-medium text-foreground">iPhone 15 Pro (Safari Mobile)</div>
+                  <div className="text-[11px] text-muted-foreground">IP: 14.232.xxx.xxx • Hoạt động 2 giờ trước</div>
                 </div>
               </div>
               <button
@@ -342,44 +341,44 @@ export const SettingsPage: React.FC = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="modal-2fa-title"
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm modal-backdrop-animate"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm overscroll-contain modal-backdrop-animate"
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl modal-dialog-animate space-y-5"
+              className="bg-card border border-border rounded-lg max-w-md w-full p-5 shadow-lg modal-dialog-animate space-y-4"
             >
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between pb-3 border-b border-border/60">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center">
+                  <div className="h-7 w-7 rounded-md border border-border bg-muted flex items-center justify-center text-foreground font-bold">
                     <QrCode className="w-4 h-4" />
                   </div>
-                  <h3 id="modal-2fa-title" className="font-bold text-base">Cấu Hình Xác Thực 2 Bước (2FA)</h3>
+                  <h3 id="modal-2fa-title" className="font-semibold text-base text-foreground">Cấu Hình Xác Thực 2 Bước (2FA)</h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIs2FAModalOpen(false)}
                   aria-label="Đóng"
-                  className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg focus-ring"
+                  className="p-1 text-muted-foreground hover:text-foreground rounded-md focus-ring"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
               {backupCodes.length === 0 ? (
                 <div className="space-y-4 text-center">
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted-foreground">
                     Dùng ứng dụng Google Authenticator hoặc 1Password quét mã QR dưới đây:
                   </p>
 
                   {qrCodeUrl && (
-                    <div className="p-3 bg-white rounded-2xl w-48 h-48 mx-auto flex items-center justify-center border border-slate-200 shadow-sm">
+                    <div className="p-3 bg-white rounded-lg w-44 h-44 mx-auto flex items-center justify-center border border-border shadow-xs">
                       <img src={qrCodeUrl} alt="2FA QR Code" className="w-full h-full object-contain" />
                     </div>
                   )}
 
-                  <div className="text-left bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 text-xs">
-                    <span className="text-[10px] text-slate-400 block mb-0.5">Mã thiết lập thủ công:</span>
-                    <div className="flex items-center justify-between font-mono font-bold tracking-wider text-brand">
+                  <div className="text-left bg-muted/40 p-2.5 rounded-md border border-border text-xs">
+                    <span className="text-[10px] text-muted-foreground block mb-0.5">Mã thiết lập thủ công:</span>
+                    <div className="flex items-center justify-between font-mono font-bold tracking-wider text-foreground">
                       <span>{secret}</span>
                       <button
                         type="button"
@@ -388,7 +387,7 @@ export const SettingsPage: React.FC = () => {
                           setCopiedSecret(true);
                           setTimeout(() => setCopiedSecret(false), 2000);
                         }}
-                        className="p-1 text-slate-400 hover:text-brand"
+                        className="p-1 text-muted-foreground hover:text-foreground"
                       >
                         {copiedSecret ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                       </button>
@@ -396,8 +395,8 @@ export const SettingsPage: React.FC = () => {
                   </div>
 
                   <form onSubmit={handleVerifyAndEnable2FA} className="space-y-3 text-left pt-1">
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      Nhập mã 6 chữ số từ ứng dụng để kích hoạt:
+                    <label className="block text-xs font-medium text-foreground">
+                      Nhập mã 6 chữ số từ ứng dụng:
                     </label>
                     <input
                       type="text"
@@ -406,11 +405,11 @@ export const SettingsPage: React.FC = () => {
                       value={otpInput}
                       onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, ''))}
                       placeholder="000000"
-                      className="w-full text-center tracking-widest text-xl font-bold py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-mono focus:outline-none focus:ring-2 focus:ring-brand"
+                      className="w-full text-center tracking-widest text-lg font-bold py-2 rounded-md border border-input bg-background font-mono focus-ring"
                     />
                     <button
                       type="submit"
-                      className="w-full py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/20 transition-all cursor-pointer"
+                      className="w-full h-10 rounded-md bg-foreground text-background font-medium text-xs hover:opacity-90 active:scale-[0.99] transition-[opacity,transform] cursor-pointer"
                     >
                       Xác Nhận & Bật 2FA
                     </button>
@@ -419,18 +418,18 @@ export const SettingsPage: React.FC = () => {
               ) : (
                 /* Backup Codes Display */
                 <div className="space-y-4">
-                  <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-600 text-xs flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+                  <div className="p-3 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
                     <span>2FA đã được kích hoạt! Lưu lại 8 mã dự phòng dưới đây.</span>
                   </div>
 
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted-foreground">
                     Mỗi mã chỉ được sử dụng một lần để đăng nhập khi bạn mất quyền truy cập vào điện thoại.
                   </p>
 
-                  <div className="grid grid-cols-2 gap-2 p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 font-mono text-center text-xs font-bold text-slate-800 dark:text-slate-200">
+                  <div className="grid grid-cols-2 gap-2 p-3 rounded-md bg-muted/40 border border-border font-mono text-center text-xs font-medium text-foreground">
                     {backupCodes.map((code, idx) => (
-                      <div key={idx} className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                      <div key={idx} className="p-1.5 rounded border border-border bg-background">
                         {code}
                       </div>
                     ))}
@@ -438,7 +437,7 @@ export const SettingsPage: React.FC = () => {
 
                   <button
                     onClick={() => setIs2FAModalOpen(false)}
-                    className="w-full py-2.5 rounded-xl bg-brand text-white font-bold text-xs cursor-pointer"
+                    className="w-full h-10 rounded-md bg-foreground text-background font-medium text-xs hover:opacity-90 active:scale-[0.99] transition-[opacity,transform] cursor-pointer"
                   >
                     Tôi Đã Lưu Mã Dự Phòng
                   </button>
@@ -455,43 +454,44 @@ export const SettingsPage: React.FC = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="modal-disable-2fa-title"
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm modal-backdrop-animate"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm overscroll-contain modal-backdrop-animate"
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl modal-dialog-animate space-y-4"
+              className="bg-card border border-border rounded-lg max-w-sm w-full p-5 shadow-lg modal-dialog-animate space-y-4"
             >
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between pb-3 border-b border-border/60">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
+                  <div className="h-7 w-7 rounded-md border border-border bg-rose-500/10 text-rose-500 flex items-center justify-center font-bold">
                     <Shield className="w-4 h-4" />
                   </div>
-                  <h3 id="modal-disable-2fa-title" className="font-bold text-base">Tắt Xác Thực 2FA</h3>
+                  <h3 id="modal-disable-2fa-title" className="font-semibold text-base text-foreground">Tắt Xác Thực 2FA</h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsDisable2FAModalOpen(false)}
                   aria-label="Đóng"
-                  className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg focus-ring"
+                  className="p-1 text-muted-foreground hover:text-foreground rounded-md focus-ring"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
               <form onSubmit={handleDisable2FA} className="space-y-4 text-xs">
-                <p className="text-slate-500 leading-relaxed">
+                <p className="text-muted-foreground leading-relaxed">
                   Để đảm bảo an toàn, vui lòng nhập mật khẩu hiện tại của bạn để tắt xác thực 2 bước:
                 </p>
 
                 <div>
-                  <label className="font-semibold block mb-1">Mật khẩu của bạn</label>
+                  <label className="font-medium block mb-1 text-foreground">Mật khẩu của bạn</label>
                   <input
                     type="password"
                     required
+                    autoComplete="current-password"
                     value={disablePassword}
                     onChange={(e) => setDisablePassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 transition-all"
+                    className="w-full px-3 py-2 rounded-md border border-input bg-background font-mono text-sm focus-ring"
                   />
                 </div>
 
@@ -499,16 +499,16 @@ export const SettingsPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setIsDisable2FAModalOpen(false)}
-                    className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    className="flex-1 h-10 rounded-md border border-border bg-secondary hover:bg-muted text-foreground font-medium text-xs transition-[background-color] cursor-pointer"
                   >
                     Hủy Bỏ
                   </button>
                   <button
                     type="submit"
                     disabled={isDisabling2FA}
-                    className="flex-1 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold transition-colors disabled:opacity-50 cursor-pointer shadow-md shadow-rose-500/20"
+                    className="flex-1 h-10 rounded-md bg-rose-500 hover:bg-rose-600 text-white font-medium text-xs transition-[background-color] disabled:opacity-50 cursor-pointer"
                   >
-                    {isDisabling2FA ? 'Đang tắt...' : 'Xác Nhận Tắt'}
+                    {isDisabling2FA ? 'Đang tắt…' : 'Xác Nhận Tắt'}
                   </button>
                 </div>
               </form>

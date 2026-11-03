@@ -128,13 +128,13 @@ export const ReminderTagModal: React.FC<ReminderTagModalProps> = ({
 
           {/* Search Bar */}
           <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm kiếm thẻ nhắc hẹn..."
-              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand"
+              placeholder="Tìm kiếm thẻ nhắc hẹn…"
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-border bg-muted/40 focus:bg-background focus:outline-none focus:ring-1 focus:ring-ring text-foreground"
             />
           </div>
 
@@ -250,11 +250,11 @@ export const ReminderTagModal: React.FC<ReminderTagModalProps> = ({
             )}
           </div>
 
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+          <div className="pt-2 border-t border-border flex justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors"
+              className="px-4 py-2 rounded-lg bg-card border border-border hover:bg-muted text-xs font-medium text-foreground transition-colors"
             >
               Đóng
             </button>

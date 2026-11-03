@@ -377,54 +377,54 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
       </div>
 
       {/* Tab Switcher */}
-      <div className="grid grid-cols-4 gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-center mt-3">
+      <div className="grid grid-cols-4 gap-1 p-1 rounded-lg bg-muted text-xs font-medium text-center mt-3">
         <button
           type="button"
           onClick={() => setActiveTab('transaction')}
-          className={`flex items-center justify-center gap-1 py-2 rounded-lg transition-all cursor-pointer ${
+          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md transition-[background-color,color] cursor-pointer focus-ring ${
             activeTab === 'transaction'
-              ? 'bg-white dark:bg-slate-900 text-brand shadow-sm font-bold'
-              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              ? 'bg-background text-foreground shadow-xs font-semibold'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <Wallet className="w-3.5 h-3.5 shrink-0" />
-          <span className="truncate">Giao Dịch</span>
+          <Wallet className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+          <span className="truncate">Giao dịch</span>
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('task')}
-          className={`flex items-center justify-center gap-1 py-2 rounded-lg transition-all cursor-pointer ${
+          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md transition-[background-color,color] cursor-pointer focus-ring ${
             activeTab === 'task'
-              ? 'bg-white dark:bg-slate-900 text-brand shadow-sm font-bold'
-              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              ? 'bg-background text-foreground shadow-xs font-semibold'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <CheckSquare className="w-3.5 h-3.5 shrink-0" />
-          <span className="truncate">Công Việc</span>
+          <CheckSquare className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+          <span className="truncate">Công việc</span>
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('reminder')}
-          className={`flex items-center justify-center gap-1 py-2 rounded-lg transition-all cursor-pointer ${
+          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md transition-[background-color,color] cursor-pointer focus-ring ${
             activeTab === 'reminder'
-              ? 'bg-white dark:bg-slate-900 text-brand shadow-sm font-bold'
-              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              ? 'bg-background text-foreground shadow-xs font-semibold'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <Bell className="w-3.5 h-3.5 shrink-0" />
-          <span className="truncate">Nhắc Hẹn</span>
+          <Bell className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+          <span className="truncate">Nhắc hẹn</span>
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('note')}
-          className={`flex items-center justify-center gap-1 py-2 rounded-lg transition-all cursor-pointer ${
+          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md transition-[background-color,color] cursor-pointer focus-ring ${
             activeTab === 'note'
-              ? 'bg-white dark:bg-slate-900 text-brand shadow-sm font-bold'
-              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              ? 'bg-background text-foreground shadow-xs font-semibold'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <FileText className="w-3.5 h-3.5 shrink-0" />
-          <span className="truncate">Ghi Chú</span>
+          <FileText className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+          <span className="truncate">Ghi chú</span>
         </button>
       </div>
 
@@ -466,8 +466,8 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
               <InfoTooltip content="Chọn ví ghi nhận dòng tiền này." />
             </div>
             {wallets.length === 0 ? (
-              <div className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-400">
-                Đang tải danh sách ví...
+              <div className="p-2.5 rounded-lg border border-border bg-muted/40 text-muted-foreground">
+                Đang tải danh sách ví…
               </div>
             ) : (
               <CustomSelect
@@ -496,17 +496,17 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
               required
               min="1"
               step="any"
-              placeholder="VD: 47857"
+              placeholder="VD: 50000"
               value={txAmount}
               onChange={(e) => setTxAmount(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-base font-extrabold tabular-nums focus:outline-none focus:ring-2 focus:ring-brand font-medium"
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-semibold tabular-nums focus-ring"
             />
           </div>
 
           {/* Category Selector */}
           <div>
             <div className="flex items-center gap-1.5 mb-1.5">
-              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+              <label className="font-medium block text-foreground">
                 Danh mục
               </label>
               <InfoTooltip content="Phân loại nhóm thu chi tương ứng." />
@@ -515,13 +515,13 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
               <input
                 type="text"
                 required
-                placeholder="Nhập danh mục: Ăn uống, Cafe, Mua sắm, Lương..."
+                placeholder="Nhập danh mục: Ăn uống, Cafe, Mua sắm, Lương…"
                 value={txCategory || txCustomCategory}
                 onChange={(e) => {
                   setTxCategory(e.target.value);
                   setTxCustomCategory(e.target.value);
                 }}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-2 focus:ring-brand font-medium"
+                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-xs focus-ring font-normal"
               />
             ) : (
               <CustomSelect
@@ -537,24 +537,24 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
 
           {/* Note Input */}
           <div>
-            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+            <label className="font-medium block mb-1 text-foreground">
               Ghi chú (Tùy chọn)
             </label>
             <input
               type="text"
-              placeholder="VD: Ăn tối với bạn, thanh toán hóa đơn..."
+              placeholder="VD: Ăn tối với bạn, thanh toán hóa đơn…"
               value={txNote}
               onChange={(e) => setTxNote(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-xs focus-ring"
             />
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all cursor-pointer disabled:opacity-50"
+            className="w-full py-2.5 rounded-lg bg-foreground hover:bg-foreground/90 text-background font-medium text-xs transition-[background-color,opacity] cursor-pointer focus-ring disabled:opacity-50"
           >
-            {isSubmitting ? 'Đang lưu...' : 'Lưu Giao Dịch'}
+            {isSubmitting ? 'Đang lưu…' : 'Lưu Giao Dịch'}
           </button>
         </form>
       )}
@@ -571,7 +571,7 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
               required
               value={taskTitle}
               onChange={(e) => setTaskTitle(e.target.value)}
-              placeholder="VD: Kiểm tra và nộp báo cáo thuế..."
+              placeholder="VD: Kiểm tra và nộp báo cáo thuế…"
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-2 focus:ring-brand font-medium"
             />
           </div>
@@ -584,7 +584,7 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
               rows={2}
               value={taskDescription}
               onChange={(e) => setTaskDescription(e.target.value)}
-              placeholder="Nhập ghi chú hoặc yêu cầu công việc..."
+              placeholder="Nhập ghi chú hoặc yêu cầu công việc…"
               className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
             />
           </div>
@@ -669,7 +669,7 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
               availableTags={availableTaskTags}
               selectedTags={taskTags}
               onChange={setTaskTags}
-              placeholder="Chọn hoặc gõ tên thẻ mới..."
+              placeholder="Chọn hoặc gõ tên thẻ mới…"
             />
 
             {/* Suggested Tags Chips */}
@@ -698,9 +698,9 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all cursor-pointer disabled:opacity-50"
+            className="w-full py-2.5 rounded-lg bg-foreground hover:bg-foreground/90 text-background font-medium text-xs transition-[background-color,opacity] cursor-pointer focus-ring disabled:opacity-50"
           >
-            {isSubmitting ? 'Đang tạo...' : 'Tạo Công Việc'}
+            {isSubmitting ? 'Đang tạo…' : 'Tạo Công Việc'}
           </button>
         </form>
       )}
@@ -709,7 +709,7 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
       {activeTab === 'reminder' && (
         <form onSubmit={handleCreateReminder} className="space-y-4 text-xs mt-4">
           <div>
-            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+            <label className="font-medium block mb-1 text-foreground">
               Tiêu đề nhắc hẹn <span className="text-rose-500">*</span>
             </label>
             <input
@@ -717,15 +717,15 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
               required
               value={reminderTitle}
               onChange={(e) => setReminderTitle(e.target.value)}
-              placeholder="VD: 13h đi dự khai mạc, Khám sức khỏe, Họp tổng kết..."
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand font-medium text-xs"
+              placeholder="VD: 13h đi dự khai mạc, Khám sức khỏe, Họp tổng kết…"
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground focus-ring font-normal text-xs"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-brand" />
+              <label className="font-medium block mb-1 text-foreground flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5 text-muted-foreground" />
                 <span>Thời điểm diễn ra</span>
               </label>
               <input
@@ -733,7 +733,7 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
                 required
                 value={reminderScheduledAt}
                 onChange={(e) => setReminderScheduledAt(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand font-medium text-xs"
+                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground focus-ring font-normal text-xs"
               />
             </div>
 
@@ -746,50 +746,50 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
           </div>
 
           <div>
-            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300 flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5 text-brand" />
+            <label className="font-medium block mb-1 text-foreground flex items-center gap-1">
+              <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
               <span>Địa điểm hoặc Link họp trực tuyến (tùy chọn)</span>
             </label>
             <input
               type="text"
               value={reminderLocation}
               onChange={(e) => setReminderLocation(e.target.value)}
-              placeholder="VD: Phòng họp A, hoặc https://meet.google.com/..."
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand font-medium text-xs"
+              placeholder="VD: Phòng họp A, hoặc https://meet.google.com/…"
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground focus-ring font-normal text-xs"
             />
           </div>
 
           <div>
-            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+            <label className="font-medium block mb-1 text-foreground">
               Ghi chú chuẩn bị
             </label>
             <textarea
               rows={2}
               value={reminderDescription}
               onChange={(e) => setReminderDescription(e.target.value)}
-              placeholder="Nội dung cần lưu ý khi tới giờ..."
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand font-medium text-xs resize-none"
+              placeholder="Nội dung cần lưu ý khi tới giờ…"
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground focus-ring font-normal text-xs resize-none"
             />
           </div>
 
           <div>
-            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+            <label className="font-medium block mb-1 text-foreground">
               Thẻ phân loại (Tags)
             </label>
             <TagSelect
               availableTags={availableReminderTags}
               selectedTags={reminderTags}
               onChange={setReminderTags}
-              placeholder="Chọn hoặc nhập thẻ mới..."
+              placeholder="Chọn hoặc nhập thẻ mới…"
             />
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all cursor-pointer disabled:opacity-50"
+            className="w-full py-2.5 rounded-lg bg-foreground hover:bg-foreground/90 text-background font-medium text-xs transition-[background-color,opacity] cursor-pointer focus-ring disabled:opacity-50"
           >
-            {isSubmitting ? 'Đang tạo...' : 'Lên Lịch Nhắc Hẹn'}
+            {isSubmitting ? 'Đang tạo…' : 'Lên Lịch Nhắc Hẹn'}
           </button>
         </form>
       )}
@@ -798,7 +798,7 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
       {activeTab === 'note' && (
         <form onSubmit={handleCreateNote} className="space-y-4 text-xs mt-4">
           <div>
-            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+            <label className="font-medium block mb-1 text-foreground">
               Tiêu đề ghi chú
             </label>
             <input
@@ -806,41 +806,41 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
               required
               value={noteTitle}
               onChange={(e) => setNoteTitle(e.target.value)}
-              placeholder="VD: Kế hoạch tuần tới..."
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand font-medium text-xs"
+              placeholder="VD: Kế hoạch tuần tới…"
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground focus-ring font-normal text-xs"
             />
           </div>
 
           <div>
-            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+            <label className="font-medium block mb-1 text-foreground">
               Thẻ phân loại (Tags)
             </label>
             <TagSelect
               availableTags={availableNoteTags}
               selectedTags={noteTags}
               onChange={setNoteTags}
-              placeholder="Chọn hoặc nhập thẻ mới..."
+              placeholder="Chọn hoặc nhập thẻ mới…"
             />
           </div>
 
           <div>
-            <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+            <label className="font-medium block mb-1 text-foreground">
               Nội dung ghi chú (Markdown)
             </label>
             <MarkdownEditor
               value={noteContent}
               onChange={setNoteContent}
               rows={6}
-              placeholder="Nhập nội dung ghi chú (hỗ trợ tiêu đề, danh sách, bảng, task list...)"
+              placeholder="Nhập nội dung ghi chú (hỗ trợ tiêu đề, danh sách, bảng, task list…)"
             />
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all cursor-pointer disabled:opacity-50"
+            className="w-full py-2.5 rounded-lg bg-foreground hover:bg-foreground/90 text-background font-medium text-xs transition-[background-color,opacity] cursor-pointer focus-ring disabled:opacity-50"
           >
-            {isSubmitting ? 'Đang lưu...' : 'Lưu Ghi Chú'}
+            {isSubmitting ? 'Đang lưu…' : 'Lưu Ghi Chú'}
           </button>
         </form>
       )}

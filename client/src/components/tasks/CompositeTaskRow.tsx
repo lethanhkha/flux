@@ -68,23 +68,23 @@ export const CompositeTaskRow = React.memo<CompositeTaskRowProps>(({
 
   return (
     <div
-      className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
+      className={`rounded-lg border transition-[border-color,background-color] overflow-hidden ${
         isDone
-          ? 'bg-slate-50/50 dark:bg-slate-950/30 border-slate-200/80 dark:border-slate-800/80 opacity-75 border-l-4 border-l-emerald-500'
+          ? 'bg-muted/30 border-border opacity-75 border-l-4 border-l-emerald-500'
           : isAllCompleted
-          ? 'bg-white dark:bg-slate-900 border-emerald-300 dark:border-emerald-800/60 border-l-4 border-l-emerald-500 shadow-sm'
-          : `bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 border-l-4 ${progressConfig.borderLeftAccent} hover:border-slate-300 dark:hover:border-slate-700 shadow-sm`
+          ? 'bg-card border-border border-l-4 border-l-emerald-500 shadow-2xs'
+          : `bg-card border-border border-l-4 ${progressConfig.borderLeftAccent} shadow-2xs`
       }`}
     >
       {/* Top Banner: Composite Badge + Parent Action Header */}
-      <div className="p-4 sm:p-5 space-y-3">
+      <div className="p-4 space-y-3">
         {/* Row 1: Header tags, type indicator, and actions */}
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           <div className="flex items-center gap-2 flex-wrap">
             {/* Multi-step Composite Task Badge */}
             <Tooltip content="Công việc có nhiều bước thực hiện (Sub-tasks). Khi hoàn thành đủ 100% việc con, hệ thống sẽ tự động đánh dấu công việc này hoàn thành.">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-brand/10 text-brand border border-brand/20 cursor-help select-none">
-                <ListTree className="w-3.5 h-3.5 flex-shrink-0" />
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-muted text-foreground border border-border cursor-help select-none">
+                <ListTree className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 <span>Nhiệm vụ đa bước ({total} việc con)</span>
               </span>
             </Tooltip>

@@ -1,10 +1,8 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { ArrowDownRight, ArrowUpRight, ArrowRightLeft, Edit3, Trash2 } from 'lucide-react';
 import { TransactionItem } from './types';
 import { formatCurrency } from '../../lib/utils';
 import { Tooltip } from '../common/Tooltip';
-import { staggerItem } from '../../lib/motionTokens';
 
 export interface TransactionRowProps {
   tx: TransactionItem;
@@ -26,11 +24,8 @@ export const TransactionRow = React.memo<TransactionRowProps>(({
   onRequestDeleteTx,
 }) => {
   return (
-    <motion.div
-      variants={staggerItem}
-      layout
-      whileHover={{ y: -1 }}
-      className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4 hover:border-brand/40 transition-colors group"
+    <div
+      className="p-3 rounded-lg border border-border bg-card flex items-center justify-between gap-4 hover:bg-muted/40 transition-[background-color,border-color] group"
     >
       <div className="flex items-center gap-3 min-w-0">
         <Tooltip
@@ -43,34 +38,35 @@ export const TransactionRow = React.memo<TransactionRowProps>(({
           }
         >
           <div
-            className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 cursor-help ${
+            className={`h-8 w-8 rounded-md flex items-center justify-center shrink-0 border ${
               tx.type === 'INCOME'
-                ? 'bg-emerald-500/10 text-emerald-600'
+                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
                 : tx.type === 'EXPENSE'
-                ? 'bg-rose-500/10 text-rose-500'
-                : 'bg-brand/10 text-brand'
+                ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+                : 'bg-muted text-foreground border-border'
             }`}
           >
-            {tx.type === 'INCOME' && <ArrowDownRight className="w-5 h-5" />}
-            {tx.type === 'EXPENSE' && <ArrowUpRight className="w-5 h-5" />}
-            {tx.type === 'TRANSFER' && <ArrowRightLeft className="w-5 h-5" />}
+            {tx.type === 'INCOME' && <ArrowDownRight className="w-4 h-4" aria-hidden="true" />}
+            {tx.type === 'EXPENSE' && <ArrowUpRight className="w-4 h-4" aria-hidden="true" />}
+            {tx.type === 'TRANSFER' && <ArrowRightLeft className="w-4 h-4" aria-hidden="true" />}
           </div>
         </Tooltip>
 
         <div className="min-w-0">
-          <Tooltip content={`Lọc nhanh theo danh mục "${tx.category}"`}>
-            <div
+          <Tooltip content={`Lọc theo danh mục “${tx.category}”`}>
+            <button
+              type="button"
               onClick={() =>
                 onSelectCategory?.(
                   selectedCategory === tx.category ? 'ALL' : tx.category
                 )
               }
-              className="font-bold text-xs text-slate-800 dark:text-slate-100 hover:text-brand transition-colors cursor-pointer truncate"
+              className="font-medium text-xs text-foreground hover:underline transition-colors cursor-pointer truncate text-left block"
             >
               {tx.category}
-            </div>
+            </button>
           </Tooltip>
-          <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5 truncate">
+          <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5 truncate">
             <span>{tx.date}</span>
             <span>•</span>
             <Tooltip
@@ -80,7 +76,8 @@ export const TransactionRow = React.memo<TransactionRowProps>(({
                   : `Lọc theo ví ${tx.wallet}`
               }
             >
-              <span
+              <button
+                type="button"
                 onClick={() => {
                   if (tx.walletId && onSelectWallet) {
                     onSelectWallet(
@@ -88,59 +85,51 @@ export const TransactionRow = React.memo<TransactionRowProps>(({
                     );
                   }
                 }}
-                className="truncate hover:text-brand cursor-pointer"
+                className="truncate hover:text-foreground cursor-pointer text-left"
               >
                 {tx.type === 'TRANSFER'
                   ? `${tx.wallet} → ${tx.destWallet}`
                   : tx.wallet}
-              </span>
+              </button>
             </Tooltip>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+      <div className="flex items-center gap-3 sm:gap-4 shrink-0">
         <div className="text-right">
-          <Tooltip
-            content={
+          <div
+            className={`text-xs sm:text-sm font-semibold tabular-nums ${
               tx.type === 'INCOME'
-                ? `Khoản thu nhập vào ví: +${formatCurrency(tx.amount)}`
+                ? 'text-emerald-600 dark:text-emerald-400'
                 : tx.type === 'EXPENSE'
-                ? `Khoản chi tiêu từ ví: -${formatCurrency(tx.amount)}`
-                : `Chuyển khoản nội bộ: ${formatCurrency(tx.amount)}`
-            }
+                ? 'text-rose-600 dark:text-rose-400'
+                : 'text-foreground'
+            }`}
           >
-            <div
-              className={`text-sm font-extrabold tabular-nums cursor-help ${
-                tx.type === 'INCOME'
-                  ? 'text-emerald-600 dark:text-emerald-400'
-                  : tx.type === 'EXPENSE'
-                  ? 'text-rose-500 dark:text-rose-400'
-                  : 'text-brand'
-              }`}
-            >
-              {tx.type === 'INCOME'
-                ? `+${formatCurrency(tx.amount)}`
-                : tx.type === 'EXPENSE'
-                ? `-${formatCurrency(tx.amount)}`
-                : `${formatCurrency(tx.amount)}`}
-            </div>
-          </Tooltip>
-          <div className="text-[10px] text-slate-400 line-clamp-1 max-w-[140px] sm:max-w-[200px]">
-            {tx.note}
+            {tx.type === 'INCOME'
+              ? `+${formatCurrency(tx.amount)}`
+              : tx.type === 'EXPENSE'
+              ? `-${formatCurrency(tx.amount)}`
+              : `${formatCurrency(tx.amount)}`}
           </div>
+          {tx.note && (
+            <div className="text-[10px] text-muted-foreground line-clamp-1 max-w-[140px] sm:max-w-[200px]">
+              {tx.note}
+            </div>
+          )}
         </div>
 
         {/* Actions: Edit & Delete buttons */}
-        <div className="flex items-center gap-1 opacity-80 sm:opacity-40 group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100 transition-opacity">
+        <div className="flex items-center gap-0.5 opacity-80 sm:opacity-40 group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100 transition-opacity">
           <Tooltip content="Chỉnh sửa giao dịch này">
             <button
               type="button"
               onClick={() => onOpenEditTx(tx)}
               aria-label={`Chỉnh sửa giao dịch ${tx.category}: ${formatCurrency(tx.amount)}`}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-brand hover:bg-brand/10 transition-colors cursor-pointer focus-ring"
+              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer focus-ring"
             >
-              <Edit3 className="w-3.5 h-3.5" />
+              <Edit3 className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </Tooltip>
           <Tooltip content="Xóa giao dịch này">
@@ -148,14 +137,14 @@ export const TransactionRow = React.memo<TransactionRowProps>(({
               type="button"
               onClick={(e) => onRequestDeleteTx(tx, e)}
               aria-label={`Xóa giao dịch ${tx.category}: ${formatCurrency(tx.amount)}`}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer focus-ring"
+              className="p-1 rounded-md text-muted-foreground hover:text-rose-600 hover:bg-rose-500/10 transition-colors cursor-pointer focus-ring"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </Tooltip>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 });
 

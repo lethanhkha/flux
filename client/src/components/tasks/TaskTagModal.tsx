@@ -253,10 +253,10 @@ export const TaskTagModal: React.FC<TaskTagModalProps> = ({
           </button>
         </div>
 
-        {/* Color Picker Overlay: Đè lên form quản lý thẻ thay vì chen ngang vào danh sách */}
+        {/* Color Picker Overlay */}
         {colorPickerTag && (
           <div
-            className="absolute inset-0 z-50 bg-slate-950/50 backdrop-blur-xs rounded-3xl flex items-center justify-center p-4 animate-in fade-in duration-150 cursor-pointer"
+            className="absolute inset-0 z-50 bg-black/50 backdrop-blur-xs rounded-xl flex items-center justify-center p-4 animate-in fade-in duration-150 cursor-pointer"
             onClick={() => setColorPickerTag(null)}
           >
             <div onClick={(e) => e.stopPropagation()} className="cursor-default">

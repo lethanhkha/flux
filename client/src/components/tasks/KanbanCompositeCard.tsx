@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Circle,
   Repeat,
-  Sparkles,
 } from 'lucide-react';
 import { Tooltip } from '../common/Tooltip';
 import { getRemainingDaysInfo, getSubtaskProgressConfig } from '../../lib/taskUtils';
@@ -54,14 +53,8 @@ export const KanbanCompositeCard = React.memo<KanbanCompositeCardProps>(({
       onDragStart={(e) => onDragStart(e, task.id)}
       onDragEnd={onDragEnd}
       onClick={() => onToggleParentStatus(task.id)}
-      className={`p-4 rounded-2xl bg-white dark:bg-slate-900 border shadow-sm hover-lift cursor-grab active:cursor-grabbing space-y-3 transition-all select-none overflow-hidden ${
-        isDone
-          ? 'border-slate-200 dark:border-slate-800 border-t-4 border-t-emerald-500 opacity-75'
-          : percentage === 100
-          ? 'border-emerald-300 dark:border-emerald-800 border-t-4 border-t-emerald-500 ring-2 ring-emerald-500/20'
-          : `border-slate-200 dark:border-slate-800 border-t-4 ${progressConfig.borderTopAccent} hover:border-slate-300 dark:hover:border-slate-700`
-      } ${
-        isDragging ? 'opacity-40 scale-95 border-brand ring-2 ring-brand/30' : ''
+      className={`p-3.5 rounded-lg border border-border bg-card shadow-xs cursor-grab active:cursor-grabbing space-y-2.5 transition-[border-color,background-color] select-none ${
+        isDragging ? 'opacity-40 scale-95 border-foreground ring-2 ring-foreground/20' : 'hover:border-foreground/30'
       }`}
     >
       {/* Header Badges & Actions */}
@@ -70,15 +63,15 @@ export const KanbanCompositeCard = React.memo<KanbanCompositeCardProps>(({
           <PriorityBadge priority={task.priority} />
 
           <Tooltip content="Công việc có việc con cần thực hiện từng bước">
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-brand/10 text-brand border border-brand/20 cursor-help">
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border cursor-help">
               <ListTree className="w-3 h-3 flex-shrink-0" />
-              <span>{total} việc con</span>
+              <span className="tabular-nums">{total} việc con</span>
             </span>
           </Tooltip>
 
           {task.isRecurring && (
             <Tooltip content={`Lặp lại: ${task.recurrenceRule}`}>
-              <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-500 font-medium">
+              <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium border border-border">
                 <Repeat className="w-2.5 h-2.5" /> {task.recurrenceRule}
               </span>
             </Tooltip>
@@ -105,7 +98,7 @@ export const KanbanCompositeCard = React.memo<KanbanCompositeCardProps>(({
               type="button"
               onClick={(e) => onEditTask(task, e)}
               aria-label={`Chỉnh sửa công việc: ${task.title}`}
-              className="text-slate-400 hover:text-brand hover:bg-brand/10 p-1 rounded-md transition-colors cursor-pointer focus-ring"
+              className="text-muted-foreground hover:text-foreground hover:bg-muted p-1 rounded transition-colors cursor-pointer focus-ring"
             >
               <Edit3 className="w-3 h-3" />
             </button>
@@ -115,7 +108,7 @@ export const KanbanCompositeCard = React.memo<KanbanCompositeCardProps>(({
               type="button"
               onClick={(e) => onDeleteTask(task.id, e)}
               aria-label={`Xóa công việc: ${task.title}`}
-              className="text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 p-1 rounded-md transition-colors cursor-pointer focus-ring"
+              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 p-1 rounded transition-colors cursor-pointer focus-ring"
             >
               <Trash2 className="w-3 h-3" />
             </button>
@@ -125,8 +118,8 @@ export const KanbanCompositeCard = React.memo<KanbanCompositeCardProps>(({
 
       {/* Task Title */}
       <div
-        className={`font-bold text-xs sm:text-sm leading-snug ${
-          isDone ? 'line-through text-slate-400' : 'text-slate-900 dark:text-slate-100'
+        className={`font-medium text-xs sm:text-sm leading-snug ${
+          isDone ? 'line-through text-muted-foreground' : 'text-foreground'
         }`}
       >
         {task.title}
@@ -138,14 +131,14 @@ export const KanbanCompositeCard = React.memo<KanbanCompositeCardProps>(({
           {isDescriptionExpanded ? (
             <div
               onClick={(e) => e.stopPropagation()}
-              className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-100 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300 select-text leading-relaxed whitespace-pre-wrap break-words mt-1 shadow-xs"
+              className="p-2.5 rounded-lg bg-muted/40 border border-border text-[11px] text-muted-foreground select-text leading-relaxed whitespace-pre-wrap break-words mt-1"
             >
-              <div className="flex items-center justify-between text-[9px] text-slate-400 font-semibold mb-1 pb-1 border-b border-slate-200/50 dark:border-slate-800">
+              <div className="flex items-center justify-between text-[9px] text-muted-foreground font-medium mb-1 pb-1 border-b border-border">
                 <span>Mô tả chi tiết</span>
                 <button
                   type="button"
                   onClick={(e) => toggleDescriptionExpand(task.id, e)}
-                  className="text-brand hover:underline cursor-pointer font-medium"
+                  className="text-foreground hover:underline cursor-pointer font-medium"
                 >
                   Thu gọn ▲
                 </button>
@@ -155,7 +148,7 @@ export const KanbanCompositeCard = React.memo<KanbanCompositeCardProps>(({
           ) : (
             <p
               title="Bấm để xem toàn bộ mô tả"
-              className="text-[11px] text-slate-400 dark:text-slate-500 line-clamp-2 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              className="text-[11px] text-muted-foreground line-clamp-2 hover:text-foreground transition-colors"
             >
               {task.description}
             </p>
@@ -171,7 +164,7 @@ export const KanbanCompositeCard = React.memo<KanbanCompositeCardProps>(({
             return (
               <span
                 key={tag}
-                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-semibold border"
+                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium border"
                 style={{
                   backgroundColor: `${color}15`,
                   borderColor: `${color}35`,
@@ -185,76 +178,76 @@ export const KanbanCompositeCard = React.memo<KanbanCompositeCardProps>(({
         </div>
       )}
 
-      {/* Prominent Multi-tier Progress Bar on Kanban Card */}
+      {/* Multi-tier Progress Bar on Kanban Card */}
       <div
-        className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-100 dark:border-slate-800/80 space-y-1.5"
+        className="p-2.5 rounded-lg bg-muted/30 border border-border space-y-1.5"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between text-[11px] gap-1 flex-wrap">
-          <Tooltip content={`Tiến độ: ${progressConfig.stageLabel}. Tự động cập nhật tức thì. Đạt 100% sẽ chuyển sang cột Đã hoàn thành.`}>
-            <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1 cursor-help">
-              <span>Tiến độ:</span>
-              <span className={`tabular-nums font-bold ${progressConfig.badgeText}`}>
+          <Tooltip content={`Tiến độ: ${progressConfig.stageLabel}. Tự động cập nhật tức thì.`}>
+            <span className="font-medium text-foreground flex items-center gap-1 cursor-help">
+              <span className="text-muted-foreground">Tiến độ:</span>
+              <span className="tabular-nums font-semibold">
                 {completed}/{total} ({percentage}%)
               </span>
             </span>
           </Tooltip>
 
           {percentage === 100 ? (
-            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
-              <Sparkles className="w-2.5 h-2.5 text-emerald-500" /> 100%
+            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
+              <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500" /> 100%
             </span>
           ) : (
-            <span className={`text-[10px] px-1.5 py-0.2 rounded font-semibold ${progressConfig.badgeBg}`}>
+            <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-muted text-muted-foreground border border-border">
               {progressConfig.stageLabel}
             </span>
           )}
         </div>
 
-        <div className="h-1.5 w-full rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+        <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden border border-border/50">
           <div
-            className={`h-full rounded-full transition-all duration-300 ease-out ${progressConfig.barGradient}`}
+            className="h-full rounded-full transition-[width] duration-200 ease-out bg-foreground"
             style={{ width: `${percentage}%` }}
           />
         </div>
 
         {/* Interactive Mini Checklist right on Kanban Card */}
-        <div className="space-y-1 pt-1.5 border-t border-slate-200/50 dark:border-slate-800/50">
+        <div className="space-y-1 pt-1.5 border-t border-border">
           {subtasks.map((st, idx) => (
             <div
               key={st.id}
               onClick={(e) => onToggleSubtask(task.id, st.id, e)}
-              className="flex items-center gap-2 px-1.5 py-1 rounded-lg hover:bg-white dark:hover:bg-slate-900 transition-colors cursor-pointer group"
+              className="flex items-center gap-2 px-1.5 py-1 rounded hover:bg-muted/60 transition-colors cursor-pointer group"
             >
               <Tooltip
                 content={
                   st.isCompleted
                     ? `Đã xong: "${st.title}". Bấm để hoàn tác.`
-                    : `Bấm để hoàn thành việc con "${st.title}" ngay trên Kanban.`
+                    : `Bấm để hoàn thành việc con "${st.title}".`
                 }
               >
                 <button
                   type="button"
-                  className="flex-shrink-0 text-slate-400 hover:text-brand focus-ring rounded"
+                  className="flex-shrink-0 text-muted-foreground hover:text-foreground focus-ring rounded"
                   aria-label={`Đổi việc con: ${st.title}`}
                 >
                   {st.isCompleted ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-foreground" />
                   ) : (
-                    <Circle className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:text-brand" />
+                    <Circle className="w-3.5 h-3.5 text-muted-foreground/60 group-hover:text-foreground" />
                   )}
                 </button>
               </Tooltip>
 
-              <span className="text-[10px] text-slate-400 font-semibold tabular-nums flex-shrink-0">
+              <span className="text-[10px] text-muted-foreground font-medium tabular-nums flex-shrink-0">
                 {idx + 1}.
               </span>
 
               <span
                 className={`text-[11px] truncate flex-1 ${
                   st.isCompleted
-                    ? 'line-through text-slate-400 dark:text-slate-500'
-                    : 'text-slate-700 dark:text-slate-200 font-medium group-hover:text-brand'
+                    ? 'line-through text-muted-foreground'
+                    : 'text-foreground font-normal group-hover:text-foreground'
                 }`}
               >
                 {st.title}
@@ -265,9 +258,9 @@ export const KanbanCompositeCard = React.memo<KanbanCompositeCardProps>(({
                 return (
                   <Tooltip content={`Hạn chót: ${dueInfo.formattedDue}`}>
                     <span
-                      className={`text-[9px] px-1 py-0.2 rounded border font-medium flex-shrink-0 flex items-center gap-0.5 ${
+                      className={`text-[9px] px-1 py-0.5 rounded border font-medium flex-shrink-0 flex items-center gap-0.5 tabular-nums ${
                         st.isCompleted
-                          ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700'
+                          ? 'bg-muted text-muted-foreground border-border'
                           : dueInfo.colorClasses
                       }`}
                     >

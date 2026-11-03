@@ -40,7 +40,7 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
       type="button"
       onClick={handleGoogleAuth}
       disabled={isLoading}
-      className={`w-full py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-xs hover:shadow-sm transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${className}`}
+      className={`w-full py-2.5 px-4 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium transition-colors flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer focus-ring ${className}`}
     >
       {isLoading ? (
         <RefreshCw className="w-4 h-4 animate-spin text-slate-500" />

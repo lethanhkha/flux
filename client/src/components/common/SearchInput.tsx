@@ -18,7 +18,7 @@ export interface SearchInputProps {
 export const SearchInput: React.FC<SearchInputProps> = ({
   value,
   onChange,
-  placeholder = 'Tìm kiếm...',
+  placeholder = 'Tìm kiếm…',
   isLoading = false,
   className = '',
   inputClassName = '',
@@ -44,15 +44,15 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 
   const sizeClasses =
     size === 'md'
-      ? 'pl-10 pr-9 py-2.5 text-sm rounded-2xl'
-      : 'pl-[36px] pr-8 py-2 text-xs rounded-xl';
+      ? 'pl-10 pr-9 py-2 text-sm rounded-lg'
+      : 'pl-[34px] pr-8 py-1.5 text-xs rounded-md';
 
   return (
     <div className={`relative flex items-center ${className}`}>
       {/* Search or Loading Icon */}
-      <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none text-slate-400">
+      <div className="absolute left-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none text-muted-foreground">
         {isLoading ? (
-          <Loader2 className="w-3.5 h-3.5 animate-spin text-brand" />
+          <Loader2 className="w-3.5 h-3.5 animate-spin text-foreground" />
         ) : (
           <Search className="w-3.5 h-3.5" />
         )}
@@ -69,7 +69,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
         autoFocus={autoFocus}
-        className={`w-full ${sizeClasses} border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-brand dark:focus:border-brand transition-colors font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-400 ${inputClassName}`}
+        className={`w-full ${sizeClasses} border border-border bg-muted/40 focus:bg-background focus:outline-none focus:ring-1 focus:ring-ring transition-colors font-normal text-foreground placeholder:text-muted-foreground ${inputClassName}`}
       />
 
       {/* Clear Button (X) */}
@@ -79,7 +79,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
             type="button"
             onClick={handleClear}
             aria-label="Xóa từ khóa tìm kiếm"
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer focus-ring"
           >
             <X className="w-3 h-3" />
           </button>

@@ -31,7 +31,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   value,
   onChange,
   options,
-  placeholder = 'Chọn một mục...',
+  placeholder = 'Chọn một mục…',
   icon,
   size = 'md',
   className = '',
@@ -94,8 +94,8 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
         aria-expanded={isOpen}
         aria-label={ariaLabel || selectedOption?.label || placeholder}
         className={cn(
-          'flex items-center justify-between gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-brand/50 text-slate-800 dark:text-slate-100 font-semibold shadow-2xs transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand/30 disabled:opacity-50 disabled:cursor-not-allowed group',
-          isSmall ? 'px-2.5 py-1.5 text-xs' : 'px-3.5 py-2 text-xs sm:text-sm',
+          'flex items-center justify-between gap-2 rounded-lg border border-border bg-card hover:bg-muted/60 text-foreground font-medium text-xs shadow-2xs transition-[background-color,border-color] cursor-pointer focus-ring disabled:opacity-50 disabled:cursor-not-allowed group',
+          isSmall ? 'px-2.5 py-1.5 text-xs' : 'px-3 py-2 text-xs sm:text-sm',
           buttonClassName
         )}
       >
@@ -139,7 +139,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           role="listbox"
           tabIndex={-1}
           className={cn(
-            'absolute z-50 mt-1.5 w-max min-w-full max-w-xs max-h-64 overflow-y-auto custom-scrollbar p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl backdrop-blur-md animate-in fade-in zoom-in-95 duration-150 space-y-0.5',
+            'absolute z-50 mt-1.5 w-max min-w-full max-w-xs max-h-64 overflow-y-auto custom-scrollbar-y p-1 rounded-lg border border-border bg-popover text-popover-foreground shadow-lg animate-in fade-in zoom-in-95 duration-100 space-y-0.5',
             align === 'right' ? 'right-0' : 'left-0',
             menuClassName
           )}
@@ -155,10 +155,10 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                 disabled={opt.disabled}
                 onClick={() => handleSelect(opt.value, opt.disabled)}
                 className={cn(
-                  'w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-xs transition-colors cursor-pointer text-left',
+                  'w-full flex items-center justify-between gap-3 px-2.5 py-1.5 rounded-md text-xs transition-colors cursor-pointer text-left',
                   isSelected
-                    ? 'bg-brand/10 text-brand font-bold'
-                    : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800',
+                    ? 'bg-muted text-foreground font-semibold'
+                    : 'text-foreground/80 hover:bg-muted/80 hover:text-foreground',
                   opt.disabled && 'opacity-40 cursor-not-allowed hover:bg-transparent'
                 )}
               >

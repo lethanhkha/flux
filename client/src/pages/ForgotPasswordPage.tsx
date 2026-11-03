@@ -66,30 +66,30 @@ export const ForgotPasswordPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 font-sans flex flex-col selection:bg-brand selection:text-white page-enter">
+    <div className="min-h-screen bg-background text-foreground font-sans flex flex-col selection:bg-foreground selection:text-background page-enter">
       {/* Header */}
-      <header className="py-6 px-4 max-w-7xl mx-auto w-full flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2.5">
+      <header className="py-4 px-4 max-w-7xl mx-auto w-full flex items-center justify-between border-b border-border/50">
+        <Link to="/" className="flex items-center gap-2.5 focus-ring rounded-md">
           <FluxLogo variant="compact" size="sm" />
         </Link>
-        <Link to="/login" className="text-xs text-slate-500 hover:text-brand flex items-center gap-1 font-semibold">
-          <ArrowLeft className="w-3.5 h-3.5" />
-          Quay lại Đăng nhập
+        <Link to="/login" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-medium">
+          <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
+          <span>Quay lại đăng nhập</span>
         </Link>
       </header>
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-md space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none space-y-6">
+        <div className="w-full max-w-sm space-y-5">
+          <div className="bg-card text-card-foreground border border-border rounded-xl p-6 sm:p-7 shadow-sm space-y-5">
             <div className="text-center space-y-2">
-              <div className="h-12 w-12 rounded-2xl bg-brand/10 text-brand flex items-center justify-center mx-auto shadow-sm">
-                <KeyRound className="w-6 h-6" />
+              <div className="h-10 w-10 rounded-lg bg-muted text-foreground flex items-center justify-center mx-auto border border-border">
+                <KeyRound className="w-5 h-5" aria-hidden="true" />
               </div>
-              <h1 className="text-2xl font-bold tracking-tight">Khôi phục mật khẩu</h1>
-              <p className="text-xs text-slate-500 max-w-xs mx-auto">
+              <h1 className="text-xl font-bold tracking-tight text-foreground">Khôi phục mật khẩu</h1>
+              <p className="text-xs text-muted-foreground max-w-xs mx-auto leading-relaxed">
                 {step === 'request'
-                  ? 'Nhập địa chỉ Gmail của bạn để nhận liên kết xác thực đặt lại mật khẩu.'
+                  ? 'Nhập địa chỉ Gmail của bạn để nhận mã xác thực đặt lại mật khẩu.'
                   : 'Nhập mã token đã được cấp và mật khẩu mới cho tài khoản của bạn.'}
               </p>
             </div>
@@ -97,23 +97,26 @@ export const ForgotPasswordPage: React.FC = () => {
             {step === 'request' ? (
               <form onSubmit={handleRequestReset} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <label htmlFor="forgot-email" className="block text-xs font-medium text-foreground">
                     Địa chỉ Gmail
                   </label>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                      <Mail className="w-4 h-4" />
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
+                      <Mail className="w-4 h-4" aria-hidden="true" />
                     </span>
                     <input
+                      id="forgot-email"
                       type="email"
+                      autoComplete="email"
+                      spellCheck={false}
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="ten_cua_ban@gmail.com"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+                      className="w-full pl-9 pr-3.5 py-2 rounded-lg border border-border bg-background text-foreground text-xs focus-ring"
                     />
                   </div>
-                  <p className="text-[11px] text-slate-500">Chỉ hỗ trợ hòm thư @gmail.com</p>
+                  <p className="text-[11px] text-muted-foreground">Hỗ trợ hòm thư @gmail.com</p>
                 </div>
 
                 {/* Cloudflare Turnstile Anti-bot Protection */}
@@ -127,14 +130,14 @@ export const ForgotPasswordPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-sm shadow-md shadow-brand/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  className="w-full py-2.5 rounded-lg bg-foreground hover:bg-foreground/90 text-background font-medium text-xs shadow-xs transition-[background-color,opacity] flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer focus-ring"
                 >
                   {isSubmitting ? (
-                    <span>Đang tạo mã khôi phục...</span>
+                    <span>Đang tạo mã khôi phục…</span>
                   ) : (
                     <>
-                      <span>Tạo Mã Khôi Phục</span>
-                      <ArrowRight className="w-4 h-4" />
+                      <span>Tạo mã khôi phục</span>
+                      <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                     </>
                   )}
                 </button>
@@ -142,34 +145,39 @@ export const ForgotPasswordPage: React.FC = () => {
             ) : (
               <form onSubmit={handleResetPassword} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <label htmlFor="reset-token" className="block text-xs font-medium text-foreground">
                     Mã Token khôi phục
                   </label>
                   <textarea
+                    id="reset-token"
                     rows={2}
                     required
+                    spellCheck={false}
                     value={token}
                     onChange={(e) => setToken(e.target.value)}
-                    placeholder="Mã token HMAC..."
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-brand break-all"
+                    placeholder="Mã token HMAC…"
+                    className="w-full p-2.5 rounded-lg border border-border bg-background font-mono text-xs focus-ring break-all resize-none"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    Mật khẩu mới (≥8 ký tự, hoa, thường, số, ký tự đặc biệt)
+                  <label htmlFor="reset-new-password" className="block text-xs font-medium text-foreground">
+                    Mật khẩu mới (≥8 ký tự)
                   </label>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                      <Lock className="w-4 h-4" />
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
+                      <Lock className="w-4 h-4" aria-hidden="true" />
                     </span>
                     <input
+                      id="reset-new-password"
                       type="password"
+                      autoComplete="new-password"
+                      spellCheck={false}
                       required
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="••••••••••••"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand font-mono"
+                      className="w-full pl-9 pr-3.5 py-2 rounded-lg border border-border bg-background text-foreground text-xs focus-ring font-mono"
                     />
                   </div>
                 </div>
@@ -177,14 +185,14 @@ export const ForgotPasswordPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-sm shadow-md shadow-brand/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  className="w-full py-2.5 rounded-lg bg-foreground hover:bg-foreground/90 text-background font-medium text-xs shadow-xs transition-[background-color,opacity] flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer focus-ring"
                 >
                   {isSubmitting ? (
-                    <span>Đang cập nhật mật khẩu...</span>
+                    <span>Đang cập nhật mật khẩu…</span>
                   ) : (
                     <>
-                      <span>Cập Nhật Mật Khẩu Mới</span>
-                      <ArrowRight className="w-4 h-4" />
+                      <span>Cập nhật mật khẩu mới</span>
+                      <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                     </>
                   )}
                 </button>
@@ -193,7 +201,7 @@ export const ForgotPasswordPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setStep('request')}
-                    className="text-xs text-brand hover:underline font-semibold cursor-pointer"
+                    className="text-xs text-muted-foreground hover:text-foreground font-medium cursor-pointer"
                   >
                     Quay lại bước nhập email
                   </button>

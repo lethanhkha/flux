@@ -618,7 +618,7 @@ export const FinancePage: React.FC = () => {
 
   const handleExportCSV = useCallback(async () => {
     try {
-      toast.info('Đang chuẩn bị file CSV dữ liệu...');
+      toast.info('Đang chuẩn bị file CSV dữ liệu…');
       const params: Record<string, any> = {
         page: 1,
         limit: 1000,

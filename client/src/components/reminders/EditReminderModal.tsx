@@ -196,24 +196,24 @@ export const EditReminderModal: React.FC<EditReminderModalProps> = ({
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="VD: 13h đi dự khai mạc, Khám răng định kỳ, Họp tổng kết..."
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all"
+              placeholder="VD: 13h đi dự khai mạc, Khám răng định kỳ, Họp tổng kết…"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-muted/40 text-xs font-normal focus:bg-background focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
             />
           </div>
 
           {/* Scheduled Date Time & Remind Before */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-brand" />
-                <span>Thời điểm diễn ra</span> <span className="text-rose-500">*</span>
+              <label className="block text-xs font-medium text-foreground mb-1.5 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-foreground" />
+                <span>Thời điểm diễn ra</span> <span className="text-destructive">*</span>
               </label>
               <input
                 type="datetime-local"
                 required
                 value={scheduledAt}
                 onChange={(e) => setScheduledAt(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-muted/40 text-xs font-normal focus:bg-background focus:outline-none focus:ring-1 focus:ring-ring transition-colors tabular-nums"
               />
             </div>
 
@@ -224,31 +224,31 @@ export const EditReminderModal: React.FC<EditReminderModalProps> = ({
 
           {/* Location / Meeting URL */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-brand" />
-              <span>Địa điểm hoặc Link họp trực tuyến (tùy chọn)</span>
+            <label className="block text-xs font-medium text-foreground mb-1.5 flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-foreground" />
+              <span>Địa điểm hoặc link họp trực tuyến (tùy chọn)</span>
             </label>
             <input
               type="text"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="VD: Hội trường A, Phòng họp 302, hoặc https://meet.google.com/..."
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all"
+              placeholder="VD: Hội trường A, Phòng họp 302, hoặc https://meet.google.com/…"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-muted/40 text-xs font-normal focus:bg-background focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
-              <FileText className="w-3.5 h-3.5 text-brand" />
+            <label className="block text-xs font-medium text-foreground mb-1.5 flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-foreground" />
               <span>Ghi chú / Chuẩn bị trước</span>
             </label>
             <textarea
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Ghi chú chi tiết, tài liệu cần mang theo, nội dung chuẩn bị..."
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all resize-none"
+              placeholder="Ghi chú chi tiết, tài liệu cần mang theo, nội dung chuẩn bị…"
+              className="w-full px-3.5 py-2 rounded-lg border border-border bg-muted/40 text-xs font-normal focus:bg-background focus:outline-none focus:ring-1 focus:ring-ring transition-colors resize-none"
             />
           </div>
 
@@ -288,28 +288,28 @@ export const EditReminderModal: React.FC<EditReminderModalProps> = ({
                 availableTags={availableTags}
                 selectedTags={tags}
                 onChange={setTags}
-                placeholder="Chọn hoặc nhập thẻ mới..."
+                placeholder="Chọn hoặc nhập thẻ mới…"
               />
             </div>
           </div>
 
           {/* Footer Actions */}
-          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
+          <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
             <button
               type="button"
               disabled={isSubmitting}
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 transition-colors"
+              className="px-4 py-2.5 rounded-lg border border-border bg-card hover:bg-muted text-xs font-medium text-foreground transition-colors"
             >
               Hủy
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-bold shadow-md shadow-brand/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-foreground text-background text-xs font-medium hover:bg-foreground/90 transition-colors disabled:opacity-50"
             >
               {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              <span>{isEditing ? 'Lưu Thay Đổi' : 'Tạo Nhắc Hẹn'}</span>
+              <span>{isEditing ? 'Lưu thay đổi' : 'Tạo nhắc hẹn'}</span>
             </button>
           </div>
         </form>

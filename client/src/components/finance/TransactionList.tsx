@@ -208,23 +208,23 @@ export const TransactionList = React.memo<TransactionListProps>(({
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-sm space-y-5">
+    <div className="rounded-lg border border-border bg-card p-4 sm:p-5 text-card-foreground space-y-4">
       {/* 1. Header & Primary Action Buttons */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="font-bold text-base sm:text-lg">Lịch Sử Giao Dịch</h2>
+            <h2 className="font-semibold text-base sm:text-lg text-foreground">Lịch sử giao dịch</h2>
             {hasActiveFilters && (
               <Tooltip content="Đang áp dụng bộ lọc cho danh sách. Nhấp nút Xóa bộ lọc bên dưới để đặt lại.">
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand/10 text-brand font-bold cursor-help">
+                <span className="text-[10px] px-2 py-0.5 rounded-full border border-border bg-muted text-muted-foreground font-medium cursor-help">
                   Đang lọc
                 </span>
               </Tooltip>
             )}
             <InfoTooltip content="Lịch sử mọi khoản thu, chi và chuyển khoản được tự động lọc theo chu kỳ thời gian và thống kê tức thời." />
           </div>
-          <p className="text-xs text-slate-500">
-            Theo dõi chi tiêu theo từng tháng, gom nhóm theo ngày và tính toán tự động
+          <p className="text-xs text-muted-foreground">
+            Theo dõi chi tiêu theo từng kỳ, gom nhóm theo ngày và tính toán tự động
           </p>
         </div>
 
@@ -233,7 +233,7 @@ export const TransactionList = React.memo<TransactionListProps>(({
             <button
               type="button"
               onClick={onOpenAddTx}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold shadow-xs transition-all cursor-pointer hover:scale-102 active:scale-98"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-foreground text-background text-xs font-medium hover:opacity-90 active:scale-[0.98] transition-[opacity,transform] cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Thêm Giao Dịch</span>
@@ -244,9 +244,9 @@ export const TransactionList = React.memo<TransactionListProps>(({
             <button
               type="button"
               onClick={onExportCSV}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 hover:border-brand/40 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-background hover:bg-muted text-foreground text-xs font-medium transition-[background-color] cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5 text-brand" />
+              <Download className="w-3.5 h-3.5 text-muted-foreground" />
               <span>Xuất CSV</span>
             </button>
           </Tooltip>
@@ -268,7 +268,7 @@ export const TransactionList = React.memo<TransactionListProps>(({
           <SearchInput
             value={searchQuery}
             onChange={(val) => onSearchChange?.(val)}
-            placeholder="Tìm kiếm nội dung, ghi chú, danh mục..."
+            placeholder="Tìm kiếm nội dung, ghi chú, danh mục…"
             isLoading={isLoading}
             className="flex-1 min-w-[200px] max-w-sm"
           />
@@ -280,12 +280,12 @@ export const TransactionList = React.memo<TransactionListProps>(({
                 value={selectedWalletId}
                 onChange={(val) => onSelectWallet?.(val)}
                 size="sm"
-                icon={<WalletIcon className="w-3.5 h-3.5 text-brand" />}
+                icon={<WalletIcon className="w-3.5 h-3.5 text-muted-foreground" />}
                 options={[
                   {
                     value: 'ALL',
                     label: `Tất cả ví (${wallets.length})`,
-                    icon: <WalletIcon className="w-3.5 h-3.5 text-brand" />,
+                    icon: <WalletIcon className="w-3.5 h-3.5 text-muted-foreground" />,
                   },
                   ...wallets.map((w) => ({
                     value: w.id,
@@ -300,15 +300,15 @@ export const TransactionList = React.memo<TransactionListProps>(({
         </div>
 
         {/* Right: Type Tabs (ALL, INCOME, EXPENSE, TRANSFER) */}
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold self-start md:self-auto">
+        <div className="flex items-center gap-0.5 p-0.5 rounded-md border border-border/40 bg-muted text-xs font-medium self-start md:self-auto">
           <Tooltip content="Hiển thị tất cả mọi loại giao dịch">
             <button
               type="button"
               onClick={() => onFilterChange('ALL')}
-              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-sm transition-[color,background-color] cursor-pointer ${
                 filter === 'ALL'
-                  ? 'bg-white dark:bg-slate-900 text-brand shadow-xs font-bold'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  ? 'bg-background text-foreground shadow-xs font-medium'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Tất Cả
@@ -319,10 +319,10 @@ export const TransactionList = React.memo<TransactionListProps>(({
             <button
               type="button"
               onClick={() => onFilterChange('INCOME')}
-              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-sm transition-[color,background-color] cursor-pointer ${
                 filter === 'INCOME'
-                  ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs font-bold'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  ? 'bg-background text-emerald-600 dark:text-emerald-400 shadow-xs font-medium'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Thu (+)
@@ -333,10 +333,10 @@ export const TransactionList = React.memo<TransactionListProps>(({
             <button
               type="button"
               onClick={() => onFilterChange('EXPENSE')}
-              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-sm transition-[color,background-color] cursor-pointer ${
                 filter === 'EXPENSE'
-                  ? 'bg-white dark:bg-slate-900 text-rose-500 dark:text-rose-400 shadow-xs font-bold'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  ? 'bg-background text-rose-500 dark:text-rose-400 shadow-xs font-medium'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Chi (-)
@@ -347,10 +347,10 @@ export const TransactionList = React.memo<TransactionListProps>(({
             <button
               type="button"
               onClick={() => onFilterChange('TRANSFER')}
-              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-sm transition-[color,background-color] cursor-pointer ${
                 filter === 'TRANSFER'
-                  ? 'bg-white dark:bg-slate-900 text-brand shadow-xs font-bold'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  ? 'bg-background text-foreground shadow-xs font-medium'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Chuyển (↔)
@@ -365,8 +365,8 @@ export const TransactionList = React.memo<TransactionListProps>(({
         className="flex items-center gap-2 text-xs min-w-0"
       >
         {/* Fixed "Danh mục:" Label */}
-        <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-semibold shrink-0 select-none pl-1 py-1">
-          <Tag className="w-3.5 h-3.5 text-brand shrink-0" />
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium shrink-0 select-none pl-1 py-1">
+          <Tag className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
           <span className="whitespace-nowrap">Danh mục:</span>
         </div>
 
@@ -379,10 +379,10 @@ export const TransactionList = React.memo<TransactionListProps>(({
             <button
               type="button"
               onClick={() => onSelectCategory('ALL')}
-              className={`px-3 py-1 rounded-xl text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+              className={`px-2.5 py-1 rounded-md text-xs transition-[color,background-color,border-color] cursor-pointer shrink-0 whitespace-nowrap border ${
                 selectedCategory === 'ALL'
-                  ? 'bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 font-bold shadow-xs'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  ? 'border-border bg-foreground text-background font-medium'
+                  : 'border-border/60 bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground'
               }`}
             >
               Tất cả ({transactions.length})
@@ -400,23 +400,23 @@ export const TransactionList = React.memo<TransactionListProps>(({
                 <button
                   type="button"
                   onClick={() => onSelectCategory(isActive ? 'ALL' : cat.name)}
-                  className={`px-2.5 py-1 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
+                  className={`px-2.5 py-1 rounded-md text-xs transition-[color,background-color,border-color] flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap border ${
                     isActive
-                      ? 'bg-brand text-white font-bold shadow-xs'
-                      : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-brand/10 hover:text-brand'
+                      ? 'border-border bg-foreground text-background font-medium'
+                      : 'border-border/60 bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground'
                   }`}
                 >
                   <span
                     className="w-2 h-2 rounded-full shrink-0"
-                    style={{ backgroundColor: cat.color || '#6366F1' }}
+                    style={{ backgroundColor: cat.color || 'hsl(var(--foreground))' }}
                   />
                   <span className="whitespace-nowrap">{cat.name}</span>
                   {count > 0 && (
                     <span
                       className={`text-[10px] px-1.5 py-0.2 rounded-full shrink-0 font-medium ${
                         isActive
-                          ? 'bg-white/20 text-white'
-                          : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
+                          ? 'bg-background/20 text-background'
+                          : 'bg-muted text-muted-foreground'
                       }`}
                     >
                       {count}
@@ -434,7 +434,7 @@ export const TransactionList = React.memo<TransactionListProps>(({
             <button
               type="button"
               onClick={onOpenCategoryModal}
-              className="px-2.5 py-1.5 rounded-xl text-xs border border-dashed border-slate-300 dark:border-slate-700 text-slate-500 hover:text-brand hover:border-brand transition-all flex items-center gap-1 cursor-pointer shrink-0"
+              className="px-2.5 py-1 rounded-md text-xs border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-[color,border-color] flex items-center gap-1 cursor-pointer shrink-0"
             >
               <Settings className="w-3 h-3" />
               <span>Quản Lý Danh Mục</span>
@@ -464,50 +464,50 @@ export const TransactionList = React.memo<TransactionListProps>(({
             {[1, 2, 3, 4].map((item) => (
               <div
                 key={item}
-                className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4 animate-pulse"
+                className="p-3.5 rounded-lg bg-card border border-border flex items-center justify-between gap-4 animate-pulse"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-10 w-10 rounded-xl bg-slate-200 dark:bg-slate-800 flex-shrink-0" />
+                  <div className="h-9 w-9 rounded-md bg-muted flex-shrink-0" />
                   <div className="space-y-1.5">
-                    <div className="h-3.5 bg-slate-200 dark:bg-slate-800 rounded w-28" />
-                    <div className="h-2.5 bg-slate-100 dark:bg-slate-850 rounded w-36" />
+                    <div className="h-3.5 bg-muted rounded w-28" />
+                    <div className="h-2.5 bg-muted/60 rounded w-36" />
                   </div>
                 </div>
                 <div className="text-right space-y-1.5 flex-shrink-0">
-                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-20 ml-auto" />
-                  <div className="h-2.5 bg-slate-100 dark:bg-slate-850 rounded w-14 ml-auto" />
+                  <div className="h-4 bg-muted rounded w-20 ml-auto" />
+                  <div className="h-2.5 bg-muted/60 rounded w-14 ml-auto" />
                 </div>
               </div>
             ))}
           </div>
         ) : transactions.length === 0 ? (
-          <div className="p-10 text-center bg-slate-50 dark:bg-slate-950/40 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center space-y-4">
-            <EmptyTransactions width={170} height={135} />
+          <div className="p-8 text-center bg-card rounded-lg border border-dashed border-border flex flex-col items-center justify-center space-y-3">
+            <EmptyTransactions width={150} height={120} />
             <div>
-              <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200">
-                Chưa có giao dịch nào trong {periodLabel}
+              <h3 className="font-semibold text-sm text-foreground">
+                Chưa có giao dịch trong {periodLabel}
               </h3>
-              <p className="text-xs text-slate-500 max-w-sm mt-1">
-                Không ghi nhận giao dịch thu chi nào trong khoảng thời gian này. Hãy thêm giao dịch mới để bắt đầu theo dõi!
+              <p className="text-xs text-muted-foreground max-w-sm mt-1">
+                Không ghi nhận giao dịch thu chi nào trong khoảng thời gian này.
               </p>
             </div>
             <button
               type="button"
               onClick={onOpenAddTx}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold shadow-xs transition-all cursor-pointer hover:scale-105 active:scale-95"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-foreground text-background text-xs font-medium hover:opacity-90 active:scale-[0.98] transition-[opacity,transform] cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Ghi Nhận Giao Dịch Ngay</span>
+              <span>Ghi Nhận Giao Dịch</span>
             </button>
           </div>
         ) : filteredTransactions.length === 0 ? (
-          <div className="p-8 text-center bg-slate-50 dark:bg-slate-950/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-400 space-y-3">
-            <EmptySearch width={130} height={100} />
+          <div className="p-8 text-center bg-card rounded-lg border border-dashed border-border text-xs text-muted-foreground space-y-3">
+            <EmptySearch width={120} height={90} />
             <p>Không tìm thấy giao dịch nào khớp với bộ lọc hoặc từ khóa tìm kiếm.</p>
             <button
               type="button"
               onClick={handleResetFilters}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-brand font-semibold text-xs transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border hover:bg-muted text-foreground font-medium text-xs transition-[background-color] cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Xóa bộ lọc</span>

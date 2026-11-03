@@ -26,7 +26,7 @@ export const WalletList = React.memo<WalletListProps>(({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h2 className="font-bold text-sm text-slate-700 dark:text-slate-300">
-            Danh Sách Ví Tiền ({isLoading ? '...' : wallets.length})
+            Danh Sách Ví Tiền ({isLoading ? '…' : wallets.length})
           </h2>
           <InfoTooltip content="Mỗi ví đại diện cho một tài khoản ngân hàng, ví tiền mặt hoặc thẻ để theo dõi số dư độc lập." />
         </div>
@@ -83,28 +83,28 @@ export const WalletList = React.memo<WalletListProps>(({
             return (
               <div
                 key={w.id}
-                className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover-lift space-y-3"
+                className="p-4 rounded-lg border border-border bg-card shadow-2xs space-y-3"
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div
-                      className="h-9 w-9 rounded-xl flex items-center justify-center text-white flex-shrink-0"
+                      className="h-8 w-8 rounded-md flex items-center justify-center text-white shrink-0"
                       style={{ backgroundColor: w.color }}
                     >
-                      <Icon className="w-5 h-5" />
+                      <Icon className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <div className="font-bold text-xs line-clamp-1 text-slate-800 dark:text-slate-100" title={w.name}>
+                      <div className="font-semibold text-xs line-clamp-1 text-foreground" title={w.name}>
                         {w.name}
                       </div>
-                      <div className="text-[10px] text-slate-500">{w.type}</div>
+                      <div className="text-[10px] text-muted-foreground">{w.type}</div>
                     </div>
                   </div>
 
-                  <div className="flex-shrink-0">
+                  <div className="shrink-0">
                     {w.isDefault ? (
                       <Tooltip content="Ví mặc định được hệ thống chọn sẵn khi bạn ghi nhận giao dịch mới.">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 shadow-2xs cursor-help">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 cursor-help">
                           <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
                           <span>Mặc định</span>
                         </span>
@@ -115,7 +115,7 @@ export const WalletList = React.memo<WalletListProps>(({
                           <button
                             type="button"
                             onClick={() => onSetDefaultWallet(w.id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-500/10 border border-slate-200 dark:border-slate-800 hover:border-amber-500/25 transition-all cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted border border-border transition-colors cursor-pointer"
                           >
                             <Star className="w-3 h-3" />
                             <span>Đặt mặc định</span>
@@ -125,8 +125,8 @@ export const WalletList = React.memo<WalletListProps>(({
                     )}
                   </div>
                 </div>
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                  <div className="text-xl font-extrabold tabular-nums text-slate-900 dark:text-slate-100">
+                <div className="pt-2 border-t border-border flex items-center justify-between">
+                  <div className="text-lg font-bold tabular-nums text-foreground">
                     {formatCurrency(w.balance)}
                   </div>
                   <div className="flex items-center gap-1">
@@ -136,7 +136,7 @@ export const WalletList = React.memo<WalletListProps>(({
                           type="button"
                           onClick={() => onEditWallet(w)}
                           aria-label={`Chỉnh sửa ví: ${w.name}`}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-brand hover:bg-brand/10 transition-colors cursor-pointer focus-ring"
+                          className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer focus-ring"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
@@ -148,7 +148,7 @@ export const WalletList = React.memo<WalletListProps>(({
                           type="button"
                           onClick={() => onDeleteWallet(w)}
                           aria-label={`Xóa ví: ${w.name}`}
-                          className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer focus-ring"
+                          className="p-1 rounded-md text-muted-foreground hover:text-rose-600 hover:bg-rose-500/10 transition-colors cursor-pointer focus-ring"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>

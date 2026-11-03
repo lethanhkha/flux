@@ -38,8 +38,8 @@ export const KanbanTaskCard = React.memo<KanbanTaskCardProps>(({
       onDragStart={(e) => onDragStart(e, task.id)}
       onDragEnd={onDragEnd}
       onClick={() => onToggleParentStatus(task.id)}
-      className={`p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover-lift cursor-grab active:cursor-grabbing space-y-2.5 transition-all select-none ${
-        isDragging ? 'opacity-40 scale-95 border-brand ring-2 ring-brand/30' : ''
+      className={`p-3.5 rounded-lg border border-border bg-card shadow-xs cursor-grab active:cursor-grabbing space-y-2 transition-[border-color,background-color] select-none ${
+        isDragging ? 'opacity-40 scale-95 border-foreground ring-2 ring-foreground/20' : 'hover:border-foreground/30'
       }`}
     >
       <div className="flex items-center justify-between">

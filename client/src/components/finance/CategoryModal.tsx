@@ -95,10 +95,10 @@ const CategoryCard = React.memo<CategoryCardProps>(({
 
   if (isEditing) {
     return (
-      <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border-2 border-brand/40 shadow-sm space-y-3 transition-all col-span-1 sm:col-span-2">
+      <div className="p-3 rounded-lg bg-card border border-border shadow-xs space-y-3 transition-[border-color] col-span-1 sm:col-span-2">
         <div className="flex items-center justify-between">
-          <span className="font-bold text-xs text-brand flex items-center gap-1.5">
-            <Edit3 className="w-3.5 h-3.5" />
+          <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+            <Edit3 className="w-3.5 h-3.5 text-muted-foreground" />
             <span>Chỉnh sửa danh mục</span>
           </span>
           <div className="flex items-center gap-1">
@@ -106,7 +106,7 @@ const CategoryCard = React.memo<CategoryCardProps>(({
               <button
                 type="button"
                 onClick={() => onSaveEdit(category.id)}
-                className="p-1.5 rounded-lg bg-brand hover:bg-brand-hover text-white transition-colors cursor-pointer"
+                className="p-1 rounded-md bg-foreground text-background hover:opacity-90 transition-[opacity] cursor-pointer"
                 aria-label="Lưu thay đổi"
               >
                 <Check className="w-3.5 h-3.5" />
@@ -116,7 +116,7 @@ const CategoryCard = React.memo<CategoryCardProps>(({
               <button
                 type="button"
                 onClick={onCancelEdit}
-                className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                className="p-1 rounded-md border border-border bg-secondary hover:bg-muted text-foreground transition-[background-color] cursor-pointer"
                 aria-label="Hủy chỉnh sửa"
               >
                 <X className="w-3.5 h-3.5" />
@@ -139,9 +139,9 @@ const CategoryCard = React.memo<CategoryCardProps>(({
                 onCancelEdit();
               }
             }}
-            placeholder="Tên danh mục..."
+            placeholder="Tên danh mục…"
             autoFocus
-            className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-2 focus:ring-brand font-medium"
+            className="w-full px-3 py-1.5 rounded-md border border-input bg-background text-xs font-medium focus-ring"
           />
 
           <CustomSelect
@@ -156,16 +156,16 @@ const CategoryCard = React.memo<CategoryCardProps>(({
         </div>
 
         {/* Color Palette Selector */}
-        <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-slate-100 dark:border-slate-800/60">
-          <span className="text-[11px] text-slate-400 font-medium mr-1">Màu sắc:</span>
+        <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-border/40">
+          <span className="text-[11px] text-muted-foreground font-medium mr-1">Màu sắc:</span>
           {CATEGORY_COLORS.map((color) => (
             <button
               key={color}
               type="button"
               onClick={() => onChangeEditColor(color)}
-              className={`w-4 h-4 rounded-full transition-transform cursor-pointer ${
+              className={`w-3.5 h-3.5 rounded-full transition-transform cursor-pointer ${
                 editColor === color
-                  ? 'scale-125 ring-2 ring-brand ring-offset-2 dark:ring-offset-slate-900'
+                  ? 'scale-125 ring-2 ring-foreground ring-offset-2'
                   : 'opacity-70 hover:opacity-100 hover:scale-110'
               }`}
               style={{ backgroundColor: color }}
@@ -178,17 +178,17 @@ const CategoryCard = React.memo<CategoryCardProps>(({
   }
 
   return (
-    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700 transition-all flex items-center justify-between gap-2.5 text-xs group">
+    <div className="p-2.5 rounded-md bg-card border border-border hover:border-foreground/30 transition-[border-color] flex items-center justify-between gap-2.5 text-xs group">
       {/* Category Info */}
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
         <span
-          className="w-3 h-3 rounded-full flex-shrink-0 shadow-xs"
-          style={{ backgroundColor: category.color || '#6366F1' }}
+          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+          style={{ backgroundColor: category.color || 'hsl(var(--foreground))' }}
         />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <span
-              className="font-bold text-slate-800 dark:text-slate-100 truncate"
+              className="font-medium text-foreground truncate"
               title={category.name}
             >
               {category.name}
@@ -196,7 +196,7 @@ const CategoryCard = React.memo<CategoryCardProps>(({
           </div>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span
-              className={`text-[10px] px-1.5 py-0.2 rounded-md font-semibold flex-shrink-0 ${
+              className={`text-[10px] px-1.5 py-0.2 rounded font-medium flex-shrink-0 ${
                 isIncome
                   ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                   : 'bg-rose-500/10 text-rose-500 dark:text-rose-400'
@@ -205,7 +205,7 @@ const CategoryCard = React.memo<CategoryCardProps>(({
               {isIncome ? 'Thu' : 'Chi'}
             </span>
             <Tooltip content={`Đang có ${txCount} giao dịch thuộc danh mục này`}>
-              <span className="text-[10px] text-slate-400 font-medium">
+              <span className="text-[10px] text-muted-foreground tabular-nums font-medium">
                 {txCount} GD
               </span>
             </Tooltip>
@@ -220,7 +220,7 @@ const CategoryCard = React.memo<CategoryCardProps>(({
             type="button"
             onClick={() => onStartEdit(category)}
             aria-label={`Chỉnh sửa danh mục ${category.name}`}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-brand hover:bg-brand/10 transition-colors cursor-pointer"
+            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-[color,background-color] cursor-pointer"
           >
             <Edit3 className="w-3.5 h-3.5" />
           </button>
@@ -230,7 +230,7 @@ const CategoryCard = React.memo<CategoryCardProps>(({
             type="button"
             onClick={() => onRequestDelete(category)}
             aria-label={`Xóa danh mục ${category.name}`}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+            className="p-1 rounded-md text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition-[color,background-color] cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -479,21 +479,21 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
     >
       <div className="space-y-4">
         {/* Modal Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between pb-3 border-b border-border/60">
           <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-2xl bg-brand/10 text-brand flex items-center justify-center font-bold">
+            <div className="h-7 w-7 rounded-md border border-border bg-muted text-foreground flex items-center justify-center font-bold">
               <FolderTree className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 id="category-modal-title" className="font-extrabold text-base text-slate-900 dark:text-white">
+                <h3 id="category-modal-title" className="font-semibold text-base text-foreground">
                   Quản Lý Danh Mục Thu Chi
                 </h3>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full border border-border bg-muted text-muted-foreground tabular-nums">
                   {categories.length}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-muted-foreground">
                 Tùy chỉnh phân loại tài chính ({incomeCount} Thu · {expenseCount} Chi)
               </p>
             </div>
@@ -504,10 +504,10 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
               <button
                 type="button"
                 onClick={() => setIsCreateOpen((prev) => !prev)}
-                className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-md font-medium text-xs flex items-center gap-1.5 transition-[opacity,transform] cursor-pointer ${
                   isCreateOpen
-                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-                    : 'bg-brand text-white hover:bg-brand-hover shadow-xs shadow-brand/20'
+                    ? 'border border-border bg-secondary text-foreground hover:bg-muted'
+                    : 'bg-foreground text-background hover:opacity-90 active:scale-[0.98]'
                 }`}
               >
                 <Plus className={`w-3.5 h-3.5 transition-transform ${isCreateOpen ? 'rotate-45' : ''}`} />
@@ -523,9 +523,9 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                   setEditingCategoryId(null);
                 }}
                 aria-label="Đóng quản lý danh mục"
-                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-[background-color] cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </Tooltip>
           </div>
@@ -535,21 +535,21 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
         {isCreateOpen && (
           <form
             onSubmit={handleCreateCategory}
-            className="p-4 rounded-2xl bg-brand/5 dark:bg-brand/10 border border-brand/20 space-y-3 text-xs animate-in fade-in slide-in-from-top-2 duration-150"
+            className="p-3.5 rounded-lg bg-card border border-border space-y-3 text-xs"
           >
-            <div className="font-bold text-xs text-brand flex items-center justify-between">
+            <div className="font-medium text-xs text-foreground flex items-center justify-between">
               <div className="flex items-center gap-1.5">
-                <Tag className="w-3.5 h-3.5" />
+                <Tag className="w-3.5 h-3.5 text-muted-foreground" />
                 <span>Tạo danh mục mới</span>
               </div>
-              <span className="text-[10px] text-slate-400 font-normal">
+              <span className="text-[10px] text-muted-foreground font-normal">
                 Điền tên và chọn màu đại diện
               </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div>
-                <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+                <label className="font-medium block mb-1 text-foreground">
                   Tên danh mục <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -557,15 +557,15 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                   required
                   value={newCatName}
                   onChange={(e) => setNewCatName(e.target.value)}
-                  placeholder="VD: Giáo dục, Thú cưng, Cà phê..."
+                  placeholder="VD: Giáo dục, Thú cưng, Cà phê…"
                   autoFocus
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-brand font-medium"
+                  className="w-full px-3 py-1.5 rounded-md border border-input bg-background text-xs font-medium focus-ring"
                 />
               </div>
 
               <div>
                 <div className="flex items-center gap-1 mb-1">
-                  <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                  <label className="font-medium block text-foreground">
                     Phân loại
                   </label>
                   <InfoTooltip content="Phân loại danh mục này là Khoản chi tiêu (-) hay Khoản thu nhập (+)." />
@@ -585,7 +585,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
             {/* Color Palette Selector */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold mr-1">
+                <span className="text-[11px] text-muted-foreground font-medium mr-1">
                   Màu đại diện:
                 </span>
                 {CATEGORY_COLORS.map((c) => (
@@ -593,9 +593,9 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                     key={c}
                     type="button"
                     onClick={() => setNewCatColor(c)}
-                    className={`w-4 h-4 rounded-full transition-transform cursor-pointer ${
+                    className={`w-3.5 h-3.5 rounded-full transition-transform cursor-pointer ${
                       newCatColor === c
-                        ? 'scale-125 ring-2 ring-brand ring-offset-2 dark:ring-offset-slate-900'
+                        ? 'scale-125 ring-2 ring-foreground ring-offset-2'
                         : 'opacity-70 hover:opacity-100 hover:scale-110'
                     }`}
                     style={{ backgroundColor: c }}
@@ -608,16 +608,16 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
-                  className="px-3 py-1.5 rounded-xl bg-slate-200/80 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors cursor-pointer"
+                  className="px-3 py-1.5 rounded-md border border-border bg-secondary hover:bg-muted text-foreground font-medium text-xs transition-[background-color] cursor-pointer"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingCat || !newCatName.trim()}
-                  className="px-4 py-1.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50 cursor-pointer flex-shrink-0"
+                  className="px-3.5 py-1.5 rounded-md bg-foreground text-background font-medium text-xs hover:opacity-90 active:scale-[0.98] transition-[opacity,transform] disabled:opacity-50 cursor-pointer flex-shrink-0"
                 >
-                  {isSubmittingCat ? 'Đang thêm...' : '+ Tạo danh mục'}
+                  {isSubmittingCat ? 'Đang thêm…' : '+ Tạo danh mục'}
                 </button>
               </div>
             </div>
@@ -631,7 +631,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
             <SearchInput
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="Tìm nhanh danh mục theo tên..."
+              placeholder="Tìm nhanh danh mục theo tên…"
               className="flex-1"
               ariaLabel="Tìm kiếm danh mục"
             />
@@ -643,7 +643,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                   value={sortOption}
                   onChange={(val) => setSortOption(val as CategorySortOption)}
                   size="sm"
-                  icon={<ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />}
+                  icon={<ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground" />}
                   className="w-44"
                   options={[
                     { value: 'NEWEST', label: 'Mới nhất' },
@@ -657,14 +657,14 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
 
           {/* Type Filter Pills */}
           <div className="flex items-center justify-between gap-2 pt-0.5">
-            <div className="flex items-center gap-1 p-0.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 text-xs font-semibold">
+            <div className="flex items-center gap-0.5 p-0.5 rounded-md border border-border/40 bg-muted text-xs font-medium">
               <button
                 type="button"
                 onClick={() => setTypeFilter('ALL')}
-                className={`px-3 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-2.5 py-1 rounded-sm transition-[color,background-color] cursor-pointer flex items-center gap-1.5 ${
                   typeFilter === 'ALL'
-                    ? 'bg-white dark:bg-slate-800 text-brand shadow-xs font-bold'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                    ? 'bg-background text-foreground shadow-xs font-medium'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 <span>Tất Cả</span>
@@ -674,10 +674,10 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
               <button
                 type="button"
                 onClick={() => setTypeFilter('EXPENSE')}
-                className={`px-3 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-2.5 py-1 rounded-sm transition-[color,background-color] cursor-pointer flex items-center gap-1.5 ${
                   typeFilter === 'EXPENSE'
-                    ? 'bg-white dark:bg-slate-800 text-rose-500 shadow-xs font-bold'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                    ? 'bg-background text-rose-500 shadow-xs font-medium'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 <span>Khoản Chi</span>
@@ -687,10 +687,10 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
               <button
                 type="button"
                 onClick={() => setTypeFilter('INCOME')}
-                className={`px-3 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-2.5 py-1 rounded-sm transition-[color,background-color] cursor-pointer flex items-center gap-1.5 ${
                   typeFilter === 'INCOME'
-                    ? 'bg-white dark:bg-slate-800 text-emerald-600 shadow-xs font-bold'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                    ? 'bg-background text-emerald-600 dark:text-emerald-400 shadow-xs font-medium'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 <span>Khoản Thu</span>
@@ -698,7 +698,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
               </button>
             </div>
 
-            <span className="text-[11px] text-slate-400 font-medium">
+            <span className="text-[11px] text-muted-foreground font-medium tabular-nums">
               Đang hiển thị {filteredAndSortedCategories.length} / {categories.length}
             </span>
           </div>
@@ -707,37 +707,37 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
         {/* Existing Categories 2-Column Responsive Grid */}
         <div className="max-h-[380px] overflow-y-auto pr-1 custom-scrollbar">
           {categories.length === 0 ? (
-            <div className="py-8 text-center text-slate-400 text-xs border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl space-y-2">
-              <FolderTree className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" />
-              <p className="font-semibold text-slate-600 dark:text-slate-400">
+            <div className="py-8 text-center text-muted-foreground text-xs border border-dashed border-border rounded-lg space-y-2">
+              <FolderTree className="w-8 h-8 text-muted-foreground mx-auto" />
+              <p className="font-semibold text-foreground">
                 Chưa có danh mục nào trong hệ thống
               </p>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-muted-foreground">
                 Bấm vào nút &quot;Thêm mới&quot; phía trên để tạo danh mục thu chi đầu tiên của bạn!
               </p>
             </div>
           ) : filteredAndSortedCategories.length === 0 ? (
-            <div className="py-8 text-center text-slate-400 text-xs border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl space-y-3">
+            <div className="py-8 text-center text-muted-foreground text-xs border border-dashed border-border rounded-lg space-y-3">
               <EmptySearch width={120} height={95} />
               <div>
-                <p className="font-bold text-sm text-slate-700 dark:text-slate-300">
+                <p className="font-semibold text-sm text-foreground">
                   Không tìm thấy danh mục nào
                 </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className="text-[11px] text-muted-foreground mt-0.5">
                   Không có danh mục nào khớp với điều kiện lọc hoặc từ khóa &quot;{searchQuery}&quot;.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={handleResetFilters}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-secondary hover:bg-muted text-foreground text-xs font-medium transition-[background-color] cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Xóa bộ lọc tìm kiếm</span>
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {paginatedCategories.map((cat) => (
                 <CategoryCard
                   key={cat.id}
@@ -762,7 +762,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
 
         {/* Pagination Control (Appears when items exceed ITEMS_PER_PAGE) */}
         {totalItems > ITEMS_PER_PAGE && (
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+          <div className="pt-2 border-t border-border/60">
             <PaginationControl
               pagination={paginationMeta}
               onPageChange={setCurrentPage}
@@ -771,9 +771,9 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
         )}
 
         {/* Modal Footer */}
-        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <span className="text-[11px] text-slate-400">
-            💡 Mẹo: Danh mục giúp báo cáo dòng tiền và thói quen chi tiêu chính xác hơn.
+        <div className="pt-3 border-t border-border/60 flex items-center justify-between">
+          <span className="text-[11px] text-muted-foreground">
+            Danh mục giúp báo cáo dòng tiền và thói quen chi tiêu chính xác hơn.
           </span>
           <button
             type="button"
@@ -781,7 +781,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
               onClose();
               setEditingCategoryId(null);
             }}
-            className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors cursor-pointer"
+            className="px-3.5 py-1.5 rounded-md border border-border bg-secondary hover:bg-muted text-foreground font-medium text-xs transition-[background-color] cursor-pointer"
           >
             Đóng
           </button>

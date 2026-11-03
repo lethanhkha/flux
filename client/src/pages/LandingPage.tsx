@@ -2,356 +2,404 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
-  ShieldCheck,
   Wallet,
   CheckSquare,
   FileText,
   Lock,
-  Zap,
   ArrowRight,
   TrendingUp,
-  KeyRound,
-  Eye,
+  ShieldCheck,
   Check,
+  Calendar,
+  Layers,
+  Sparkles,
 } from 'lucide-react';
 import { FluxLogo } from '../components/brand/FluxLogo';
-import { ShinyText, StarBorder, MagneticBox } from '../components/motion';
 import { springs } from '../lib/motionTokens';
 
 export const LandingPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 font-sans selection:bg-brand selection:text-white page-enter">
-      {/* Main Header */}
-      <header className="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#0B0F19]/80 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
-            <FluxLogo variant="compact" size="md" />
+    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-foreground selection:text-background page-enter">
+      {/* 1. Header */}
+      <header className="border-b border-border bg-background/85 backdrop-blur-md sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2.5 focus-ring rounded-md">
+            <FluxLogo variant="compact" size="sm" />
           </Link>
 
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600 dark:text-slate-300">
-            <a href="#features" className="hover:text-brand transition-colors">Tính Năng Cốt Lõi</a>
-            <a href="#security" className="hover:text-brand transition-colors">Bảo Mật Cấp Cao</a>
-            <a href="#architecture" className="hover:text-brand transition-colors">Kiến Trúc</a>
-            <Link to="/login" className="hover:text-brand transition-colors font-semibold text-brand">
-              Khám Phá Workspace
+          <nav className="hidden md:flex items-center gap-6 text-xs font-medium text-muted-foreground">
+            <a href="#features" className="hover:text-foreground transition-colors">Tính năng</a>
+            <a href="#preview" className="hover:text-foreground transition-colors">Giao diện thực tế</a>
+            <a href="#security" className="hover:text-foreground transition-colors">Bảo mật</a>
+            <Link to="/login" className="hover:text-foreground transition-colors font-semibold text-foreground">
+              Không gian làm việc
             </Link>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <Link
               to="/login"
-              className="text-sm font-semibold px-4 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="text-xs font-medium px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted transition-colors focus-ring"
             >
-              Đăng Nhập
+              Đăng nhập
             </Link>
-            <MagneticBox strength={5}>
-              <Link
-                to="/register"
-                className="text-sm font-semibold px-4 py-2 rounded-xl bg-brand hover:bg-brand-hover text-white shadow-md shadow-brand/25 transition-all block hover:scale-105 active:scale-95"
-              >
-                Bắt Đầu Miễn Phí
-              </Link>
-            </MagneticBox>
+            <Link
+              to="/register"
+              className="text-xs font-medium px-3.5 py-1.5 rounded-lg bg-foreground text-background hover:bg-foreground/90 transition-colors focus-ring shadow-xs flex items-center gap-1.5"
+            >
+              <span>Bắt đầu ngay</span>
+              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+            </Link>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden pt-12 pb-20 sm:pt-20 sm:pb-28">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+      {/* 2. Hero Section */}
+      <section className="pt-16 pb-16 sm:pt-24 sm:pb-20 border-b border-border">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={springs.gentle}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand/10 border border-brand/20 text-brand text-xs font-semibold"
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-muted/60 text-foreground text-xs font-medium"
           >
-            <ShieldCheck className="w-4 h-4 text-emerald-500" />
-            <ShinyText className="text-brand font-semibold" speed={3}>
-              Không Gian Làm Việc Cá Nhân All-in-One Thế Hệ Mới
-            </ShinyText>
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+            <span>Flux Workspace 2026 — Kiến trúc chuẩn ACID & Bảo mật Enterprise</span>
           </motion.div>
 
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ ...springs.gentle, delay: 0.1 }}
-            className="text-4xl sm:text-6xl font-extrabold tracking-tight max-w-4xl mx-auto leading-tight"
+            transition={{ ...springs.gentle, delay: 0.08 }}
+            className="text-4xl sm:text-6xl font-bold tracking-tight text-foreground max-w-3xl mx-auto leading-[1.12] text-balance"
           >
-            Làm chủ{' '}
-            <span className="bg-gradient-to-r from-brand via-indigo-500 to-purple-600 bg-clip-text text-transparent">
-              Tài Chính, Công Việc
-            </span>{' '}
-            và <span className="text-brand">Tri Thức</span> trong một nơi duy nhất.
+            Không gian quản trị tài chính và công việc cá nhân.
           </motion.h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ ...springs.gentle, delay: 0.2 }}
-            className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed"
+            transition={{ ...springs.gentle, delay: 0.16 }}
+            className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed text-pretty"
           >
-            Flux loại bỏ sự phân mảnh giữa hàng tá ứng dụng rời rạc. Tinh gọn, tốc độ tức thì, bảo mật dữ liệu nghiêm ngặt và hoàn toàn thuộc quyền kiểm soát của bạn.
+            Hợp nhất quản lý dòng tiền đa ví chuẩn ACID, kế hoạch tuần trực quan, chuông báo thức thời gian thực và trạm ghi chú Markdown tự động lưu ngầm.
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ ...springs.gentle, delay: 0.3 }}
+            transition={{ ...springs.gentle, delay: 0.24 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2"
           >
-            <MagneticBox strength={8} className="w-full sm:w-auto">
-              <StarBorder color="#818CF8" speed="3.5s" className="w-full sm:w-auto">
-                <Link
-                  to="/register"
-                  className="w-full sm:w-auto px-8 py-3.5 rounded-[14px] bg-brand hover:bg-brand-hover text-white font-bold text-sm shadow-xl shadow-brand/30 flex items-center justify-center gap-2 transition-colors"
-                >
-                  <span>Tạo Tài Khoản Ngay</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </StarBorder>
-            </MagneticBox>
+            <Link
+              to="/register"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-foreground hover:bg-foreground/90 text-background font-medium text-xs shadow-xs flex items-center justify-center gap-2 transition-colors focus-ring"
+            >
+              <span>Mở không gian làm việc</span>
+              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+            </Link>
 
-            <MagneticBox strength={8} className="w-full sm:w-auto">
-              <Link
-                to="/login"
-                className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 font-semibold text-sm hover:border-brand/40 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
-              >
-                <Eye className="w-4 h-4 text-brand" />
-                <span>Khám Phá Ngay</span>
-              </Link>
-            </MagneticBox>
+            <Link
+              to="/login"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-background border border-border text-foreground font-medium text-xs hover:bg-muted transition-colors flex items-center justify-center gap-2 focus-ring"
+            >
+              <span>Đăng nhập tài khoản</span>
+            </Link>
           </motion.div>
 
-          {/* Badges */}
-          <div className="pt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500 dark:text-slate-400">
-            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-500" /> Miễn phí sử dụng</span>
-            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-500" /> Đồng bộ đám mây</span>
-            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-500" /> Bảo mật đa lớp</span>
-            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-500" /> Riêng tư tuyệt đối</span>
+          {/* Value Props Strip */}
+          <div className="pt-6 flex flex-wrap items-center justify-center gap-6 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" /> Miễn phí sử dụng</span>
+            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" /> Đồng bộ thời gian thực</span>
+            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" /> Xác thực 2 bước (2FA)</span>
+            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" /> Bảo mật tuyệt đối</span>
           </div>
-
-          {/* 3D Abstract Hero Showcase */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 30 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ ...springs.smooth, delay: 0.35 }}
-            className="pt-8 max-w-5xl mx-auto relative group"
-          >
-            {/* Ambient Multi-Color Glow behind the frame */}
-            <div className="absolute -inset-1.5 bg-gradient-to-r from-sky-500 via-brand to-emerald-500 rounded-3xl blur-2xl opacity-25 group-hover:opacity-40 transition duration-1000 -z-10" />
-
-            <div className="relative rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-800 bg-[#070A12] shadow-2xl shadow-brand/10">
-              <picture>
-                <source srcSet="/brand/flux-hero-3d.webp" type="image/webp" />
-                <img
-                  src="/brand/flux-hero-3d.png"
-                  alt="Flux 3D Dynamic Productivity & Financial Workspace"
-                  width="1920"
-                  height="1080"
-                  className="w-full h-auto object-cover transform hover:scale-[1.01] transition-transform duration-700"
-                  loading="eager"
-                />
-              </picture>
-
-              {/* Glass Floating Indicator Badges */}
-              <motion.div
-                animate={{ y: [0, -4, 0] }}
-                transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
-                className="absolute top-4 left-4 sm:top-6 sm:left-6 px-4 py-2 rounded-2xl bg-slate-900/85 backdrop-blur-md border border-white/10 text-left shadow-lg hidden sm:flex items-center gap-3"
-              >
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm">
-                  💰
-                </div>
-                <div>
-                  <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Tài Chính Cá Nhân</div>
-                  <div className="text-xs font-bold text-white">+24.500.000₫ / tháng</div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                animate={{ y: [0, 4, 0] }}
-                transition={{ repeat: Infinity, duration: 5, ease: 'easeInOut', delay: 0.5 }}
-                className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 px-4 py-2 rounded-2xl bg-slate-900/85 backdrop-blur-md border border-white/10 text-left shadow-lg hidden sm:flex items-center gap-3"
-              >
-                <div className="w-8 h-8 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold text-sm">
-                  🎯
-                </div>
-                <div>
-                  <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Kanban Tiến Độ</div>
-                  <div className="text-xs font-bold text-white">5/5 Mục Tiêu Hoàn Tất</div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                animate={{ y: [0, -3, 0] }}
-                transition={{ repeat: Infinity, duration: 4.5, ease: 'easeInOut', delay: 1 }}
-                className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 px-4 py-2 rounded-2xl bg-slate-900/85 backdrop-blur-md border border-white/10 text-left shadow-lg hidden sm:flex items-center gap-3"
-              >
-                <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-sm">
-                  📝
-                </div>
-                <div>
-                  <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Markdown Vault</div>
-                  <div className="text-xs font-bold text-white">Live Sync Chuẩn ACID</div>
-                </div>
-              </motion.div>
-            </div>
-          </motion.div>
         </div>
       </section>
 
-      {/* 3 Core Modules */}
-      <section id="features" className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">3 Trụ Cột Năng Suất Cá Nhân</h2>
-          <p className="text-sm text-slate-500 max-w-xl mx-auto">
-            Mọi tính năng được tối giản hóa tối đa, tập trung vào trải nghiệm mượt mà và thao tác nhanh 1 chạm.
+      {/* 3. Live Product Viewport (Working Product Fragment instead of 3D Slop) */}
+      <section id="preview" className="py-14 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center space-y-2 mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+            Giao diện thực tế được tối ưu hóa cho hiệu năng cao
+          </h2>
+          <p className="text-xs text-muted-foreground max-w-lg mx-auto">
+            Không sử dụng hiệu ứng màu mè. Mọi chỉ số, hàng dữ liệu và nút bấm được thiết kế chính xác đến từng pixel.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card 1 */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ ...springs.smooth, delay: 0 }}
-            whileHover={{ y: -6, transition: springs.snappy }}
-            className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 hover:border-brand/40 transition-colors"
-          >
-            <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
-              <Wallet className="w-6 h-6" />
+        <div className="rounded-xl border border-border bg-card text-card-foreground shadow-xl overflow-hidden">
+          {/* Simulated Application Window Chrome */}
+          <div className="px-4 py-2.5 bg-muted/40 border-b border-border flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80 inline-block" />
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80 inline-block" />
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80 inline-block" />
+              <span className="ml-2 font-mono text-[11px] text-muted-foreground" translate="no">flux.app / overview</span>
             </div>
-            <h3 className="font-bold text-lg">Quản Lý Tài Chính & Ví</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Theo dõi tiền mặt, tài khoản ngân hàng, sổ tiết kiệm. Quản lý thu chi và chuyển khoản giữa các ví với độ chính xác cao và số dư được đồng bộ tức thì.
-            </p>
-            <div className="pt-2 text-xs font-semibold text-emerald-600 flex items-center gap-1">
-              <TrendingUp className="w-3.5 h-3.5" /> Quản lý dòng tiền thông minh
+            <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+              <span>Đồng bộ máy chủ: 12ms</span>
             </div>
-          </motion.div>
+          </div>
 
-          {/* Card 2 */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ ...springs.smooth, delay: 0.12 }}
-            whileHover={{ y: -6, transition: springs.snappy }}
-            className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 hover:border-brand/40 transition-colors"
-          >
-            <div className="h-12 w-12 rounded-2xl bg-brand/10 text-brand flex items-center justify-center font-bold">
-              <CheckSquare className="w-6 h-6" />
-            </div>
-            <h3 className="font-bold text-lg">Công Việc & To-Do List</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Lập kế hoạch công việc theo hạn chót, phân loại mức độ ưu tiên rõ ràng. Xem dạng danh sách hoặc bảng trực quan giúp bạn không bỏ lỡ việc quan trọng.
-            </p>
-            <div className="pt-2 text-xs font-semibold text-brand flex items-center gap-1">
-              <Zap className="w-3.5 h-3.5" /> Tự động lặp lại theo chu kỳ
-            </div>
-          </motion.div>
+          {/* Product Fragment Body */}
+          <div className="p-5 sm:p-7 space-y-6 bg-card">
+            {/* Unified Metrics Strip */}
+            <div className="grid grid-cols-2 md:grid-cols-4 border border-border rounded-lg divide-y md:divide-y-0 md:divide-x divide-border bg-background">
+              <div className="p-4 space-y-1">
+                <div className="text-[11px] font-medium text-muted-foreground">Tổng số dư khả dụng</div>
+                <div className="text-xl sm:text-2xl font-bold tracking-tight tabular-nums text-foreground">
+                  24.500.000&nbsp;₫
+                </div>
+                <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                  +12.5% so với tháng trước
+                </div>
+              </div>
 
-          {/* Card 3 */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ ...springs.smooth, delay: 0.24 }}
-            whileHover={{ y: -6, transition: springs.snappy }}
-            className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 hover:border-brand/40 transition-colors"
-          >
-            <div className="h-12 w-12 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold">
-              <FileText className="w-6 h-6" />
+              <div className="p-4 space-y-1">
+                <div className="text-[11px] font-medium text-muted-foreground">Thu nhập tháng này</div>
+                <div className="text-xl sm:text-2xl font-bold tracking-tight tabular-nums text-foreground">
+                  32.800.000&nbsp;₫
+                </div>
+                <div className="text-[11px] text-muted-foreground">Từ 2 ví hoạt động</div>
+              </div>
+
+              <div className="p-4 space-y-1">
+                <div className="text-[11px] font-medium text-muted-foreground">Tổng chi tiêu thực tế</div>
+                <div className="text-xl sm:text-2xl font-bold tracking-tight tabular-nums text-foreground">
+                  8.300.000&nbsp;₫
+                </div>
+                <div className="text-[11px] text-muted-foreground">Trong ngân sách an toàn</div>
+              </div>
+
+              <div className="p-4 space-y-1">
+                <div className="text-[11px] font-medium text-muted-foreground">Công việc cần làm hôm nay</div>
+                <div className="text-xl sm:text-2xl font-bold tracking-tight tabular-nums text-foreground">
+                  3 / 5
+                </div>
+                <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                  60% hoàn thành
+                </div>
+              </div>
             </div>
-            <h3 className="font-bold text-lg">Ghi Chú & Kho Tri Thức</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Soạn thảo định dạng Markdown trực quan, phân loại linh hoạt theo thẻ nhãn, ghim ghi chú quan trọng và tìm kiếm nội dung nhanh chóng.
-            </p>
-            <div className="pt-2 text-xs font-semibold text-purple-600 flex items-center gap-1">
-              <Lock className="w-3.5 h-3.5" /> Lưu trữ an toàn & riêng tư
+
+            {/* Split Data Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Left Column: Recent Transactions */}
+              <div className="border border-border rounded-lg p-4 space-y-3 bg-background">
+                <div className="flex items-center justify-between">
+                  <div className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                    <Wallet className="w-3.5 h-3.5 text-muted-foreground" aria-hidden="true" />
+                    <span>Giao dịch phát sinh gần nhất</span>
+                  </div>
+                  <span className="text-[11px] text-muted-foreground">Tháng hiện tại</span>
+                </div>
+
+                <div className="divide-y divide-border text-xs">
+                  <div className="py-2.5 flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-foreground">Lương & Thưởng dự án Q3</div>
+                      <div className="text-[11px] text-muted-foreground">Ví Techcombank • 01/11/2026</div>
+                    </div>
+                    <div className="text-emerald-600 dark:text-emerald-400 font-semibold tabular-nums text-right">
+                      +28.000.000&nbsp;₫
+                    </div>
+                  </div>
+
+                  <div className="py-2.5 flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-foreground">Tiền thuê văn phòng & Điện nước</div>
+                      <div className="text-[11px] text-muted-foreground">Ví Tiền mặt • 02/11/2026</div>
+                    </div>
+                    <div className="text-rose-600 dark:text-rose-400 font-semibold tabular-nums text-right">
+                      -6.500.000&nbsp;₫
+                    </div>
+                  </div>
+
+                  <div className="py-2.5 flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-foreground">Cafe làm việc cùng đối tác</div>
+                      <div className="text-[11px] text-muted-foreground">Ví Thẻ tín dụng • Hôm nay</div>
+                    </div>
+                    <div className="text-rose-600 dark:text-rose-400 font-semibold tabular-nums text-right">
+                      -185.000&nbsp;₫
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Priority Tasks */}
+              <div className="border border-border rounded-lg p-4 space-y-3 bg-background">
+                <div className="flex items-center justify-between">
+                  <div className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                    <CheckSquare className="w-3.5 h-3.5 text-muted-foreground" aria-hidden="true" />
+                    <span>Công việc ưu tiên khẩn cấp</span>
+                  </div>
+                  <span className="text-[11px] text-muted-foreground">Kanban & Planner</span>
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  <div className="p-2.5 rounded-md border border-border flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                      <span className="font-medium text-foreground truncate">Hoàn tất đối soát sao kê ngân hàng</span>
+                    </div>
+                    <span className="text-[11px] text-rose-600 dark:text-rose-400 font-medium shrink-0">Hôm nay</span>
+                  </div>
+
+                  <div className="p-2.5 rounded-md border border-border flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                      <span className="font-medium text-foreground truncate">Ký biên bản nghiệm thu hợp đồng</span>
+                    </div>
+                    <span className="text-[11px] text-muted-foreground shrink-0">Ngày mai</span>
+                  </div>
+
+                  <div className="p-2.5 rounded-md border border-border flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                      <span className="font-medium text-foreground line-through text-muted-foreground truncate">
+                        Sao lưu cơ sở dữ liệu PostgreSQL
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium shrink-0">Đã xong</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* Security Architecture Section */}
-      <section id="security" className="py-16 bg-slate-100/60 dark:bg-slate-900/40 border-y border-slate-200 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      {/* 4. Core Capabilities (Craft Asymmetric Matrix) */}
+      <section id="features" className="py-16 border-t border-border bg-muted/20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           <div className="text-center space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/10 text-brand text-xs font-bold">
-              Tiêu Chuẩn Bảo Mật
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">
+              3 Trụ cột cốt lõi được xây dựng chuẩn mực
+            </h2>
+            <p className="text-xs text-muted-foreground max-w-xl mx-auto">
+              Không có tính năng thừa. Mọi công cụ tập trung vào độ tin cậy và tốc độ xử lý tức thì.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Pillar 1 */}
+            <div className="p-5 rounded-lg border border-border bg-background space-y-3">
+              <div className="h-8 w-8 rounded-md bg-muted text-foreground flex items-center justify-center font-semibold border border-border">
+                <Wallet className="w-4 h-4" aria-hidden="true" />
+              </div>
+              <h3 className="font-semibold text-sm text-foreground">Quản lý tài chính đa ví ACID</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Tạo ví tiền mặt, ngân hàng, quỹ tiết kiệm độc lập. Cơ chế khóa dòng dữ liệu PostgreSQL bảo đảm số dư không bao giờ sai lệch khi chuyển tiền liên ví.
+              </p>
+              <div className="pt-1 text-[11px] font-medium text-foreground flex items-center gap-1">
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                <span>Số học chính xác với decimal.js</span>
+              </div>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Bảo Vệ Toàn Diện Cho Dữ Liệu Của Bạn</h2>
+
+            {/* Pillar 2 */}
+            <div className="p-5 rounded-lg border border-border bg-background space-y-3">
+              <div className="h-8 w-8 rounded-md bg-muted text-foreground flex items-center justify-center font-semibold border border-border">
+                <CheckSquare className="w-4 h-4" aria-hidden="true" />
+              </div>
+              <h3 className="font-semibold text-sm text-foreground">Lập kế hoạch tuần & Kanban</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                3 chế độ xem: Danh sách, Kanban kéo thả và Lịch tuần 7 ngày. Phân bổ công việc chi tiết với hạn chót riêng cho từng checklist con và hoàn tác xóa trong 6 giây.
+              </p>
+              <div className="pt-1 text-[11px] font-medium text-foreground flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5 text-foreground" aria-hidden="true" />
+                <span>Weekly Planner cân đối khối lượng làm việc</span>
+              </div>
+            </div>
+
+            {/* Pillar 3 */}
+            <div className="p-5 rounded-lg border border-border bg-background space-y-3">
+              <div className="h-8 w-8 rounded-md bg-muted text-foreground flex items-center justify-center font-semibold border border-border">
+                <FileText className="w-4 h-4" aria-hidden="true" />
+              </div>
+              <h3 className="font-semibold text-sm text-foreground">Markdown Vault & Nhắc hẹn</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Trình soạn thảo Markdown chia đôi 2 cột với tính năng tự động lưu ngầm. Hệ thống báo thức thời gian thực qua Web Audio API không phụ thuộc server push.
+              </p>
+              <div className="pt-1 text-[11px] font-medium text-foreground flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-foreground" aria-hidden="true" />
+                <span>Tự động lưu ngầm Debounced Auto-save</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Security & Architecture */}
+      <section id="security" className="py-16 border-t border-border bg-background">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">
+              Tiêu chuẩn bảo mật cấp hệ thống
+            </h2>
+            <p className="text-xs text-muted-foreground max-w-lg mx-auto">
+              Bảo vệ toàn vẹn dữ liệu cá nhân theo các tiêu chuẩn kỹ thuật nghiêm ngặt nhất.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ ...springs.smooth, delay: 0 }}
-              whileHover={{ y: -4, transition: springs.snappy }}
-              className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 hover:border-brand/30 transition-colors"
-            >
-              <KeyRound className="w-5 h-5 text-brand" />
-              <div className="font-bold text-sm">Bảo Vệ Đăng Nhập</div>
-              <p className="text-slate-500">Tự động duy trì phiên làm việc an toàn, bảo vệ tài khoản khỏi nguy cơ bị đánh cắp thông tin đăng nhập.</p>
-            </motion.div>
+            <div className="p-4 rounded-lg border border-border bg-card space-y-2">
+              <div className="font-semibold text-foreground text-sm flex items-center gap-1.5">
+                <Lock className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                <span>Dual JWT Token</span>
+              </div>
+              <p className="text-muted-foreground leading-relaxed">
+                Access Token lưu строго trong bộ nhớ React, Refresh Token lưu trong HttpOnly Cookie có cơ chế xoay vòng RTR.
+              </p>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ ...springs.smooth, delay: 0.08 }}
-              whileHover={{ y: -4, transition: springs.snappy }}
-              className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 hover:border-brand/30 transition-colors"
-            >
-              <ShieldCheck className="w-5 h-5 text-emerald-500" />
-              <div className="font-bold text-sm">Xác Thực 2 Bước (2FA)</div>
-              <p className="text-slate-500">Bảo vệ tài khoản qua ứng dụng Google Authenticator và cung cấp mã dự phòng khi cần thiết.</p>
-            </motion.div>
+            <div className="p-4 rounded-lg border border-border bg-card space-y-2">
+              <div className="font-semibold text-foreground text-sm flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                <span>Xác thực 2 bước 2FA</span>
+              </div>
+              <p className="text-muted-foreground leading-relaxed">
+                Hỗ trợ TOTP chuẩn RFC 6238 qua Google Authenticator kết hợp 8 mã dự phòng băm an toàn.
+              </p>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ ...springs.smooth, delay: 0.16 }}
-              whileHover={{ y: -4, transition: springs.snappy }}
-              className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 hover:border-brand/30 transition-colors"
-            >
-              <Lock className="w-5 h-5 text-indigo-500" />
-              <div className="font-bold text-sm">Mã Hóa Mật Khẩu</div>
-              <p className="text-slate-500">Mật khẩu của bạn được mã hóa an toàn ở mức cao nhất, đảm bảo tính bảo mật và riêng tư tuyệt đối.</p>
-            </motion.div>
+            <div className="p-4 rounded-lg border border-border bg-card space-y-2">
+              <div className="font-semibold text-foreground text-sm flex items-center gap-1.5">
+                <Layers className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                <span>Mã hóa Argon2id</span>
+              </div>
+              <p className="text-muted-foreground leading-relaxed">
+                Mật khẩu được băm bằng thuật toán Argon2id tiên tiến nhất, triệt tiêu nguy cơ tấn công GPU brute-force.
+              </p>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ ...springs.smooth, delay: 0.24 }}
-              whileHover={{ y: -4, transition: springs.snappy }}
-              className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 hover:border-brand/30 transition-colors"
-            >
-              <Zap className="w-5 h-5 text-amber-500" />
-              <div className="font-bold text-sm">Chống Xâm Nhập</div>
-              <p className="text-slate-500">Hệ thống tự động phát hiện và ngăn chặn các hành vi dò đoán mật khẩu bất thường trên tài khoản của bạn.</p>
-            </motion.div>
+            <div className="p-4 rounded-lg border border-border bg-card space-y-2">
+              <div className="font-semibold text-foreground text-sm flex items-center gap-1.5">
+                <Check className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                <span>Chống Bot & Spam</span>
+              </div>
+              <p className="text-muted-foreground leading-relaxed">
+                Tích hợp Cloudflare Turnstile vô hình và kiểm soát tần suất truy cập qua Redis Token Bucket.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200 dark:border-slate-800 py-8 text-center text-xs text-slate-500">
+      {/* 6. Footer */}
+      <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground bg-background">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <FluxLogo variant="compact" size="xs" />
-            <span className="text-slate-400">— Không gian làm việc cá nhân Tinh gọn, Năng suất và An toàn</span>
+            <span>— Không gian làm việc cá nhân & tài chính chuẩn mực.</span>
           </div>
-          <div className="flex items-center gap-4">
-            <Link to="/login" className="hover:text-brand font-medium">Đăng Nhập</Link>
-            <Link to="/register" className="hover:text-brand font-medium">Đăng Ký</Link>
-            <Link to="/login" className="text-brand font-bold hover:underline">Bắt Đầu Trải Nghiệm</Link>
+          <div className="flex items-center gap-4 text-xs">
+            <Link to="/login" className="hover:text-foreground transition-colors font-medium">Đăng nhập</Link>
+            <Link to="/register" className="hover:text-foreground transition-colors font-medium">Tạo tài khoản</Link>
+            <Link to="/dashboard" className="hover:text-foreground transition-colors font-semibold text-foreground">Vào Workspace</Link>
           </div>
         </div>
       </footer>

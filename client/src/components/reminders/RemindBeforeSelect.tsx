@@ -93,21 +93,21 @@ export const RemindBeforeSelect: React.FC<RemindBeforeSelectProps> = ({
       <select
         value={isCustom ? 'custom' : value}
         onChange={handlePresetChange}
-        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm font-medium focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all"
+        className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-muted/40 text-xs font-normal focus:bg-background focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
       >
         {REMIND_BEFORE_OPTIONS.map((opt) => (
           <option key={opt.value} value={opt.value}>
             {opt.label}
           </option>
         ))}
-        <option value="custom">⚙️ Tùy chọn khác (Nhập số ngày, giờ, phút...)</option>
+        <option value="custom">Tùy chọn khác (Nhập số ngày, giờ, phút…)</option>
       </select>
 
       {/* Custom Inputs (When 'custom' selected) */}
       {isCustom && (
-        <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-brand/30 dark:border-brand/40 space-y-2 animate-in fade-in duration-150">
+        <div className="p-2.5 rounded-lg bg-muted/30 border border-border space-y-2 animate-in fade-in duration-150">
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-semibold text-slate-500 whitespace-nowrap">
+            <span className="text-[11px] font-medium text-muted-foreground whitespace-nowrap">
               Báo trước:
             </span>
 
@@ -118,14 +118,14 @@ export const RemindBeforeSelect: React.FC<RemindBeforeSelectProps> = ({
               max={365}
               value={customAmount}
               onChange={handleCustomAmountChange}
-              className="w-20 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-center focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
+              className="w-20 px-2.5 py-1.5 rounded-md border border-border bg-background text-xs font-medium text-center focus:outline-none focus:ring-1 focus:ring-ring tabular-nums"
             />
 
             {/* Unit select */}
             <select
               value={customUnit}
               onChange={handleCustomUnitChange}
-              className="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
+              className="flex-1 px-2.5 py-1.5 rounded-md border border-border bg-background text-xs font-medium focus:outline-none focus:ring-1 focus:ring-ring"
             >
               <option value="minutes">Phút</option>
               <option value="hours">Giờ</option>
@@ -134,8 +134,8 @@ export const RemindBeforeSelect: React.FC<RemindBeforeSelectProps> = ({
             </select>
           </div>
 
-          <div className="text-[10px] text-brand dark:text-brand font-medium">
-            💡 Hệ thống sẽ nhắc trước: <span className="font-bold">{formatRemindBefore(value)}</span>
+          <div className="text-[10px] text-muted-foreground font-normal">
+            Hệ thống sẽ nhắc trước: <span className="font-medium text-foreground">{formatRemindBefore(value)}</span>
           </div>
         </div>
       )}

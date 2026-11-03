@@ -365,24 +365,24 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
   return (
     <div className="space-y-4">
       {/* Top Header Controls: Navigation + Presets */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 rounded-3xl shadow-xs">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-card border border-border p-3 rounded-lg">
         {/* Week navigation buttons */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl">
+          <div className="flex items-center bg-muted border border-border/40 p-0.5 rounded-md">
             <Tooltip content="Khoảng thời gian trước">
               <button
                 type="button"
                 onClick={handlePrevWeek}
                 aria-label="Khoảng thời gian trước"
-                className="p-1.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 hover:text-brand hover:shadow-xs transition-all cursor-pointer"
+                className="p-1 rounded-sm text-muted-foreground hover:bg-background hover:text-foreground transition-[color,background-color] cursor-pointer"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-3.5 h-3.5" />
               </button>
             </Tooltip>
             <button
               type="button"
               onClick={handleToday}
-              className="px-3 py-1 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-brand cursor-pointer transition-colors"
+              className="px-2.5 py-0.5 text-xs font-medium text-foreground hover:bg-background rounded-sm cursor-pointer transition-[background-color]"
             >
               Hôm nay
             </button>
@@ -391,16 +391,16 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
                 type="button"
                 onClick={handleNextWeek}
                 aria-label="Khoảng thời gian kế tiếp"
-                className="p-1.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 hover:text-brand hover:shadow-xs transition-all cursor-pointer"
+                className="p-1 rounded-sm text-muted-foreground hover:bg-background hover:text-foreground transition-[color,background-color] cursor-pointer"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </Tooltip>
           </div>
 
           <div className="flex items-center gap-2 pl-1">
-            <CalendarIcon className="w-4 h-4 text-brand" />
-            <span className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-100">
+            <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
+            <span className="font-semibold text-xs sm:text-sm text-foreground">
               {rangeTitle}
             </span>
           </div>
@@ -409,17 +409,17 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
         {/* View Presets & Backlog Toggle */}
         <div className="flex items-center gap-2 flex-wrap justify-between sm:justify-end">
           {/* Presets segment */}
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl text-[11px] font-medium">
+          <div className="flex items-center bg-muted border border-border/40 p-0.5 rounded-md text-[11px] font-medium">
             <button
               type="button"
               onClick={() => {
                 setActivePreset('7days_week');
                 setCustomRange(null);
               }}
-              className={`px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
+              className={`px-2 py-0.5 rounded-sm transition-[color,background-color] cursor-pointer ${
                 activePreset === '7days_week'
-                  ? 'bg-white dark:bg-slate-900 text-brand shadow-xs font-bold'
-                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                  ? 'bg-background text-foreground shadow-xs font-medium'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Cả tuần (7 ngày)
@@ -430,10 +430,10 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
                 setActivePreset('work_week');
                 setCustomRange(null);
               }}
-              className={`px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
+              className={`px-2 py-0.5 rounded-sm transition-[color,background-color] cursor-pointer ${
                 activePreset === 'work_week'
-                  ? 'bg-white dark:bg-slate-900 text-brand shadow-xs font-bold'
-                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                  ? 'bg-background text-foreground shadow-xs font-medium'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Ngày làm việc (T2-T6)
@@ -444,10 +444,10 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
                 setActivePreset('next_7days');
                 setCustomRange(null);
               }}
-              className={`px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
+              className={`px-2 py-0.5 rounded-sm transition-[color,background-color] cursor-pointer ${
                 activePreset === 'next_7days'
-                  ? 'bg-white dark:bg-slate-900 text-brand shadow-xs font-bold'
-                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                  ? 'bg-background text-foreground shadow-xs font-medium'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               7 ngày tới
@@ -459,13 +459,13 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
             <button
               type="button"
               onClick={() => setIsRangeModalOpen(true)}
-              className={`px-3 py-1.5 rounded-2xl border text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-all ${
+              className={`px-2.5 py-1 rounded-md border text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-[color,background-color,border-color] ${
                 activePreset === 'custom'
-                  ? 'border-brand bg-brand/10 text-brand font-bold'
-                  : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand hover:text-brand'
+                  ? 'border-border bg-foreground text-background font-medium'
+                  : 'border-border bg-secondary hover:bg-muted text-foreground'
               }`}
             >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <SlidersHorizontal className="w-3 h-3" />
               <span>Tùy chỉnh</span>
             </button>
           </Tooltip>
@@ -475,16 +475,16 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
             <button
               type="button"
               onClick={toggleHidePastDays}
-              className={`px-3 py-1.5 rounded-2xl border text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-all ${
+              className={`px-2.5 py-1 rounded-md border text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-[color,background-color,border-color] ${
                 hidePastDays && isCurrentWeek
-                  ? 'border-brand bg-brand/10 text-brand font-bold shadow-xs'
-                  : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand/40 hover:text-brand'
+                  ? 'border-border bg-foreground text-background font-medium'
+                  : 'border-border bg-secondary hover:bg-muted text-foreground'
               }`}
             >
-              <EyeOff className="w-3.5 h-3.5" />
+              <EyeOff className="w-3 h-3" />
               <span>Ẩn ngày đã qua</span>
               {hiddenDayLabels.length > 0 && hidePastDays && isCurrentWeek && (
-                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-brand text-white font-bold leading-none">
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-background text-foreground font-medium leading-none">
                   {hiddenDayLabels.length}
                 </span>
               )}
@@ -497,9 +497,9 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
               <button
                 type="button"
                 onClick={toggleBacklogCollapse}
-                className="px-3 py-1.5 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-bold flex items-center gap-1.5 cursor-pointer hover:bg-amber-500/20 transition-all"
+                className="px-2.5 py-1 rounded-md border border-border bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 cursor-pointer hover:bg-muted/80 transition-[background-color]"
               >
-                <Inbox className="w-3.5 h-3.5" />
+                <Inbox className="w-3 h-3 text-muted-foreground" />
                 <span>Chưa xếp ({unscheduledTasks.length})</span>
               </button>
             </Tooltip>
@@ -509,9 +509,9 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
 
       {/* Banner hint when past days of the current week are hidden */}
       {hiddenDayLabels.length > 0 && hidePastDays && isCurrentWeek && (
-        <div className="flex items-center justify-between px-4 py-2 rounded-2xl bg-brand/5 dark:bg-brand/10 border border-brand/20 text-xs text-brand">
+        <div className="flex items-center justify-between px-3.5 py-2 rounded-lg bg-muted/40 border border-border text-xs text-foreground">
           <div className="flex items-center gap-2">
-            <EyeOff className="w-4 h-4 shrink-0" />
+            <EyeOff className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
             <span>
               Đang ẩn <strong>{hiddenDayLabels.length} ngày</strong> đã qua của tuần này ({hiddenDayLabels.join(', ')}).
             </span>
@@ -519,7 +519,7 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
           <button
             type="button"
             onClick={toggleHidePastDays}
-            className="text-xs font-bold underline hover:text-brand-hover cursor-pointer"
+            className="text-xs font-medium underline text-foreground hover:opacity-80 cursor-pointer"
           >
             Hiện lại tất cả ngày
           </button>

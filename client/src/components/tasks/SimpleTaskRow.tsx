@@ -37,12 +37,12 @@ export const SimpleTaskRow = React.memo<SimpleTaskRowProps>(({
   return (
     <div
       onClick={() => onToggleTaskStatus(task.id)}
-      className={`p-4 rounded-2xl border transition-all flex ${
+      className={`p-3 rounded-lg border transition-[background-color,border-color] flex ${
         isDescriptionExpanded ? 'items-start' : 'items-start sm:items-center'
-      } justify-between gap-4 cursor-pointer hover:border-brand/50 ${
+      } justify-between gap-4 cursor-pointer hover:border-foreground/30 ${
         isDone
-          ? 'bg-slate-50/50 dark:bg-slate-950/30 border-slate-100 dark:border-slate-800/80 opacity-70'
-          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover-lift'
+          ? 'bg-muted/30 border-border opacity-70'
+          : 'bg-card border-border shadow-2xs hover:bg-muted/30'
       }`}
     >
       <div className={`flex ${isDescriptionExpanded ? 'items-start' : 'items-start sm:items-center'} gap-3.5 flex-1 min-w-0`}>

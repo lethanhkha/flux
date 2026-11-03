@@ -95,13 +95,13 @@ export const TransferModal: React.FC<TransferModalProps> = ({
       ariaLabelledBy="transfer-modal-title"
       maxWidth="md"
     >
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between pb-3 border-b border-border/60">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center">
+            <div className="h-7 w-7 rounded-md border border-border bg-muted flex items-center justify-center text-foreground font-bold">
               <ArrowRightLeft className="w-4 h-4" />
             </div>
             <div className="flex items-center gap-2">
-              <h3 id="transfer-modal-title" className="font-bold text-base">Chuyển Tiền Giữa Các Ví</h3>
+              <h3 id="transfer-modal-title" className="font-semibold text-base text-foreground">Chuyển Tiền Giữa Các Ví</h3>
               <InfoTooltip content="Chuyển tiền nội bộ chỉ trừ tiền ví nguồn và cộng tiền ví đích, không làm thay đổi tổng tài sản." />
             </div>
           </div>
@@ -109,16 +109,16 @@ export const TransferModal: React.FC<TransferModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Đóng chuyển tiền"
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-[background-color] cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           <div>
             <div className="flex items-center gap-1.5 mb-1.5">
-              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+              <label className="font-medium block text-foreground">
                 Ví nguồn (Trừ tiền)
               </label>
               <InfoTooltip content="Số tiền chuyển sẽ được trừ trực tiếp khỏi số dư của ví này." />
@@ -132,13 +132,13 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                 color: w.color,
                 badge: formatCurrency(w.balance),
               }))}
-              icon={<WalletIcon className="w-4 h-4 text-brand" />}
+              icon={<WalletIcon className="w-4 h-4 text-muted-foreground" />}
             />
           </div>
 
           <div>
             <div className="flex items-center gap-1.5 mb-1.5">
-              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+              <label className="font-medium block text-foreground">
                 Ví đích (Cộng tiền)
               </label>
               <InfoTooltip content="Số tiền chuyển sẽ được cộng trực tiếp vào số dư của ví này." />
@@ -152,13 +152,13 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                 color: w.color,
                 badge: formatCurrency(w.balance),
               }))}
-              icon={<WalletIcon className="w-4 h-4 text-brand" />}
+              icon={<WalletIcon className="w-4 h-4 text-muted-foreground" />}
             />
           </div>
 
           <div>
             <div className="flex items-center gap-1.5 mb-1.5">
-              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+              <label className="font-medium block text-foreground">
                 Số tiền chuyển (VND)
               </label>
               <InfoTooltip content="Số tiền chuyển giữa hai ví (> 0 và không vượt quá số dư ví nguồn)." />
@@ -168,34 +168,34 @@ export const TransferModal: React.FC<TransferModalProps> = ({
               required
               min="1"
               step="any"
-              placeholder="VD: 47857"
+              placeholder="VD: 50000"
               value={transferAmount}
               onChange={(e) => setTransferAmount(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-base font-extrabold tabular-nums focus:outline-none focus:ring-2 focus:ring-brand"
+              className="w-full px-3 py-2 rounded-md border border-input bg-background text-base font-bold tabular-nums focus-ring"
             />
           </div>
 
           <div>
             <div className="flex items-center gap-1.5 mb-1.5">
-              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+              <label className="font-medium block text-foreground">
                 Ghi chú chuyển khoản
               </label>
-              <InfoTooltip content="Lý do chuyển tiền (ví dụ: rút tiền mặt chi tiêu, trích lương sang tiết kiệm...)." />
+              <InfoTooltip content="Lý do chuyển tiền (ví dụ: rút tiền mặt chi tiêu, trích lương sang tiết kiệm…)." />
             </div>
             <input
               type="text"
               value={transferNote}
               onChange={(e) => setTransferNote(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+              className="w-full px-3 py-2 rounded-md border border-input bg-background font-normal focus-ring"
             />
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all cursor-pointer disabled:opacity-50"
+            className="w-full h-10 rounded-md bg-foreground text-background font-medium text-xs hover:opacity-90 active:scale-[0.99] transition-[opacity,transform] cursor-pointer disabled:opacity-50"
           >
-            {isSubmitting ? 'Đang thực hiện...' : 'Xác Nhận Chuyển Tiền'}
+            {isSubmitting ? 'Đang thực hiện…' : 'Xác Nhận Chuyển Tiền'}
           </button>
         </form>
     </Modal>

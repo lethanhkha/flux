@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShieldCheck, Mail, Lock, User, Check, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, Check, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getErrorMessage } from '../api/client';
 import { GoogleAuthButton } from '../components/auth/GoogleAuthButton';
@@ -87,15 +87,15 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 font-sans flex flex-col selection:bg-brand selection:text-white page-enter">
+    <div className="min-h-screen bg-background text-foreground font-sans flex flex-col selection:bg-foreground selection:text-background page-enter">
       {/* Header */}
-      <header className="py-6 px-4 max-w-7xl mx-auto w-full flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2.5">
+      <header className="py-4 px-4 max-w-7xl mx-auto w-full flex items-center justify-between border-b border-border/50">
+        <Link to="/" className="flex items-center gap-2.5 focus-ring rounded-md">
           <FluxLogo variant="compact" size="sm" />
         </Link>
-        <div className="text-xs text-slate-500">
+        <div className="text-xs text-muted-foreground">
           Đã có tài khoản?{' '}
-          <Link to="/login" className="text-brand font-bold hover:underline ml-1">
+          <Link to="/login" className="text-foreground font-semibold hover:underline ml-1">
             Đăng nhập ngay
           </Link>
         </div>
@@ -103,23 +103,21 @@ export const RegisterPage: React.FC = () => {
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-md space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none space-y-6">
-            <div className="space-y-1 text-center sm:text-left">
-              <h1 className="text-2xl font-bold tracking-tight">Tạo tài khoản Flux</h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+        <div className="w-full max-w-sm space-y-5">
+          <div className="bg-card text-card-foreground border border-border rounded-xl p-6 sm:p-7 shadow-sm space-y-5">
+            <div className="space-y-1">
+              <h1 className="text-xl font-bold tracking-tight text-foreground">Tạo tài khoản Flux</h1>
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 Khởi tạo không gian làm việc cá nhân an toàn và độc lập cho bạn.
               </p>
             </div>
 
-            {/* Security Note */}
-            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 text-slate-500 text-xs">
-              <ShieldCheck className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-              <span>Dữ liệu cá nhân của bạn được mã hóa an toàn và bảo mật riêng tư.</span>
-            </div>
-
             {errorMsg && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-medium">
+              <div
+                role="alert"
+                aria-live="polite"
+                className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-medium"
+              >
                 {errorMsg}
               </div>
             )}
@@ -127,69 +125,80 @@ export const RegisterPage: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Full Name */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <label htmlFor="register-name" className="block text-xs font-medium text-foreground">
                   Họ và tên
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <User className="w-4 h-4" />
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
+                    <User className="w-4 h-4" aria-hidden="true" />
                   </span>
                   <input
+                    id="register-name"
+                    name="name"
                     type="text"
+                    autoComplete="name"
                     required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Nguyễn Văn A"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand transition-all"
+                    className="w-full pl-9 pr-3.5 py-2 rounded-lg border border-border bg-background text-foreground text-xs focus-ring"
                   />
                 </div>
               </div>
 
               {/* Email */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <label htmlFor="register-email" className="block text-xs font-medium text-foreground">
                   Địa chỉ Email
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <Mail className="w-4 h-4" />
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
+                    <Mail className="w-4 h-4" aria-hidden="true" />
                   </span>
                   <input
+                    id="register-email"
+                    name="email"
                     type="email"
+                    autoComplete="email"
+                    spellCheck={false}
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="ten_cua_ban@gmail.com"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand transition-all"
+                    className="w-full pl-9 pr-3.5 py-2 rounded-lg border border-border bg-background text-foreground text-xs focus-ring"
                   />
                 </div>
-                <p className="text-[11px] text-slate-500">Chỉ hỗ trợ hòm thư @gmail.com</p>
+                <p className="text-[11px] text-muted-foreground">Hỗ trợ hòm thư @gmail.com</p>
               </div>
 
               {/* Password */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <label htmlFor="register-password" className="block text-xs font-medium text-foreground">
                   Mật khẩu
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <Lock className="w-4 h-4" />
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
+                    <Lock className="w-4 h-4" aria-hidden="true" />
                   </span>
                   <input
+                    id="register-password"
+                    name="new-password"
                     type={showPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    spellCheck={false}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand transition-all font-mono"
+                    className="w-full pl-9 pr-9 py-2 rounded-lg border border-border bg-background text-foreground text-xs focus-ring font-mono"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer focus-ring rounded-lg my-1 mr-1"
+                    className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-muted-foreground hover:text-foreground cursor-pointer focus-ring rounded-md my-1 mr-1"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </button>
                 </div>
 
@@ -197,10 +206,10 @@ export const RegisterPage: React.FC = () => {
                 {password.length > 0 && (
                   <div className="space-y-1.5 pt-1">
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-slate-500">Độ mạnh mật khẩu:</span>
-                      <span className="font-bold">{strengthText}</span>
+                      <span className="text-muted-foreground">Độ mạnh mật khẩu:</span>
+                      <span className="font-semibold">{strengthText}</span>
                     </div>
-                    <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex gap-1">
+                    <div className="w-full h-1 bg-muted rounded-full overflow-hidden flex gap-1">
                       {[1, 2, 3, 4, 5].map((idx) => (
                         <div
                           key={idx}
@@ -210,17 +219,17 @@ export const RegisterPage: React.FC = () => {
                         />
                       ))}
                     </div>
-                    <div className="grid grid-cols-2 gap-1 text-[10px] text-slate-500 pt-1">
-                      <span className={hasMinLength ? 'text-emerald-600 font-semibold flex items-center gap-1' : ''}>
+                    <div className="grid grid-cols-2 gap-1 text-[10px] text-muted-foreground pt-0.5">
+                      <span className={hasMinLength ? 'text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1' : ''}>
                         {hasMinLength && <Check className="w-3 h-3" />} ≥ 8 ký tự
                       </span>
-                      <span className={hasUpper ? 'text-emerald-600 font-semibold flex items-center gap-1' : ''}>
+                      <span className={hasUpper ? 'text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1' : ''}>
                         {hasUpper && <Check className="w-3 h-3" />} Chữ hoa (A-Z)
                       </span>
-                      <span className={hasLower ? 'text-emerald-600 font-semibold flex items-center gap-1' : ''}>
+                      <span className={hasLower ? 'text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1' : ''}>
                         {hasLower && <Check className="w-3 h-3" />} Chữ thường (a-z)
                       </span>
-                      <span className={hasNumber && hasSpecial ? 'text-emerald-600 font-semibold flex items-center gap-1' : ''}>
+                      <span className={hasNumber && hasSpecial ? 'text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1' : ''}>
                         {hasNumber && hasSpecial && <Check className="w-3 h-3" />} Số & Ký tự đặc biệt
                       </span>
                     </div>
@@ -229,16 +238,16 @@ export const RegisterPage: React.FC = () => {
               </div>
 
               {/* Terms Checkbox */}
-              <label className="flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-400 cursor-pointer pt-2">
+              <label className="flex items-start gap-2 text-xs text-muted-foreground cursor-pointer pt-1">
                 <input
                   type="checkbox"
                   checked={agreedToTerms}
                   onChange={(e) => setAgreedToTerms(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 text-brand focus:ring-brand mt-0.5"
+                  className="w-3.5 h-3.5 rounded border-border text-foreground focus-ring mt-0.5"
                 />
-                <span>
-                  Tôi đồng ý với <span className="text-brand font-medium">Điều khoản sử dụng</span> và{' '}
-                  <span className="text-brand font-medium">Chính sách bảo mật</span> dữ liệu cá nhân của Flux.
+                <span className="text-[11px] leading-tight">
+                  Tôi đồng ý với <span className="text-foreground font-medium">Điều khoản sử dụng</span> và{' '}
+                  <span className="text-foreground font-medium">Chính sách bảo mật</span> của Flux.
                 </span>
               </label>
 
@@ -253,14 +262,14 @@ export const RegisterPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-sm shadow-md shadow-brand/25 transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                className="w-full py-2.5 rounded-lg bg-foreground hover:bg-foreground/90 text-background font-medium text-xs shadow-xs transition-[background-color,opacity] flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer focus-ring"
               >
                 {isSubmitting ? (
-                  <span>Đang tạo tài khoản...</span>
+                  <span>Đang tạo tài khoản…</span>
                 ) : (
                   <>
-                    <span>Đăng Ký Tài Khoản</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <span>Đăng ký tài khoản</span>
+                    <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                   </>
                 )}
               </button>
@@ -269,11 +278,11 @@ export const RegisterPage: React.FC = () => {
             {/* Divider */}
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200 dark:border-slate-800" />
+                <div className="w-full border-t border-border" />
               </div>
-              <div className="relative flex justify-center text-[11px] uppercase">
-                <span className="bg-white dark:bg-slate-900 px-3 text-slate-400 font-medium tracking-wider">
-                  Hoặc đăng ký nhanh với
+              <div className="relative flex justify-center text-[10px] uppercase">
+                <span className="bg-card px-2.5 text-muted-foreground font-medium tracking-wider">
+                  Hoặc
                 </span>
               </div>
             </div>

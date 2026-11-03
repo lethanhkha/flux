@@ -136,16 +136,16 @@ export const AddWalletModal: React.FC<AddWalletModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Đóng thêm ví mới"
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-[background-color] cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         <form onSubmit={handleCreateWallet} className="space-y-4 text-xs">
           <div>
             <div className="flex items-center gap-1.5 mb-1.5">
-              <label className="font-semibold block text-slate-700 dark:text-slate-300">
+              <label className="font-medium block text-foreground">
                 Tên ví / Tài khoản
               </label>
               <InfoTooltip content="Tên gọi gợi nhớ của ví hoặc tài khoản ngân hàng (VD: MoMo, BIDV, Quỹ Khẩn Cấp)." />
@@ -155,15 +155,15 @@ export const AddWalletModal: React.FC<AddWalletModalProps> = ({
               required
               value={newWalletName}
               onChange={(e) => setNewWalletName(e.target.value)}
-              placeholder="VD: Ví MoMo, BIDV SmartBanking, Quỹ Khẩn Cấp..."
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand font-medium"
+              placeholder="VD: Ví MoMo, BIDV SmartBanking, Quỹ Khẩn Cấp…"
+              className="w-full px-3 py-2 rounded-md border border-input bg-background font-medium focus-ring"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
-                <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                <label className="font-medium block text-foreground">
                   Loại ví
                 </label>
                 <InfoTooltip content="Phân loại ví để áp dụng biểu tượng và cách thức quản lý phù hợp." />
@@ -180,7 +180,7 @@ export const AddWalletModal: React.FC<AddWalletModalProps> = ({
 
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
-                <label className="font-semibold block text-slate-700 dark:text-slate-300">
+                <label className="font-medium block text-foreground">
                   Số dư ban đầu (VND)
                 </label>
                 <InfoTooltip content="Số dư thực tế đang có trong ví tại thời điểm khởi tạo." />
@@ -192,13 +192,13 @@ export const AddWalletModal: React.FC<AddWalletModalProps> = ({
                 value={newWalletBalance}
                 onChange={(e) => setNewWalletBalance(e.target.value)}
                 placeholder="0"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand font-mono font-bold"
+                className="w-full px-3 py-2 rounded-md border border-input bg-background font-mono font-bold tabular-nums focus-ring"
               />
             </div>
           </div>
 
           <div>
-            <label className="font-semibold block mb-1.5 text-slate-700 dark:text-slate-300">
+            <label className="font-medium block mb-1.5 text-foreground">
               Màu sắc nhận diện
             </label>
             <div className="flex items-center gap-2.5">
@@ -208,21 +208,21 @@ export const AddWalletModal: React.FC<AddWalletModalProps> = ({
                   type="button"
                   onClick={() => setNewWalletColor(c)}
                   style={{ backgroundColor: c }}
-                  className={`h-7 w-7 rounded-full cursor-pointer transition-transform ${
-                    newWalletColor === c ? 'scale-125 ring-2 ring-offset-2 ring-brand' : 'hover:scale-110'
+                  className={`h-6 w-6 rounded-full cursor-pointer transition-transform ${
+                    newWalletColor === c ? 'scale-125 ring-2 ring-offset-2 ring-foreground' : 'hover:scale-110'
                   }`}
                 />
               ))}
             </div>
           </div>
 
-          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
-            <label className="flex items-center gap-2 cursor-pointer font-semibold text-slate-700 dark:text-slate-300 select-none">
+          <div className="p-2.5 rounded-md bg-muted/40 border border-border">
+            <label className="flex items-center gap-2 cursor-pointer font-medium text-foreground select-none">
               <input
                 type="checkbox"
                 checked={newWalletIsDefault}
                 onChange={(e) => setNewWalletIsDefault(e.target.checked)}
-                className="w-4 h-4 rounded text-brand focus:ring-brand cursor-pointer"
+                className="w-4 h-4 rounded border-input text-foreground focus-ring cursor-pointer"
               />
               <span className="flex items-center gap-1.5 text-xs">
                 <Star className="w-3.5 h-3.5 text-amber-500" />
@@ -234,9 +234,9 @@ export const AddWalletModal: React.FC<AddWalletModalProps> = ({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all cursor-pointer disabled:opacity-50"
+            className="w-full h-10 rounded-md bg-foreground text-background font-medium text-xs hover:opacity-90 active:scale-[0.99] transition-[opacity,transform] cursor-pointer disabled:opacity-50"
           >
-            {isSubmitting ? 'Đang tạo ví...' : 'Tạo Ví Mới'}
+            {isSubmitting ? 'Đang tạo ví…' : 'Tạo Ví Mới'}
           </button>
         </form>
     </Modal>

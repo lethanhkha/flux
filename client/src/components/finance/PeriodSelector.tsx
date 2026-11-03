@@ -156,10 +156,10 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
   };
 
   return (
-    <div className="bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-3 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3.5">
+    <div className="rounded-lg border border-border bg-card p-2.5 sm:p-3 text-card-foreground flex flex-col md:flex-row md:items-center justify-between gap-3">
       {/* Left: Mode Switcher & Presets */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-200/60 dark:bg-slate-800/80 text-xs font-semibold">
+        <div className="flex items-center gap-0.5 p-0.5 rounded-md border border-border/40 bg-muted text-xs font-medium">
           <Tooltip content="Lọc và theo dõi dòng tiền thu chi theo từng tháng">
             <button
               type="button"
@@ -170,10 +170,10 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
                   year: period.year || currentYear,
                 })
               }
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-sm transition-[color,background-color] cursor-pointer ${
                 period.mode === 'MONTH'
-                  ? 'bg-white dark:bg-slate-900 text-brand shadow-xs font-bold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-background text-foreground shadow-xs font-medium'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Theo Tháng
@@ -195,10 +195,10 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
                   endDate: period.endDate || endOfMonth,
                 });
               }}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-sm transition-[color,background-color] cursor-pointer ${
                 period.mode === 'RANGE'
-                  ? 'bg-white dark:bg-slate-900 text-brand shadow-xs font-bold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-background text-foreground shadow-xs font-medium'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Khoảng Ngày
@@ -215,10 +215,10 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
                   year: period.year,
                 })
               }
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-sm transition-[color,background-color] cursor-pointer ${
                 period.mode === 'ALL'
-                  ? 'bg-white dark:bg-slate-900 text-brand shadow-xs font-bold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-background text-foreground shadow-xs font-medium'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Toàn Thời Gian
@@ -227,15 +227,15 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
         </div>
 
         {/* Quick presets */}
-        <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500">
+        <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground">
           <Tooltip content="Xem các khoản thu chi trong tháng hiện tại">
             <button
               type="button"
               onClick={() => applyPreset('THIS_MONTH')}
-              className={`px-2.5 py-1 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
+              className={`px-2 py-0.5 rounded-md border text-xs font-medium transition-[color,background-color,border-color] cursor-pointer ${
                 isCurrentMonthSelected
-                  ? 'border-brand/40 bg-brand/10 text-brand font-semibold'
-                  : 'border-transparent hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                  ? 'border-border bg-foreground text-background font-medium'
+                  : 'border-border/60 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground'
               }`}
             >
               Tháng này
@@ -246,7 +246,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
             <button
               type="button"
               onClick={() => applyPreset('LAST_MONTH')}
-              className="px-2.5 py-1 rounded-lg border border-transparent hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-medium transition-colors cursor-pointer"
+              className="px-2 py-0.5 rounded-md border border-border/60 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-medium transition-[color,background-color,border-color] cursor-pointer"
             >
               Tháng trước
             </button>
@@ -256,7 +256,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
             <button
               type="button"
               onClick={() => applyPreset('THIS_QUARTER')}
-              className="px-2.5 py-1 rounded-lg border border-transparent hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-medium transition-colors cursor-pointer"
+              className="px-2 py-0.5 rounded-md border border-border/60 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-medium transition-[color,background-color,border-color] cursor-pointer"
             >
               Quý này
             </button>
@@ -274,9 +274,9 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
                 onClick={handlePrevMonth}
                 disabled={isLoading}
                 aria-label="Tháng trước"
-                className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer disabled:opacity-50"
+                className="p-1.5 rounded-md border border-border bg-background hover:bg-muted text-foreground transition-[background-color] cursor-pointer disabled:opacity-50"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-3.5 h-3.5" />
               </button>
             </Tooltip>
 
@@ -288,14 +288,14 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
                   setPickerYear(period.year);
                   setIsMonthPickerOpen(!isMonthPickerOpen);
                 }}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-brand/50 text-slate-900 dark:text-white font-bold text-xs sm:text-sm shadow-xs transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md border border-border bg-background hover:bg-muted text-foreground font-medium text-xs shadow-xs transition-[background-color] cursor-pointer"
               >
-                <CalendarIcon className="w-4 h-4 text-brand" />
-                <span>
+                <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="tabular-nums">
                   Tháng {period.month}, {period.year}
                 </span>
                 {isCurrentMonthSelected && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-brand/10 text-brand font-bold">
+                  <span className="text-[10px] px-1.5 py-0.2 rounded border border-border bg-muted text-muted-foreground font-medium">
                     Hiện tại
                   </span>
                 )}
@@ -308,9 +308,9 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
                 onClick={handleNextMonth}
                 disabled={isLoading}
                 aria-label="Tháng sau"
-                className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer disabled:opacity-50"
+                className="p-1.5 rounded-md border border-border bg-background hover:bg-muted text-foreground transition-[background-color] cursor-pointer disabled:opacity-50"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </Tooltip>
 
@@ -319,9 +319,9 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
                 <button
                   type="button"
                   onClick={handleJumpToCurrentMonth}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-brand/10 hover:bg-brand/20 text-brand text-xs font-semibold transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-border bg-secondary hover:bg-muted text-foreground text-xs font-medium transition-[background-color] cursor-pointer"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" />
+                  <RotateCcw className="w-3 h-3" />
                   <span className="hidden sm:inline">Về tháng này</span>
                 </button>
               </Tooltip>
@@ -329,34 +329,34 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
 
             {/* Month Picker Popover */}
             {isMonthPickerOpen && (
-              <div className="absolute top-full right-0 mt-2 z-50 w-72 p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl space-y-3">
+              <div className="absolute top-full right-0 mt-2 z-50 w-64 p-3 bg-popover text-popover-foreground rounded-lg border border-border shadow-md space-y-2.5">
                 {/* Year Controller */}
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between pb-2 border-b border-border/60">
                   <Tooltip content="Năm trước">
                     <button
                       type="button"
                       onClick={() => setPickerYear((y) => y - 1)}
-                      className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 cursor-pointer"
+                      className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer"
                     >
-                      <ChevronLeft className="w-4 h-4" />
+                      <ChevronLeft className="w-3.5 h-3.5" />
                     </button>
                   </Tooltip>
-                  <span className="font-extrabold text-sm text-slate-900 dark:text-white">
+                  <span className="font-semibold text-xs tabular-nums text-foreground">
                     Năm {pickerYear}
                   </span>
                   <Tooltip content="Năm sau">
                     <button
                       type="button"
                       onClick={() => setPickerYear((y) => y + 1)}
-                      className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 cursor-pointer"
+                      className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer"
                     >
-                      <ChevronRight className="w-4 h-4" />
+                      <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </Tooltip>
                 </div>
 
                 {/* 12 Months Grid */}
-                <div className="grid grid-cols-3 gap-1.5">
+                <div className="grid grid-cols-3 gap-1">
                   {MONTH_NAMES.map((name, idx) => {
                     const isSelected =
                       period.month === idx + 1 && period.year === pickerYear;
@@ -368,15 +368,15 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
                         key={name}
                         type="button"
                         onClick={() => handleSelectMonth(idx)}
-                        className={`p-2 rounded-xl text-xs font-semibold text-center transition-all cursor-pointer relative ${
+                        className={`p-1.5 rounded-md text-xs font-medium text-center transition-[color,background-color] cursor-pointer relative ${
                           isSelected
-                            ? 'bg-brand text-white shadow-xs font-bold'
-                            : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                            ? 'bg-foreground text-background font-medium'
+                            : 'hover:bg-muted text-foreground'
                         }`}
                       >
                         {name}
                         {isThisMonth && !isSelected && (
-                          <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-brand" />
+                          <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-foreground" />
                         )}
                       </button>
                     );
@@ -388,8 +388,8 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
         ) : period.mode === 'RANGE' ? (
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <Tooltip content="Chọn ngày bắt đầu của khoảng thời gian">
-              <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 shadow-xs">
-                <span className="text-slate-400 font-medium">Từ:</span>
+              <div className="flex items-center gap-1.5 bg-background border border-border rounded-md px-2 py-1 shadow-xs">
+                <span className="text-muted-foreground font-medium">Từ:</span>
                 <input
                   type="date"
                   value={period.startDate || ''}
@@ -399,13 +399,13 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
                       startDate: e.target.value,
                     })
                   }
-                  className="bg-transparent text-slate-800 dark:text-slate-200 font-semibold focus:outline-none text-xs cursor-pointer"
+                  className="bg-transparent text-foreground font-medium focus-ring text-xs cursor-pointer"
                 />
               </div>
             </Tooltip>
             <Tooltip content="Chọn ngày kết thúc của khoảng thời gian">
-              <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 shadow-xs">
-                <span className="text-slate-400 font-medium">Đến:</span>
+              <div className="flex items-center gap-1.5 bg-background border border-border rounded-md px-2 py-1 shadow-xs">
+                <span className="text-muted-foreground font-medium">Đến:</span>
                 <input
                   type="date"
                   value={period.endDate || ''}
@@ -415,16 +415,16 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
                       endDate: e.target.value,
                     })
                   }
-                  className="bg-transparent text-slate-800 dark:text-slate-200 font-semibold focus:outline-none text-xs cursor-pointer"
+                  className="bg-transparent text-foreground font-medium focus-ring text-xs cursor-pointer"
                 />
               </div>
             </Tooltip>
           </div>
         ) : (
           <Tooltip content="Đang hiển thị toàn bộ lịch sử giao dịch không giới hạn mốc thời gian">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs shadow-xs cursor-help">
-              <Clock className="w-3.5 h-3.5 text-brand" />
-              <span>Toàn bộ lịch sử từ trước đến nay</span>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted border border-border text-foreground font-medium text-xs cursor-help">
+              <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+              <span>Toàn bộ lịch sử giao dịch</span>
             </div>
           </Tooltip>
         )}

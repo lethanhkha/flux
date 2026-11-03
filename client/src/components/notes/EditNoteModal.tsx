@@ -163,14 +163,11 @@ export const EditNoteModal: React.FC<EditNoteModalProps> = ({
           <button
             type="button"
             onClick={saveNow}
-            className="flex-1 py-2.5 px-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40 font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-2xs group"
+            className="flex-1 py-2 px-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 font-medium text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors group"
             title="Nhấn để lưu ngay lập tức (hoặc tự động lưu sau 1 giây)"
           >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-            </span>
-            <span className="group-hover:hidden">Có thay đổi...</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            <span className="group-hover:hidden">Có thay đổi…</span>
             <span className="hidden group-hover:inline">Lưu ngay</span>
           </button>
         );
@@ -180,11 +177,11 @@ export const EditNoteModal: React.FC<EditNoteModalProps> = ({
           <button
             type="button"
             disabled
-            className="flex-1 py-2.5 px-3.5 rounded-xl bg-brand/10 dark:bg-brand/20 border border-brand/30 text-brand font-semibold text-xs flex items-center justify-center gap-1.5 cursor-wait select-none transition-all shadow-2xs"
-            title="Đang đồng bộ thay đổi lên máy chủ..."
+            className="flex-1 py-2 px-3 rounded-lg bg-muted border border-border text-foreground font-medium text-xs flex items-center justify-center gap-1.5 cursor-wait select-none transition-colors"
+            title="Đang đồng bộ thay đổi lên máy chủ…"
           >
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-brand" />
-            <span>Đang lưu...</span>
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-foreground" />
+            <span>Đang lưu…</span>
           </button>
         );
 
@@ -193,10 +190,10 @@ export const EditNoteModal: React.FC<EditNoteModalProps> = ({
           <button
             type="button"
             onClick={retry}
-            className="flex-1 py-2.5 px-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-2xs"
+            className="flex-1 py-2 px-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive hover:bg-destructive/20 font-medium text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
             title="Gặp sự cố khi lưu. Nhấn để thử lại ngay"
           >
-            <RefreshCw className="w-3.5 h-3.5 text-rose-500" />
+            <RefreshCw className="w-3.5 h-3.5" />
             <span>Lỗi lưu. Nhấp để thử lại</span>
           </button>
         );
@@ -207,7 +204,7 @@ export const EditNoteModal: React.FC<EditNoteModalProps> = ({
           <button
             type="button"
             disabled
-            className="flex-1 py-2.5 px-3.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 font-semibold text-xs flex items-center justify-center gap-1.5 cursor-not-allowed select-none transition-all"
+            className="flex-1 py-2 px-3 rounded-lg bg-muted border border-border text-muted-foreground font-medium text-xs flex items-center justify-center gap-1.5 cursor-not-allowed select-none transition-colors"
             title="Tiêu đề ghi chú không được để trống"
           >
             <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
@@ -245,11 +242,11 @@ export const EditNoteModal: React.FC<EditNoteModalProps> = ({
 
         <div className="flex items-center gap-2">
           {/* Header Sync Chip */}
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/50 dark:border-slate-700/50 text-[11px] select-none">
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/60 border border-border text-[11px] select-none">
             {status === 'saving' ? (
               <>
-                <Loader2 className="w-3 h-3 animate-spin text-brand" />
-                <span className="text-brand font-medium">Đang lưu...</span>
+                <Loader2 className="w-3 h-3 animate-spin text-foreground" />
+                <span className="text-foreground font-medium">Đang lưu…</span>
               </>
             ) : status === 'pending' ? (
               <>
@@ -258,13 +255,13 @@ export const EditNoteModal: React.FC<EditNoteModalProps> = ({
               </>
             ) : status === 'error' ? (
               <>
-                <AlertCircle className="w-3 h-3 text-rose-500" />
-                <span className="text-rose-500 font-medium">Lỗi lưu</span>
+                <AlertCircle className="w-3 h-3 text-destructive" />
+                <span className="text-destructive font-medium">Lỗi lưu</span>
               </>
             ) : (
               <>
-                <Cloud className="w-3 h-3 text-emerald-500" />
-                <span className="text-emerald-600 dark:text-emerald-400 font-medium">Tự động lưu</span>
+                <Cloud className="w-3 h-3 text-foreground" />
+                <span className="text-muted-foreground font-medium">Tự động lưu</span>
               </>
             )}
           </div>
@@ -324,26 +321,26 @@ export const EditNoteModal: React.FC<EditNoteModalProps> = ({
                   required
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  placeholder="VD: Kế hoạch tuần tới..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-2 focus:ring-brand font-medium text-slate-900 dark:text-slate-100"
+                  placeholder="VD: Kế hoạch tuần tới…"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-muted/40 text-xs focus:outline-none focus:ring-1 focus:ring-ring font-normal text-foreground"
                 />
               </div>
 
               {/* Tags */}
               <div>
-                <label className="font-semibold block mb-1 text-slate-700 dark:text-slate-300">
+                <label className="font-medium block mb-1 text-foreground">
                   Thẻ phân loại (Tags)
                 </label>
                 <TagSelect
                   availableTags={availableTags}
                   selectedTags={editTags}
                   onChange={setEditTags}
-                  placeholder="Chọn hoặc nhập thẻ mới..."
+                  placeholder="Chọn hoặc nhập thẻ mới…"
                 />
               </div>
 
               {/* Pin toggle */}
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border">
                 <label className="flex items-center gap-2 cursor-pointer font-semibold text-slate-700 dark:text-slate-300 select-none">
                   <input
                     type="checkbox"
@@ -411,7 +408,7 @@ export const EditNoteModal: React.FC<EditNoteModalProps> = ({
             <MarkdownEditor
               value={editContent}
               onChange={setEditContent}
-              placeholder="Nhập nội dung ghi chú (hỗ trợ tiêu đề, danh sách, công việc, trích dẫn, khối code, bảng...)"
+              placeholder="Nhập nội dung ghi chú (hỗ trợ tiêu đề, danh sách, công việc, trích dẫn, khối code, bảng…)"
               minHeightClass="min-h-[200px] lg:min-h-[460px]"
               maxHeightPreviewClass="max-h-[350px] lg:max-h-[460px]"
             />
@@ -419,11 +416,11 @@ export const EditNoteModal: React.FC<EditNoteModalProps> = ({
         </div>
 
         {/* Mobile/Tablet Action Buttons (Shown below editor on screen < LG) */}
-        <div className="lg:hidden pt-3 flex items-center justify-end gap-2.5 border-t border-slate-100 dark:border-slate-800">
+        <div className="lg:hidden pt-3 flex items-center justify-end gap-2.5 border-t border-border">
           <button
             type="button"
             onClick={handleSafeClose}
-            className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors cursor-pointer"
+            className="px-4 py-2.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground font-medium text-xs transition-colors cursor-pointer"
           >
             Đóng
           </button>

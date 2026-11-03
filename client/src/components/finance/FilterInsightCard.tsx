@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Sparkles,
   PieChart,
   TrendingDown,
   Receipt,
@@ -58,30 +57,27 @@ export const FilterInsightCard: React.FC<FilterInsightCardProps> = ({
   }
 
   return (
-    <div className="bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/50 dark:from-slate-900 dark:via-slate-900/90 dark:to-indigo-950/30 border border-brand/20 dark:border-brand/30 rounded-2xl p-4 sm:p-5 shadow-xs relative overflow-hidden transition-all">
-      {/* Background soft glow decoration */}
-      <div className="absolute top-0 right-0 w-64 h-32 bg-brand/5 dark:bg-brand/10 rounded-full blur-2xl pointer-events-none" />
-
+    <div className="rounded-lg border border-border bg-card p-4 text-card-foreground">
       {/* Header bar: Title & Clear Filters button */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-slate-200/60 dark:border-slate-800/80">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-border/60">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-brand/10 text-brand">
-            <Calculator className="w-4 h-4" />
+          <div className="p-1 rounded-md border border-border bg-muted text-foreground">
+            <Calculator className="w-3.5 h-3.5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-sm text-slate-900 dark:text-white">
+              <span className="font-semibold text-sm text-foreground">
                 {filterTitle}
               </span>
               <Tooltip content="Khoảng thời gian đang áp dụng cho số liệu thống kê bên dưới">
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-brand/10 text-brand font-semibold cursor-help">
+                <span className="text-[11px] px-2 py-0.5 rounded-full border border-border bg-muted text-muted-foreground font-medium cursor-help">
                   {periodLabel}
                 </span>
               </Tooltip>
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+            <p className="text-[11px] text-muted-foreground">
               {hasAnyFilter
-                ? 'Thông số tính toán tự động trên toàn bộ giao dịch khớp với bộ lọc'
+                ? 'Thông số tính toán trên các giao dịch khớp bộ lọc'
                 : 'Thống kê tổng hợp số liệu thu chi trong chu kỳ đang chọn'}
             </p>
           </div>
@@ -92,7 +88,7 @@ export const FilterInsightCard: React.FC<FilterInsightCardProps> = ({
             <button
               type="button"
               onClick={onClearFilters}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-white dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border bg-secondary hover:bg-muted text-foreground text-xs font-medium transition-[background-color] cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
               <span>Xóa bộ lọc</span>
@@ -102,18 +98,18 @@ export const FilterInsightCard: React.FC<FilterInsightCardProps> = ({
       </div>
 
       {/* Grid of 4 Key Calculated Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pt-3.5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-3.5 divide-y lg:divide-y-0 lg:divide-x divide-border/40">
         {/* Metric 1: Total Amount (Category Mode) OR Total Income & Expense (Period Mode) */}
-        <div className="p-3 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-800 shadow-2xs flex flex-col justify-between">
+        <div className="flex flex-col justify-between pr-2">
           <div className="flex items-center justify-between mb-1">
-            <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
-              <Receipt className="w-3.5 h-3.5 text-brand" />
+            <div className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+              <Receipt className="w-3.5 h-3.5" />
               <span>
                 {isCategoryFiltered
                   ? filterType === 'INCOME'
                     ? 'Tổng thu danh mục'
                     : 'Tổng chi danh mục'
-                  : 'Tổng Thu & Tổng Chi'}
+                  : 'Tổng Thu & Chi'}
               </span>
             </div>
             <InfoTooltip
@@ -128,7 +124,7 @@ export const FilterInsightCard: React.FC<FilterInsightCardProps> = ({
           {isCategoryFiltered ? (
             <div>
               <div
-                className={`text-base sm:text-lg font-black tabular-nums tracking-tight ${
+                className={`text-base sm:text-lg font-bold tabular-nums tracking-tight ${
                   filterType === 'INCOME'
                     ? 'text-emerald-600 dark:text-emerald-400'
                     : 'text-rose-500 dark:text-rose-400'
@@ -137,31 +133,25 @@ export const FilterInsightCard: React.FC<FilterInsightCardProps> = ({
                 {filterType === 'INCOME' ? '+' : '-'}
                 {formatCurrency(stats.totalAmount)}
               </div>
-              <div className="text-[10px] text-slate-400 mt-0.5">
+              <div className="text-[10px] text-muted-foreground mt-0.5">
                 {stats.count > 0 ? `Tính trên ${stats.count} giao dịch` : 'Chưa có giao dịch'}
               </div>
             </div>
           ) : (
             <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs sm:text-sm font-black tabular-nums text-emerald-600 dark:text-emerald-400">
-                <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  Thu:
-                </span>
+              <div className="flex items-center justify-between text-xs sm:text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                <span className="text-[10px] font-medium text-muted-foreground">Thu:</span>
                 <span>+{formatCurrency(periodSummary?.income ?? 0)}</span>
               </div>
-              <div className="flex items-center justify-between text-xs sm:text-sm font-black tabular-nums text-rose-500 dark:text-rose-400">
-                <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                  Chi:
-                </span>
+              <div className="flex items-center justify-between text-xs sm:text-sm font-bold tabular-nums text-rose-500 dark:text-rose-400">
+                <span className="text-[10px] font-medium text-muted-foreground">Chi:</span>
                 <span>-{formatCurrency(periodSummary?.expense ?? 0)}</span>
               </div>
-              <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="text-[10px] text-muted-foreground pt-1 border-t border-border/40 flex items-center justify-between">
                 <span>Ròng:</span>
                 <span
                   className={cn(
-                    'font-bold tabular-nums',
+                    'font-medium tabular-nums',
                     (periodSummary?.netCashflow ?? 0) >= 0
                       ? 'text-emerald-600 dark:text-emerald-400'
                       : 'text-rose-500 dark:text-rose-400'
@@ -176,23 +166,22 @@ export const FilterInsightCard: React.FC<FilterInsightCardProps> = ({
         </div>
 
         {/* Metric 2: Transaction Count */}
-        <div className="p-3 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-800 shadow-2xs flex flex-col justify-between">
+        <div className="flex flex-col justify-between pt-3 lg:pt-0 lg:px-3">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>Tần suất / Số lần</span>
+              <div className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+                <span>Số lần phát sinh</span>
               </div>
               <InfoTooltip content="Tổng số lượt giao dịch ghi nhận tương ứng với tiêu chí lọc." />
             </div>
-            <div className="text-base sm:text-lg font-black tabular-nums text-slate-900 dark:text-white">
+            <div className="text-base sm:text-lg font-bold tabular-nums tracking-tight text-foreground">
               {stats.count}{' '}
-              <span className="text-xs font-semibold text-slate-500">lần phát sinh</span>
+              <span className="text-xs font-normal text-muted-foreground">lần</span>
             </div>
           </div>
-          <div className="text-[10px] text-slate-400 mt-0.5">
+          <div className="text-[10px] text-muted-foreground mt-0.5">
             {stats.count === 0
-              ? 'Không có giao dịch nào'
+              ? 'Không có giao dịch'
               : stats.count === 1
               ? 'Giao dịch đơn lẻ'
               : 'Nhiều khoản phát sinh'}
@@ -200,11 +189,11 @@ export const FilterInsightCard: React.FC<FilterInsightCardProps> = ({
         </div>
 
         {/* Metric 3: Budget Share / Percentage */}
-        <div className="p-3 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-800 shadow-2xs flex flex-col justify-between">
+        <div className="flex flex-col justify-between pt-3 lg:pt-0 lg:px-3">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                <PieChart className="w-3.5 h-3.5 text-indigo-500" />
+              <div className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+                <PieChart className="w-3.5 h-3.5" />
                 <span>{isCategoryFiltered ? 'Tỷ trọng ngân sách' : 'Tỷ lệ tiết kiệm'}</span>
               </div>
               <InfoTooltip
@@ -215,7 +204,7 @@ export const FilterInsightCard: React.FC<FilterInsightCardProps> = ({
                 }
               />
             </div>
-            <div className="text-base sm:text-lg font-black tabular-nums text-indigo-600 dark:text-indigo-400">
+            <div className="text-base sm:text-lg font-bold tabular-nums tracking-tight text-foreground">
               {isCategoryFiltered
                 ? stats.percentageOfPeriodExpense > 0
                   ? `${stats.percentageOfPeriodExpense}%`
@@ -225,49 +214,49 @@ export const FilterInsightCard: React.FC<FilterInsightCardProps> = ({
                 : '—'}
             </div>
           </div>
-          <div className="text-[10px] text-slate-400 mt-0.5">
+          <div className="text-[10px] text-muted-foreground mt-0.5">
             {isCategoryFiltered
               ? stats.percentageOfPeriodExpense > 0
                 ? `trên tổng chi tiêu ${periodLabel}`
                 : 'Chưa đủ dữ liệu tính tỷ trọng'
               : periodSummary && periodSummary.income > 0 && periodSummary.netCashflow > 0
-              ? `tiết kiệm được từ thu nhập ${periodLabel}`
+              ? `tiết kiệm từ thu nhập ${periodLabel}`
               : 'Chưa có thặng dư tiết kiệm'}
           </div>
         </div>
 
         {/* Metric 4: Average Amount per Transaction */}
-        <div className="p-3 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-800 shadow-2xs flex flex-col justify-between">
+        <div className="flex flex-col justify-between pt-3 lg:pt-0 lg:pl-3">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                <TrendingDown className="w-3.5 h-3.5 text-rose-500" />
-                <span>Trung bình mỗi lần</span>
+              <div className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+                <TrendingDown className="w-3.5 h-3.5" />
+                <span>Bình quân mỗi lần</span>
               </div>
               <InfoTooltip content="Số tiền chi tiêu hoặc thu nhập bình quân trên mỗi lượt giao dịch phát sinh." />
             </div>
-            <div className="text-base sm:text-lg font-black tabular-nums text-slate-900 dark:text-white">
+            <div className="text-base sm:text-lg font-bold tabular-nums tracking-tight text-foreground">
               {formatCurrency(stats.averageAmount)}
             </div>
           </div>
-          <div className="text-[10px] text-slate-400 mt-0.5">
-            Ước lượng định mức chi tiêu
+          <div className="text-[10px] text-muted-foreground mt-0.5">
+            Định mức trung bình mỗi giao dịch
           </div>
         </div>
       </div>
 
       {/* Footer Highlight: Max Single Transaction */}
       {stats.maxAmount > 0 && (
-        <div className="mt-3 pt-2.5 border-t border-slate-200/50 dark:border-slate-800/60 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div className="mt-3 pt-2.5 border-t border-border/50 flex flex-wrap items-center justify-between gap-2 text-xs">
           <Tooltip content="Giao dịch có giá trị phát sinh cao nhất trong nhóm đang lọc">
-            <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 cursor-help">
+            <div className="flex items-center gap-1.5 text-muted-foreground cursor-help">
               <Award className="w-4 h-4 text-amber-500 flex-shrink-0" />
-              <span className="font-semibold">Khoản lớn nhất:</span>
-              <span className="font-extrabold tabular-nums text-brand dark:text-brand-light">
+              <span className="font-medium text-foreground">Khoản lớn nhất:</span>
+              <span className="font-bold tabular-nums text-foreground">
                 {formatCurrency(stats.maxAmount)}
               </span>
               {stats.maxTransactionNote && (
-                <span className="text-slate-500 dark:text-slate-400 truncate max-w-xs">
+                <span className="text-muted-foreground truncate max-w-xs">
                   ({stats.maxTransactionNote})
                 </span>
               )}
@@ -276,12 +265,12 @@ export const FilterInsightCard: React.FC<FilterInsightCardProps> = ({
 
           {periodSummary && (
             <Tooltip content="Chênh lệch ròng giữa Tổng thu và Tổng chi trong toàn bộ kỳ này">
-              <div className="text-slate-400 text-[11px] cursor-help flex items-center gap-1">
-                <Wallet className="w-3 h-3 text-brand" />
+              <div className="text-muted-foreground text-[11px] cursor-help flex items-center gap-1">
+                <Wallet className="w-3 h-3" />
                 <span>Dòng tiền kỳ:</span>
                 <span
                   className={cn(
-                    'font-bold tabular-nums',
+                    'font-medium tabular-nums',
                     periodSummary.netCashflow >= 0
                       ? 'text-emerald-600 dark:text-emerald-400'
                       : 'text-rose-500 dark:text-rose-400'

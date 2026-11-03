@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Bell,
-  Clock,
   Calendar,
   Plus,
-  CheckCircle2,
   Volume2,
   BellRing,
   LayoutGrid,
@@ -314,20 +312,15 @@ export const RemindersPage: React.FC = () => {
       {/* 1. Header & Distinction Concept Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              Nhắc Hẹn & Lịch Trình
-            </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand/10 text-brand dark:bg-brand/20">
-              Chính xác theo giờ
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Khác với công việc (hoàn thành trước hạn), nhắc hẹn reo chuông và kích hoạt đúng vào thời điểm diễn ra.
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">
+            Nhắc nhở
+          </h1>
+          <p className="text-xs text-muted-foreground mt-1">
+            Khác với công việc, nhắc hẹn reo chuông và kích hoạt đúng vào thời điểm diễn ra
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           {/* Test Sound Button */}
           <button
             type="button"
@@ -336,7 +329,7 @@ export const RemindersPage: React.FC = () => {
               toast.info('Đang phát thử âm chuông báo thời gian thực');
             }}
             title="Thử âm thanh chuông báo"
-            className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+            className="p-2 rounded-md border border-border bg-background hover:bg-muted text-foreground transition-[background-color] cursor-pointer"
           >
             <Volume2 className="w-4 h-4" />
           </button>
@@ -346,10 +339,10 @@ export const RemindersPage: React.FC = () => {
             <button
               type="button"
               onClick={requestNotificationPermission}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700/60 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700/60 transition-[background-color] cursor-pointer"
             >
               <BellRing className="w-3.5 h-3.5" />
-              <span>Bật Thông Báo Trình Duyệt</span>
+              <span>Bật Thông Báo</span>
             </button>
           )}
 
@@ -357,49 +350,34 @@ export const RemindersPage: React.FC = () => {
           <button
             type="button"
             onClick={handleCreateNew}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-bold shadow-md shadow-brand/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            className="h-8 px-3 rounded-md bg-foreground text-background text-xs font-medium hover:opacity-90 active:scale-[0.98] transition-[opacity,transform] flex items-center gap-1.5 cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             <span>Thêm Nhắc Hẹn</span>
           </button>
         </div>
       </div>
 
-      {/* 2. Quick Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-brand/10 text-brand flex items-center justify-center font-bold">
-            <Calendar className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xl font-extrabold text-slate-900 dark:text-white">
-              {stats.todayCount}
-            </div>
-            <div className="text-xs text-slate-500">Lịch hẹn hôm nay</div>
+      {/* 2. Unified Quick Metric Strip */}
+      <div className="rounded-lg border border-border bg-card p-3 sm:p-4 grid grid-cols-3 divide-x divide-border/60">
+        <div className="px-2 sm:px-4">
+          <div className="text-xs text-muted-foreground font-medium">Lịch hẹn hôm nay</div>
+          <div className="text-xl sm:text-2xl font-bold tabular-nums tracking-tight text-foreground mt-0.5">
+            {stats.todayCount}
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-500 border border-amber-200 dark:border-amber-800/60 flex items-center justify-center font-bold">
-            <Clock className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xl font-extrabold text-amber-600 dark:text-amber-400">
-              {stats.imminentCount}
-            </div>
-            <div className="text-xs text-slate-500">Sắp diễn ra trong 2 giờ</div>
+        <div className="px-2 sm:px-4">
+          <div className="text-xs text-muted-foreground font-medium">Sắp diễn ra (2 giờ)</div>
+          <div className="text-xl sm:text-2xl font-bold tabular-nums tracking-tight text-foreground mt-0.5">
+            {stats.imminentCount}
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-center font-bold">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">
-              {stats.completedCount}
-            </div>
-            <div className="text-xs text-slate-500">Đã tham gia / Xong</div>
+        <div className="px-2 sm:px-4">
+          <div className="text-xs text-muted-foreground font-medium">Đã hoàn thành</div>
+          <div className="text-xl sm:text-2xl font-bold tabular-nums tracking-tight text-foreground mt-0.5">
+            {stats.completedCount}
           </div>
         </div>
       </div>
@@ -407,14 +385,14 @@ export const RemindersPage: React.FC = () => {
       {/* 3. Filter Pills, Search Bar, and View Mode Toggle */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         {/* Filter Pills */}
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-200/60 dark:bg-slate-800/80 self-start">
+        <div className="flex items-center gap-0.5 p-0.5 rounded-md border border-border/40 bg-muted text-xs font-medium self-start">
           <button
             type="button"
             onClick={() => setFilter('today')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`px-2.5 py-1 rounded-sm transition-[color,background-color] cursor-pointer ${
               filter === 'today'
-                ? 'bg-white dark:bg-slate-900 text-brand shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-background text-foreground shadow-xs font-medium'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Hôm Nay
@@ -422,10 +400,10 @@ export const RemindersPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setFilter('upcoming')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`px-2.5 py-1 rounded-sm transition-[color,background-color] cursor-pointer ${
               filter === 'upcoming'
-                ? 'bg-white dark:bg-slate-900 text-brand shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-background text-foreground shadow-xs font-medium'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Sắp Tới
@@ -433,10 +411,10 @@ export const RemindersPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setFilter('past')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`px-2.5 py-1 rounded-sm transition-[color,background-color] cursor-pointer ${
               filter === 'past'
-                ? 'bg-white dark:bg-slate-900 text-brand shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-background text-foreground shadow-xs font-medium'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Lịch Sử Đã Qua
@@ -444,10 +422,10 @@ export const RemindersPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setFilter('all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`px-2.5 py-1 rounded-sm transition-[color,background-color] cursor-pointer ${
               filter === 'all'
-                ? 'bg-white dark:bg-slate-900 text-brand shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-background text-foreground shadow-xs font-medium'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Tất Cả
@@ -460,19 +438,19 @@ export const RemindersPage: React.FC = () => {
             <SearchInput
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="Tìm kiếm lịch hẹn, địa điểm..."
+              placeholder="Tìm kiếm lịch hẹn, địa điểm…"
             />
           </div>
 
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-200/60 dark:bg-slate-800/80 shrink-0">
+          <div className="flex items-center gap-0.5 p-0.5 rounded-md border border-border/40 bg-muted shrink-0 text-xs font-medium">
             <button
               type="button"
               onClick={() => setViewMode('timeline')}
               title="Dòng thời gian (Timeline)"
-              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`p-1.5 rounded-md transition-colors cursor-pointer ${
                 viewMode === 'timeline'
-                  ? 'bg-white dark:bg-slate-900 text-brand shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400'
+                  ? 'bg-card text-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <CalendarDays className="w-4 h-4" />
@@ -481,10 +459,10 @@ export const RemindersPage: React.FC = () => {
               type="button"
               onClick={() => setViewMode('grid')}
               title="Dạng thẻ (Grid)"
-              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`p-1.5 rounded-md transition-colors cursor-pointer ${
                 viewMode === 'grid'
-                  ? 'bg-white dark:bg-slate-900 text-brand shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400'
+                  ? 'bg-card text-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <LayoutGrid className="w-4 h-4" />
@@ -496,8 +474,8 @@ export const RemindersPage: React.FC = () => {
       {/* 3.5. Tag Filter Bar */}
       <div className="flex items-center gap-2 pb-1 pt-0.5 text-xs min-w-0">
         {/* Fixed Left Label */}
-        <span className="text-xs text-slate-400 font-semibold flex items-center gap-1 pl-1 shrink-0 select-none">
-          <Tag className="w-3.5 h-3.5 text-brand" /> Thẻ:
+        <span className="text-xs text-muted-foreground font-medium flex items-center gap-1 pl-1 shrink-0 select-none">
+          <Tag className="w-3.5 h-3.5 text-foreground" /> Thẻ:
         </span>
 
         {/* Scrollable Middle Container */}
@@ -505,10 +483,10 @@ export const RemindersPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setSelectedTags([])}
-            className={`px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer shrink-0 border ${
+            className={`px-3 py-1.5 rounded-lg text-xs transition-colors cursor-pointer shrink-0 border ${
               selectedTags.length === 0
-                ? 'bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 border-transparent font-bold shadow-xs'
-                : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'bg-foreground text-background border-foreground font-medium'
+                : 'bg-card border-border text-muted-foreground hover:bg-muted'
             }`}
           >
             Tất cả thẻ
@@ -524,27 +502,27 @@ export const RemindersPage: React.FC = () => {
                 key={item.name}
                 type="button"
                 onClick={() => handleToggleTag(item.name)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 shrink-0 border cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 shrink-0 border cursor-pointer ${
                   isActive
-                    ? 'text-white font-bold shadow-xs'
-                    : 'text-slate-700 dark:text-slate-300 hover:scale-[1.02]'
+                    ? 'text-foreground font-semibold border-foreground'
+                    : 'text-muted-foreground border-border hover:text-foreground'
                 }`}
                 style={{
-                  backgroundColor: isActive ? color : `${color}15`,
-                  borderColor: isActive ? color : `${color}35`,
+                  backgroundColor: isActive ? `${color}25` : `${color}10`,
+                  borderColor: isActive ? color : undefined,
                 }}
               >
                 <span
-                  className="w-2 h-2 rounded-full shrink-0"
-                  style={{ backgroundColor: isActive ? '#FFFFFF' : color }}
+                  className="w-1.5 h-1.5 rounded-full shrink-0"
+                  style={{ backgroundColor: color }}
                 />
                 <span>#{item.name}</span>
                 {item.count !== undefined && item.count > 0 && (
                   <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full tabular-nums ${
                       isActive
-                        ? 'bg-white/25 text-white'
-                        : 'bg-slate-200/60 dark:bg-slate-800 text-slate-500'
+                        ? 'bg-foreground/15 text-foreground font-semibold'
+                        : 'bg-muted text-muted-foreground'
                     }`}
                   >
                     {item.count}
@@ -559,7 +537,7 @@ export const RemindersPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setSelectedTags([])}
-              className="px-2.5 py-1.5 rounded-xl text-xs text-rose-500 hover:text-rose-600 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 transition-all flex items-center gap-1 cursor-pointer shrink-0"
+              className="px-2.5 py-1.5 rounded-lg text-xs text-destructive hover:bg-destructive/10 border border-destructive/20 transition-colors flex items-center gap-1 cursor-pointer shrink-0"
               title="Xóa bộ lọc thẻ"
             >
               <X className="w-3 h-3" />
@@ -573,10 +551,10 @@ export const RemindersPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsTagModalOpen(true)}
-            className="px-2.5 py-1.5 rounded-xl text-xs border border-dashed border-slate-300 dark:border-slate-700 text-slate-500 hover:text-brand hover:border-brand transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+            className="px-2.5 py-1.5 rounded-lg text-xs border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
           >
             <Settings className="w-3.5 h-3.5" />
-            <span>Quản Lý Thẻ</span>
+            <span>Quản lý thẻ</span>
           </button>
         </Tooltip>
       </div>
@@ -584,31 +562,31 @@ export const RemindersPage: React.FC = () => {
       {/* 4. Main Reminders Content */}
       {isLoading ? (
         <div className="py-20 flex flex-col items-center justify-center gap-3">
-          <div className="w-8 h-8 rounded-full border-2 border-brand border-t-transparent animate-spin" />
-          <span className="text-xs text-slate-500 font-medium">Đang tải lịch trình...</span>
+          <div className="w-7 h-7 rounded-full border-2 border-foreground border-t-transparent animate-spin" />
+          <span className="text-xs text-muted-foreground font-medium">Đang tải lịch trình…</span>
         </div>
       ) : reminders.length === 0 ? (
-        <div className="py-16 px-4 text-center rounded-2xl bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 space-y-3">
-          <div className="w-14 h-14 rounded-2xl bg-brand/10 text-brand flex items-center justify-center mx-auto">
-            <Bell className="w-7 h-7" />
+        <div className="py-16 px-4 text-center rounded-xl bg-card border border-dashed border-border space-y-3">
+          <div className="w-10 h-10 rounded-lg bg-muted text-foreground flex items-center justify-center mx-auto">
+            <Bell className="w-5 h-5" />
           </div>
-          <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">
+          <h3 className="text-base font-semibold text-foreground">
             {searchQuery
               ? 'Không tìm thấy lịch hẹn phù hợp'
               : filter === 'today'
               ? 'Hôm nay bạn không có lịch hẹn nào'
               : 'Chưa có lịch hẹn trong mục này'}
           </h3>
-          <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+          <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
             Tạo một lời nhắc để hệ thống phát chuông thông báo đúng giờ khi đến lúc cần đi họp, dự sự kiện hoặc thực hiện việc quan trọng.
           </p>
           <button
             type="button"
             onClick={handleCreateNew}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-bold shadow-sm transition-all"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-foreground text-background text-xs font-medium hover:bg-foreground/90 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Tạo Nhắc Hẹn Ngay</span>
+            <span>Tạo nhắc hẹn mới</span>
           </button>
         </div>
       ) : viewMode === 'timeline' ? (

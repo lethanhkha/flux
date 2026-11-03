@@ -60,9 +60,10 @@ export default {
           light: '#FFE4E6',
         },
         brand: {
-          DEFAULT: '#6366F1', // Indigo violet
-          hover: '#4F46E5',
-          dark: '#818CF8',
+          DEFAULT: 'hsl(var(--foreground))',
+          hover: 'hsl(var(--foreground) / 0.85)',
+          dark: 'hsl(var(--foreground))',
+          accent: '#0070F3', // Vercel blue for minimal link/action highlights if needed
         },
       },
       borderRadius: {
