@@ -228,7 +228,7 @@ export const PlannerRangeModal: React.FC<PlannerRangeModalProps> = ({
           </button>
           <button
             type="submit"
-            className="px-4 py-2 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold shadow-sm shadow-brand/20 cursor-pointer transition-colors flex items-center gap-1.5"
+            className="px-4 py-2 rounded-lg bg-foreground text-background hover:bg-foreground/90 font-medium text-xs cursor-pointer transition-colors flex items-center gap-1.5"
           >
             <Check className="w-3.5 h-3.5" />
             <span>Áp Dụng Khoảng Ngày</span>

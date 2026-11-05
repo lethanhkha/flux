@@ -69,7 +69,7 @@ export const WalletList = React.memo<WalletListProps>(({
             <button
               type="button"
               onClick={onOpenAddWallet}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-foreground hover:bg-foreground/90 text-background text-xs font-medium shadow-xs transition-all cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Thêm Ví Đầu Tiên</span>

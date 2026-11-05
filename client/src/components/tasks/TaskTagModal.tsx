@@ -167,7 +167,7 @@ export const TaskTagModal: React.FC<TaskTagModalProps> = ({
                         type="button"
                         onClick={() => handleSaveRename(item.name)}
                         disabled={isSubmitting}
-                        className="p-1.5 rounded-lg bg-brand text-white hover:bg-brand-hover cursor-pointer"
+                        className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer"
                         title="Lưu"
                       >
                         {isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}

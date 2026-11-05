@@ -119,11 +119,11 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             type="button"
             disabled={isLoading}
             onClick={onConfirm}
-            className={`flex-1 py-2 px-3.5 rounded-lg font-medium text-xs text-white transition-[background-color,opacity] disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 focus-ring ${
+            className={`flex-1 py-2 px-3.5 rounded-lg font-medium text-xs transition-[background-color,opacity] disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 focus-ring ${
               isDanger
-                ? 'bg-rose-600 hover:bg-rose-700'
+                ? 'bg-rose-600 hover:bg-rose-700 text-white'
                 : isWarning
-                ? 'bg-amber-600 hover:bg-amber-700'
+                ? 'bg-amber-600 hover:bg-amber-700 text-white'
                 : 'bg-foreground hover:bg-foreground/90 text-background'
             }`}
           >

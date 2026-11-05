@@ -322,7 +322,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
                   onClick={() => setEditRecurrenceRule(rule)}
                   className={`py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
                     editRecurrenceRule === rule
-                      ? 'bg-brand text-white border-brand shadow-xs'
+                      ? 'bg-foreground text-background border-foreground shadow-xs'
                       : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                   }`}
                 >
@@ -394,7 +394,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/25 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="px-5 py-2.5 rounded-lg bg-foreground hover:bg-foreground/90 text-background font-medium text-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
             {isSubmitting ? (
               <>

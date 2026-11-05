@@ -647,8 +647,8 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
                     onClick={() => setTaskRecurrenceRule(rule)}
                     className={`py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
                       taskRecurrenceRule === rule
-                        ? 'bg-brand text-white border-brand'
-                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                        ? 'bg-foreground text-background border-foreground font-semibold shadow-xs'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                     }`}
                   >
                     {rule === 'DAILY' && 'Hàng ngày'}

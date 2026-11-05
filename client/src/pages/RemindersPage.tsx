@@ -612,7 +612,7 @@ export const RemindersPage: React.FC = () => {
                   <span
                     className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                       day.relativeLabel === 'Hôm nay'
-                        ? 'bg-brand text-white shadow-xs'
+                        ? 'bg-foreground text-background shadow-xs'
                         : day.relativeLabel === 'Ngày mai'
                         ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20'
                         : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'

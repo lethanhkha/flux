@@ -157,7 +157,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
           <button
             type="button"
             onClick={() => handleApplyColor(hexInput)}
-            className="px-2.5 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-xs font-semibold cursor-pointer transition-colors"
+            className="px-2.5 py-1.5 bg-foreground hover:bg-foreground/90 text-background rounded-lg text-xs font-medium cursor-pointer transition-colors"
           >
             Lưu
           </button>

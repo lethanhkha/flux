@@ -61,6 +61,7 @@ export default {
         },
         brand: {
           DEFAULT: 'hsl(var(--foreground))',
+          foreground: 'hsl(var(--background))',
           hover: 'hsl(var(--foreground) / 0.85)',
           dark: 'hsl(var(--foreground))',
           accent: '#0070F3', // Vercel blue for minimal link/action highlights if needed

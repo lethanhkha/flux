@@ -421,15 +421,15 @@ export const NotesPage: React.FC = () => {
                 onClick={() => setSelectedTag('ALL')}
                 className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
                   selectedTag === 'ALL'
-                    ? 'bg-brand text-white border-brand font-bold shadow-xs'
-                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand/40'
+                    ? 'bg-foreground text-background border-foreground font-semibold shadow-xs'
+                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-border'
                 }`}
               >
                 <span>Tất Cả</span>
                 <span
                   className={`text-[10px] px-1.5 py-0.2 rounded-full ${
                     selectedTag === 'ALL'
-                      ? 'bg-white/20 text-white'
+                      ? 'bg-background/20 text-background'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
                   }`}
                 >
@@ -683,7 +683,7 @@ export const NotesPage: React.FC = () => {
                         handleCloseViewModal();
                         handleOpenEditNote(noteToEdit);
                       }}
-                      className="px-3 py-1.5 rounded-xl bg-brand/10 hover:bg-brand text-brand hover:text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                      className="px-3 py-1.5 rounded-xl bg-secondary hover:bg-foreground hover:text-background text-foreground font-medium text-xs flex items-center gap-1.5 transition-all cursor-pointer"
                       title="Chỉnh sửa nội dung ghi chú này"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
@@ -781,7 +781,7 @@ export const NotesPage: React.FC = () => {
                         <button
                           onClick={() => handleSaveRenameTag(name)}
                           disabled={tagActionLoading}
-                          className="p-1.5 rounded-lg bg-brand text-white hover:bg-brand-hover cursor-pointer"
+                          className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer"
                           title="Lưu tên mới"
                         >
                           <Check className="w-3.5 h-3.5" />

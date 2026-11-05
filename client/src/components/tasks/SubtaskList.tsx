@@ -606,7 +606,7 @@ export const SubtaskList = React.memo<SubtaskListProps>(({
               handleAddSubtask(e);
             }}
             disabled={!newTitle.trim() || isAdding || disabled}
-            className="px-3.5 py-2 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold shadow-xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-3.5 py-2 rounded-lg bg-foreground hover:bg-foreground/90 text-background text-xs font-medium shadow-xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isAdding ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -627,8 +627,8 @@ export const SubtaskList = React.memo<SubtaskListProps>(({
             onClick={setPresetToday}
             className={`px-2 py-0.5 rounded-md transition-colors cursor-pointer font-medium ${
               newDueDate && newDueDate.endsWith('T18:00') && newDueDate.startsWith(new Date().toISOString().slice(0, 10))
-                ? 'bg-brand text-white font-semibold'
-                : 'bg-slate-100 dark:bg-slate-800 hover:bg-brand hover:text-white text-slate-700 dark:text-slate-300'
+                ? 'bg-foreground text-background font-semibold'
+                : 'bg-slate-100 dark:bg-slate-800 hover:bg-muted-foreground/20 text-slate-700 dark:text-slate-300'
             }`}
           >
             Hôm nay (18:00)
@@ -636,7 +636,7 @@ export const SubtaskList = React.memo<SubtaskListProps>(({
           <button
             type="button"
             onClick={setPresetTomorrow}
-            className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-brand hover:text-white transition-colors cursor-pointer font-medium text-slate-700 dark:text-slate-300"
+            className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-muted-foreground/20 transition-colors cursor-pointer font-medium text-slate-700 dark:text-slate-300"
           >
             Ngày mai (18:00)
           </button>
@@ -689,14 +689,14 @@ export const SubtaskList = React.memo<SubtaskListProps>(({
                 <button
                   type="button"
                   onClick={setPresetToday}
-                  className="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-brand hover:text-white transition-colors cursor-pointer font-medium"
+                  className="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-muted-foreground/20 transition-colors cursor-pointer font-medium"
                 >
                   Hôm nay (18:00)
                 </button>
                 <button
                   type="button"
                   onClick={setPresetTomorrow}
-                  className="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-brand hover:text-white transition-colors cursor-pointer font-medium"
+                  className="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-muted-foreground/20 transition-colors cursor-pointer font-medium"
                 >
                   Ngày mai (18:00)
                 </button>
