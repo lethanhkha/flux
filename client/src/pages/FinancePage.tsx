@@ -482,6 +482,15 @@ export const FinancePage: React.FC = () => {
       prev.map((w) => (w.id === walletId ? { ...w, balance: w.balance + deltaBalance } : w))
     );
     setTransactions((prev) => [newTx, ...prev]);
+    if (newTx.category) {
+      setCategories((prev) =>
+        prev.map((c) =>
+          c.name === newTx.category
+            ? { ...c, transactionCount: (c.transactionCount || 0) + 1 }
+            : c
+        )
+      );
+    }
     // Refresh calculations and totals for the current period
     fetchTransactions(1, period, filter, selectedCategory, selectedWalletId, debouncedSearch);
     fetchWallets();
@@ -575,6 +584,15 @@ export const FinancePage: React.FC = () => {
         await apiClient.delete(`/finance/transactions/${tx.id}`);
         toast.success('Đã xóa giao dịch và hoàn lại số dư ví thành công!');
         setTransactions((prev) => prev.filter((t) => t.id !== tx.id));
+        if (tx.category) {
+          setCategories((prev) =>
+            prev.map((c) =>
+              c.name === tx.category
+                ? { ...c, transactionCount: Math.max((c.transactionCount || 0) - 1, 0) }
+                : c
+            )
+          );
+        }
         setDeleteModalState({ isOpen: false, type: null, isLoading: false });
         fetchWallets();
         const p = currentParamsRef.current;
@@ -859,25 +877,36 @@ export const FinancePage: React.FC = () => {
                 </div>
               </div>
             ) : deleteModalState.type === 'CATEGORY' && deleteModalState.targetCategory ? (
-              <div className="flex items-center justify-between gap-2.5">
-                <div className="flex items-center gap-2.5 min-w-0">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span
+                      className="w-3.5 h-3.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: deleteModalState.targetCategory.color || '#6366F1' }}
+                    />
+                    <span className="font-bold text-slate-900 dark:text-slate-100 truncate">
+                      {deleteModalState.targetCategory.name}
+                    </span>
+                  </div>
                   <span
-                    className="w-3.5 h-3.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: deleteModalState.targetCategory.color || '#6366F1' }}
-                  />
-                  <span className="font-bold text-slate-900 dark:text-slate-100 truncate">
-                    {deleteModalState.targetCategory.name}
+                    className={`text-[10px] px-2 py-0.5 rounded-md font-bold flex-shrink-0 ${
+                      deleteModalState.targetCategory.type === 'INCOME'
+                        ? 'bg-emerald-500/10 text-emerald-600'
+                        : 'bg-rose-500/10 text-rose-500'
+                    }`}
+                  >
+                    {deleteModalState.targetCategory.type === 'INCOME' ? 'Khoản thu' : 'Khoản chi'}
                   </span>
                 </div>
-                <span
-                  className={`text-[10px] px-2 py-0.5 rounded-md font-bold flex-shrink-0 ${
-                    deleteModalState.targetCategory.type === 'INCOME'
-                      ? 'bg-emerald-500/10 text-emerald-600'
-                      : 'bg-rose-500/10 text-rose-500'
-                  }`}
-                >
-                  {deleteModalState.targetCategory.type === 'INCOME' ? 'Khoản thu' : 'Khoản chi'}
-                </span>
+                <div className="text-[11px] text-muted-foreground bg-muted/60 p-2 rounded-md">
+                  {deleteModalState.targetCategory.transactionCount && deleteModalState.targetCategory.transactionCount > 0 ? (
+                    <span>
+                      Đang có <strong className="text-foreground">{deleteModalState.targetCategory.transactionCount}</strong> giao dịch thuộc danh mục này.
+                    </span>
+                  ) : (
+                    <span>Chưa có giao dịch nào thuộc danh mục này.</span>
+                  )}
+                </div>
               </div>
             ) : deleteModalState.type === 'WALLET' && deleteModalState.targetWallet ? (() => {
               const { type: walletTypeLabel, icon: WalletIcon } = resolveWalletTypeAndIcon(

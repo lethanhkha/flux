@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
 import { financeService } from './finance.service';
 import {
   createWalletSchema,
@@ -192,10 +193,11 @@ export class FinanceController {
 
   async updateCategory(req: Request, res: Response, next: NextFunction) {
     try {
+      const categoryId = z.string().uuid('ID danh mục không hợp lệ.').parse(req.params.id);
       const validated = updateCategorySchema.parse(req.body);
       const category = await financeService.updateCategory(
         req.user!.userId,
-        req.params.id,
+        categoryId,
         validated
       );
       res.status(200).json({ status: 'success', data: category });
@@ -206,7 +208,8 @@ export class FinanceController {
 
   async deleteCategory(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await financeService.deleteCategory(req.user!.userId, req.params.id);
+      const categoryId = z.string().uuid('ID danh mục không hợp lệ.').parse(req.params.id);
+      const result = await financeService.deleteCategory(req.user!.userId, categoryId);
       res.status(200).json({ status: 'success', data: result });
     } catch (error) {
       next(error);

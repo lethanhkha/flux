@@ -28,6 +28,7 @@ export interface CategoryItem {
   type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
   icon?: string;
   color?: string;
+  transactionCount?: number;
 }
 
 export interface DeleteModalState {

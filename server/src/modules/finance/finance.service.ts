@@ -12,6 +12,18 @@ import {
   UpdateCategoryInput,
 } from './finance.schema';
 
+const DEFAULT_FINANCE_CATEGORIES = [
+  { name: 'Ăn uống & Cafe', type: 'EXPENSE', color: '#F97316', icon: 'Tag' },
+  { name: 'Mua sắm & Tiêu dùng', type: 'EXPENSE', color: '#EC4899', icon: 'Tag' },
+  { name: 'Di chuyển & Xăng xe', type: 'EXPENSE', color: '#3B82F6', icon: 'Tag' },
+  { name: 'Tiền nhà & Hóa đơn', type: 'EXPENSE', color: '#EF4444', icon: 'Tag' },
+  { name: 'Giải trí & Du lịch', type: 'EXPENSE', color: '#8B5CF6', icon: 'Tag' },
+  { name: 'Lương & Thưởng', type: 'INCOME', color: '#10B981', icon: 'Tag' },
+  { name: 'Lợi nhuận đầu tư', type: 'INCOME', color: '#06B6D4', icon: 'Tag' },
+  { name: 'Kinh doanh & Dự án', type: 'INCOME', color: '#6366F1', icon: 'Tag' },
+  { name: 'Khác', type: 'EXPENSE', color: '#64748B', icon: 'Tag' },
+];
+
 export class FinanceService {
   /**
    * Invalidate finance and dashboard caches for user
@@ -792,19 +804,70 @@ export class FinanceService {
   }
 
   /**
-   * 9. Get all categories for user
+   * 9. Get all categories for user with real all-time transaction count
+   * Automatically seeds default categories if user has none.
    */
   async getCategories(userId: string) {
-    return prisma.category.findMany({
+    let categories = await prisma.category.findMany({
       where: { userId },
       orderBy: { createdAt: 'asc' },
     });
+
+    if (categories.length === 0) {
+      await prisma.category.createMany({
+        data: DEFAULT_FINANCE_CATEGORIES.map((cat) => ({
+          userId,
+          name: cat.name,
+          type: cat.type,
+          color: cat.color,
+          icon: cat.icon,
+        })),
+      });
+
+      categories = await prisma.category.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'asc' },
+      });
+    }
+
+    const txCounts = await prisma.transaction.groupBy({
+      by: ['category'],
+      where: { userId },
+      _count: { id: true },
+    });
+
+    const countMap = new Map<string, number>();
+    for (const item of txCounts) {
+      if (item.category) {
+        countMap.set(item.category, item._count.id);
+      }
+    }
+
+    return categories.map((cat) => ({
+      ...cat,
+      transactionCount: countMap.get(cat.name) || 0,
+    }));
   }
 
   /**
-   * 10. Create a custom category
+   * 10. Create a custom category with duplicate prevention
    */
   async createCategory(userId: string, input: CreateCategoryInput) {
+    const existing = await prisma.category.findFirst({
+      where: {
+        userId,
+        name: { equals: input.name, mode: 'insensitive' },
+        type: input.type,
+      },
+    });
+
+    if (existing) {
+      throw new AppError(
+        `Danh mục "${input.name}" (${input.type === 'INCOME' ? 'Khoản thu' : 'Khoản chi'}) đã tồn tại.`,
+        400
+      );
+    }
+
     const created = await prisma.category.create({
       data: {
         userId,
@@ -816,7 +879,10 @@ export class FinanceService {
     });
 
     await this.invalidateUserFinanceCache(userId);
-    return created;
+    return {
+      ...created,
+      transactionCount: 0,
+    };
   }
 
   /**
@@ -831,6 +897,27 @@ export class FinanceService {
       throw new AppError('Không tìm thấy danh mục.', 404);
     }
 
+    const targetName = input.name || existing.name;
+    const targetType = input.type || existing.type;
+
+    if (input.name || input.type) {
+      const duplicate = await prisma.category.findFirst({
+        where: {
+          userId,
+          name: { equals: targetName, mode: 'insensitive' },
+          type: targetType,
+          NOT: { id: categoryId },
+        },
+      });
+
+      if (duplicate) {
+        throw new AppError(
+          `Danh mục "${targetName}" (${targetType === 'INCOME' ? 'Khoản thu' : 'Khoản chi'}) đã tồn tại.`,
+          400
+        );
+      }
+    }
+
     const updated = await prisma.category.update({
       where: { id: categoryId },
       data: input,
@@ -843,8 +930,15 @@ export class FinanceService {
       });
     }
 
+    const count = await prisma.transaction.count({
+      where: { userId, category: updated.name },
+    });
+
     await this.invalidateUserFinanceCache(userId);
-    return updated;
+    return {
+      ...updated,
+      transactionCount: count,
+    };
   }
 
   /**

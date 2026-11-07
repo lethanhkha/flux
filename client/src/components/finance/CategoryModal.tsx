@@ -11,7 +11,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { CategoryItem, TransactionItem } from './types';
-import { apiClient } from '../../api/client';
+import { apiClient, getErrorMessage } from '../../api/client';
 import { toast } from 'sonner';
 import { Modal } from '../common/Modal';
 import { CustomSelect } from '../common/CustomSelect';
@@ -225,7 +225,7 @@ const CategoryCard = React.memo<CategoryCardProps>(({
             <Edit3 className="w-3.5 h-3.5" />
           </button>
         </Tooltip>
-        <Tooltip content="Xóa danh mục này">
+        <Tooltip content={txCount > 0 ? `Xóa danh mục này (${txCount} giao dịch liên quan)` : 'Xóa danh mục này'}>
           <button
             type="button"
             onClick={() => onRequestDelete(category)}
@@ -339,7 +339,11 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
     if (sortOption === 'NAME_ASC') {
       result = [...result].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
     } else if (sortOption === 'TX_COUNT') {
-      result = [...result].sort((a, b) => (txCountMap[b.name] || 0) - (txCountMap[a.name] || 0));
+      result = [...result].sort((a, b) => {
+        const countB = b.transactionCount !== undefined ? b.transactionCount : (txCountMap[b.name] || 0);
+        const countA = a.transactionCount !== undefined ? a.transactionCount : (txCountMap[a.name] || 0);
+        return countB - countA;
+      });
     }
 
     return result;
@@ -381,34 +385,25 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
     }
 
     setIsSubmittingCat(true);
-    const tempId = `cat-${Date.now()}`;
-    const newCategory: CategoryItem = {
-      id: tempId,
-      name: cleanName,
-      type: newCatType,
-      color: newCatColor,
-    };
-
-    onCategoryCreated(newCategory);
-    setNewCatName('');
-    setIsCreateOpen(false);
-    toast.success(`Đã thêm danh mục "${newCategory.name}" thành công!`);
-
     try {
       const res = await apiClient.post('/finance/categories', {
-        name: newCategory.name,
-        type: newCategory.type,
-        color: newCategory.color,
+        name: cleanName,
+        type: newCatType,
+        color: newCatColor,
       });
-      if (res.data.data?.id) {
-        onCategoryUpdated(
-          { ...newCategory, id: res.data.data.id },
-          newCategory.name
-        );
+      const createdCategory = res.data?.data;
+      if (createdCategory) {
+        onCategoryCreated({
+          ...createdCategory,
+          transactionCount: 0,
+        });
       }
+      setNewCatName('');
+      setIsCreateOpen(false);
+      toast.success(`Đã thêm danh mục "${cleanName}" thành công!`);
       window.dispatchEvent(new CustomEvent('flux:refresh-data'));
-    } catch {
-      // Degrade gracefully - UI remains optimistic
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể tạo danh mục.'));
     } finally {
       setIsSubmittingCat(false);
     }
@@ -435,26 +430,41 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
     const oldCat = categories.find((c) => c.id === catId);
     const oldName = oldCat?.name || '';
 
-    const updatedCat: CategoryItem = {
-      id: catId,
-      name: cleanName,
-      type: editCategoryType,
-      color: editCategoryColor,
-    };
-
-    onCategoryUpdated(updatedCat, oldName);
-    setEditingCategoryId(null);
-    toast.success(`Đã cập nhật danh mục "${cleanName}"!`);
+    // Prevent duplicate category names in same type (excluding self)
+    const exists = categories.some(
+      (c) =>
+        c.id !== catId &&
+        c.name.toLowerCase() === cleanName.toLowerCase() &&
+        c.type === editCategoryType
+    );
+    if (exists) {
+      toast.error(`Danh mục "${cleanName}" (${editCategoryType === 'INCOME' ? 'Thu' : 'Chi'}) đã tồn tại.`);
+      return;
+    }
 
     try {
-      await apiClient.patch(`/finance/categories/${catId}`, {
+      const res = await apiClient.patch(`/finance/categories/${catId}`, {
         name: cleanName,
         type: editCategoryType,
         color: editCategoryColor,
       });
+      const updatedFromServer = res.data?.data;
+      const updatedCat: CategoryItem = {
+        ...oldCat,
+        ...(updatedFromServer || {}),
+        id: catId,
+        name: cleanName,
+        type: editCategoryType,
+        color: editCategoryColor,
+        transactionCount: updatedFromServer?.transactionCount ?? oldCat?.transactionCount ?? 0,
+      };
+
+      onCategoryUpdated(updatedCat, oldName);
+      setEditingCategoryId(null);
+      toast.success(`Đã cập nhật danh mục "${cleanName}"!`);
       window.dispatchEvent(new CustomEvent('flux:refresh-data'));
-    } catch {
-      // Degrade gracefully
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể cập nhật danh mục.'));
     }
   }, [categories, editCategoryName, editCategoryType, editCategoryColor, onCategoryUpdated]);
 
@@ -742,7 +752,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                 <CategoryCard
                   key={cat.id}
                   category={cat}
-                  txCount={txCountMap[cat.name] || 0}
+                  txCount={cat.transactionCount !== undefined ? cat.transactionCount : (txCountMap[cat.name] || 0)}
                   isEditing={editingCategoryId === cat.id}
                   editName={editCategoryName}
                   editType={editCategoryType}
