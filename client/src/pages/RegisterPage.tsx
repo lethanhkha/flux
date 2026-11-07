@@ -37,6 +37,7 @@ export const RegisterPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!agreedToTerms) {
       toast.error('Vui lòng đồng ý với điều khoản sử dụng.');
       return;

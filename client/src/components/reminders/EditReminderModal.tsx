@@ -97,6 +97,7 @@ export const EditReminderModal: React.FC<EditReminderModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     if (!title.trim()) {
       setErrorMsg('Vui lòng nhập tiêu đề nhắc hẹn');

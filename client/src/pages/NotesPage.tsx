@@ -287,6 +287,7 @@ export const NotesPage: React.FC = () => {
   };
 
   const handleSaveRenameTag = async (oldTag: string) => {
+    if (tagActionLoading) return;
     const cleanNewTag = renameValue.trim().toLowerCase().replace(/^#/, '');
     if (!cleanNewTag || cleanNewTag === oldTag) {
       setEditingTag(null);
@@ -312,7 +313,7 @@ export const NotesPage: React.FC = () => {
   };
 
   const handleConfirmDeleteTag = async () => {
-    if (!confirmDeleteTag) return;
+    if (!confirmDeleteTag || tagActionLoading) return;
     const tagToDelete = confirmDeleteTag;
 
     setTagActionLoading(true);

@@ -10,6 +10,7 @@ import {
   User,
   Copy,
   Check,
+  Loader2,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { apiClient, getErrorMessage } from '../api/client';
@@ -23,6 +24,7 @@ export const SettingsPage: React.FC = () => {
   const [isDisable2FAModalOpen, setIsDisable2FAModalOpen] = useState(false);
   const [disablePassword, setDisablePassword] = useState('');
   const [isDisabling2FA, setIsDisabling2FA] = useState(false);
+  const [isEnabling2FA, setIsEnabling2FA] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [secret, setSecret] = useState<string>('');
   const [otpInput, setOtpInput] = useState('');
@@ -69,6 +71,8 @@ export const SettingsPage: React.FC = () => {
 
   const handleVerifyAndEnable2FA = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isEnabling2FA) return;
+    setIsEnabling2FA(true);
     try {
       const res = await apiClient.post('/auth/2fa/enable', {
         secret,
@@ -81,11 +85,14 @@ export const SettingsPage: React.FC = () => {
       toast.success('Kích hoạt xác thực 2 bước (2FA) thành công!');
     } catch (err: any) {
       toast.error(getErrorMessage(err, 'Mã OTP không chính xác.'));
+    } finally {
+      setIsEnabling2FA(false);
     }
   };
 
   const handleDisable2FA = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isDisabling2FA) return;
     setIsDisabling2FA(true);
     try {
       await apiClient.post('/auth/2fa/disable', {
@@ -105,6 +112,7 @@ export const SettingsPage: React.FC = () => {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isChangingPass) return;
     if (newPassword !== confirmPassword) {
       toast.error('Mật khẩu xác nhận không khớp.');
       return;
@@ -402,16 +410,25 @@ export const SettingsPage: React.FC = () => {
                       type="text"
                       maxLength={6}
                       required
+                      disabled={isEnabling2FA}
                       value={otpInput}
                       onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, ''))}
                       placeholder="000000"
-                      className="w-full text-center tracking-widest text-lg font-bold py-2 rounded-md border border-input bg-background font-mono focus-ring"
+                      className="w-full text-center tracking-widest text-lg font-bold py-2 rounded-md border border-input bg-background font-mono focus-ring disabled:opacity-60"
                     />
                     <button
                       type="submit"
-                      className="w-full h-10 rounded-md bg-foreground text-background font-medium text-xs hover:opacity-90 active:scale-[0.99] transition-[opacity,transform] cursor-pointer"
+                      disabled={isEnabling2FA}
+                      className="w-full h-10 rounded-md bg-foreground text-background font-medium text-xs hover:opacity-90 active:scale-[0.99] transition-[opacity,transform] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                      Xác Nhận & Bật 2FA
+                      {isEnabling2FA ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Đang xác nhận…</span>
+                        </>
+                      ) : (
+                        'Xác Nhận & Bật 2FA'
+                      )}
                     </button>
                   </form>
                 </div>

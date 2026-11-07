@@ -52,6 +52,7 @@ export const AddWalletModal: React.FC<AddWalletModalProps> = ({
 
   const handleCreateWallet = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!newWalletName.trim()) {
       toast.error('Vui lòng nhập tên ví.');
       return;

@@ -45,6 +45,7 @@ export const TaskTagModal: React.FC<TaskTagModalProps> = ({
   };
 
   const handleSaveRename = async (oldTag: string) => {
+    if (isSubmitting) return;
     const cleanNew = renameValue.trim().toLowerCase().replace(/^#/, '');
     if (!cleanNew) {
       toast.error('Tên thẻ không được để trống.');
@@ -67,7 +68,7 @@ export const TaskTagModal: React.FC<TaskTagModalProps> = ({
   };
 
   const handleConfirmDelete = async () => {
-    if (!tagToDelete) return;
+    if (!tagToDelete || isSubmitting) return;
     setIsSubmitting(true);
     try {
       await onDeleteTag(tagToDelete);

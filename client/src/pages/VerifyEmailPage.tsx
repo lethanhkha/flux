@@ -87,6 +87,7 @@ export const VerifyEmailPage: React.FC = () => {
 
   const submitCode = useCallback(
     async (targetEmail: string, codeToSubmit: string) => {
+      if (isVerifying) return;
       if (!targetEmail) {
         toast.error('Vui lòng nhập địa chỉ Gmail của bạn.');
         return;
@@ -123,7 +124,7 @@ export const VerifyEmailPage: React.FC = () => {
         setIsVerifying(false);
       }
     },
-    [verifyEmail, navigate]
+    [isVerifying, verifyEmail, navigate]
   );
 
   // Auto trigger verification if email & code were present in URL search params
@@ -136,6 +137,7 @@ export const VerifyEmailPage: React.FC = () => {
   }, [queryEmail, queryCode, submitCode]);
 
   const handleResend = async () => {
+    if (isResending || cooldown > 0) return;
     if (!email) {
       toast.error('Vui lòng nhập email trước khi gửi lại mã.');
       return;

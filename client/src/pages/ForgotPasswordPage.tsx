@@ -19,6 +19,7 @@ export const ForgotPasswordPage: React.FC = () => {
 
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     const normalizedEmail = email.trim().toLowerCase();
     if (!normalizedEmail.endsWith('@gmail.com')) {
       toast.error('Vui lòng nhập địa chỉ Gmail hợp lệ (@gmail.com).');
@@ -49,6 +50,7 @@ export const ForgotPasswordPage: React.FC = () => {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       const res = await apiClient.post('/auth/reset-password', {

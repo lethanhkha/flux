@@ -216,7 +216,7 @@ export const RemindersPage: React.FC = () => {
   };
 
   const handleConfirmDelete = async () => {
-    if (!deletingReminder) return;
+    if (!deletingReminder || isDeleting) return;
     setIsDeleting(true);
     try {
       await apiClient.delete(`/reminders/${deletingReminder.id}`);

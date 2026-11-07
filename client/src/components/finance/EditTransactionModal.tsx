@@ -75,6 +75,7 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
 
   const handleUpdateTransaction = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     const amt = parseFloat(editTxAmount);
     if (isNaN(amt) || amt <= 0) {

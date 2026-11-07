@@ -9,6 +9,7 @@ import {
   Tag,
   ArrowUpDown,
   RotateCcw,
+  Loader2,
 } from 'lucide-react';
 import { CategoryItem, TransactionItem } from './types';
 import { apiClient, getErrorMessage } from '../../api/client';
@@ -64,6 +65,7 @@ interface CategoryCardProps {
   category: CategoryItem;
   txCount: number;
   isEditing: boolean;
+  isSaving?: boolean;
   editName: string;
   editType: 'INCOME' | 'EXPENSE';
   editColor: string;
@@ -80,6 +82,7 @@ const CategoryCard = React.memo<CategoryCardProps>(({
   category,
   txCount,
   isEditing,
+  isSaving = false,
   editName,
   editType,
   editColor,
@@ -102,21 +105,23 @@ const CategoryCard = React.memo<CategoryCardProps>(({
             <span>Chỉnh sửa danh mục</span>
           </span>
           <div className="flex items-center gap-1">
-            <Tooltip content="Lưu thay đổi (Enter)">
+            <Tooltip content={isSaving ? 'Đang lưu thay đổi…' : 'Lưu thay đổi (Enter)'}>
               <button
                 type="button"
+                disabled={isSaving}
                 onClick={() => onSaveEdit(category.id)}
-                className="p-1 rounded-md bg-foreground text-background hover:opacity-90 transition-[opacity] cursor-pointer"
+                className="p-1 rounded-md bg-foreground text-background hover:opacity-90 transition-[opacity] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Lưu thay đổi"
               >
-                <Check className="w-3.5 h-3.5" />
+                {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
               </button>
             </Tooltip>
             <Tooltip content="Hủy bỏ (Esc)">
               <button
                 type="button"
+                disabled={isSaving}
                 onClick={onCancelEdit}
-                className="p-1 rounded-md border border-border bg-secondary hover:bg-muted text-foreground transition-[background-color] cursor-pointer"
+                className="p-1 rounded-md border border-border bg-secondary hover:bg-muted text-foreground transition-[background-color] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Hủy chỉnh sửa"
               >
                 <X className="w-3.5 h-3.5" />
@@ -129,19 +134,20 @@ const CategoryCard = React.memo<CategoryCardProps>(({
           <input
             type="text"
             value={editName}
+            disabled={isSaving}
             onChange={(e) => onChangeEditName(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
-                onSaveEdit(category.id);
+                if (!isSaving) onSaveEdit(category.id);
               } else if (e.key === 'Escape') {
                 e.preventDefault();
-                onCancelEdit();
+                if (!isSaving) onCancelEdit();
               }
             }}
             placeholder="Tên danh mục…"
             autoFocus
-            className="w-full px-3 py-1.5 rounded-md border border-input bg-background text-xs font-medium focus-ring"
+            className="w-full px-3 py-1.5 rounded-md border border-input bg-background text-xs font-medium focus-ring disabled:opacity-60"
           />
 
           <CustomSelect
@@ -266,6 +272,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
 
   // Edit Category State
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [editCategoryName, setEditCategoryName] = useState('');
   const [editCategoryType, setEditCategoryType] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
   const [editCategoryColor, setEditCategoryColor] = useState('#6366F1');
@@ -286,7 +293,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !isSubmittingCat) {
+      if (e.key === 'Escape' && !isSubmittingCat && !isSavingEdit) {
         if (editingCategoryId) {
           setEditingCategoryId(null);
         } else {
@@ -296,7 +303,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, isSubmittingCat, editingCategoryId, onClose]);
+  }, [isOpen, isSubmittingCat, isSavingEdit, editingCategoryId, onClose]);
 
   // 1. Precalculate transaction count map once in O(T) instead of O(C * T) per render
   const txCountMap = useMemo(() => {
@@ -369,6 +376,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
   // Handlers
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmittingCat) return;
     const cleanName = newCatName.trim();
     if (!cleanName) {
       toast.error('Vui lòng nhập tên danh mục.');
@@ -421,6 +429,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
   }, []);
 
   const handleSaveEditCategory = useCallback(async (catId: string) => {
+    if (isSavingEdit) return;
     const cleanName = editCategoryName.trim();
     if (!cleanName) {
       toast.error('Tên danh mục không được để trống.');
@@ -442,6 +451,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
       return;
     }
 
+    setIsSavingEdit(true);
     try {
       const res = await apiClient.patch(`/finance/categories/${catId}`, {
         name: cleanName,
@@ -465,8 +475,10 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
       window.dispatchEvent(new CustomEvent('flux:refresh-data'));
     } catch (err) {
       toast.error(getErrorMessage(err, 'Không thể cập nhật danh mục.'));
+    } finally {
+      setIsSavingEdit(false);
     }
-  }, [categories, editCategoryName, editCategoryType, editCategoryColor, onCategoryUpdated]);
+  }, [isSavingEdit, categories, editCategoryName, editCategoryType, editCategoryColor, onCategoryUpdated]);
 
   const handleResetFilters = useCallback(() => {
     setSearchQuery('');
@@ -754,6 +766,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                   category={cat}
                   txCount={cat.transactionCount !== undefined ? cat.transactionCount : (txCountMap[cat.name] || 0)}
                   isEditing={editingCategoryId === cat.id}
+                  isSaving={isSavingEdit && editingCategoryId === cat.id}
                   editName={editCategoryName}
                   editType={editCategoryType}
                   editColor={editCategoryColor}

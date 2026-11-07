@@ -60,6 +60,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     const amt = parseFloat(transferAmount);
 
     if (isNaN(amt) || amt <= 0) {

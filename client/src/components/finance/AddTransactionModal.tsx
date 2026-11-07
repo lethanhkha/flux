@@ -91,6 +91,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
   const handleCreateTransaction = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     const amt = parseFloat(txAmount);
     if (isNaN(amt) || amt <= 0) {
       toast.error('Vui lòng nhập số tiền hợp lệ (> 0).');

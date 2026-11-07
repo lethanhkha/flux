@@ -176,6 +176,7 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
   // --- Handlers ---
   const handleCreateTransaction = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     const amountNum = parseFloat(txAmount);
     if (isNaN(amountNum) || amountNum <= 0) {
       toast.error('Vui lòng nhập số tiền hợp lệ (> 0).');
@@ -232,6 +233,7 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!taskTitle.trim()) {
       toast.error('Vui lòng nhập tiêu đề công việc.');
       return;
@@ -266,6 +268,7 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
 
   const handleCreateNote = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!noteTitle.trim()) {
       toast.error('Vui lòng nhập tiêu đề ghi chú.');
       return;
@@ -298,6 +301,7 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
 
   const handleCreateReminder = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!reminderTitle.trim()) {
       toast.error('Vui lòng nhập tiêu đề nhắc hẹn.');
       return;

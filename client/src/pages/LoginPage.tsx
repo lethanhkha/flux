@@ -22,6 +22,7 @@ export const LoginPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     const normalizedEmail = email.trim().toLowerCase();
     if (!normalizedEmail.endsWith('@gmail.com')) {
       toast.error('Vui lòng nhập địa chỉ Gmail hợp lệ (@gmail.com).');

@@ -51,6 +51,7 @@ export const ReminderCard: React.FC<ReminderCardProps> = ({
     (reminder.location.startsWith('http://') || reminder.location.startsWith('https://'));
 
   const handleComplete = async () => {
+    if (isProcessing) return;
     setIsProcessing(true);
     try {
       await onComplete(reminder.id);
@@ -60,6 +61,7 @@ export const ReminderCard: React.FC<ReminderCardProps> = ({
   };
 
   const handleSnooze = async (minutes: number) => {
+    if (isProcessing) return;
     setIsProcessing(true);
     setShowSnoozeMenu(false);
     try {

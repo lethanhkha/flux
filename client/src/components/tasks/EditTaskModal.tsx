@@ -109,6 +109,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
 
   const handleUpdateTask = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!editTitle.trim()) {
       toast.error('Tiêu đề công việc không được để trống.');
       return;

@@ -577,6 +577,7 @@ export const FinancePage: React.FC = () => {
   }, []);
 
   const handleConfirmDelete = async () => {
+    if (deleteModalState.isLoading) return;
     if (deleteModalState.type === 'TRANSACTION' && deleteModalState.targetTx) {
       const tx = deleteModalState.targetTx;
       setDeleteModalState((prev) => ({ ...prev, isLoading: true }));

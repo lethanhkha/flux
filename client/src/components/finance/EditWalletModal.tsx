@@ -71,6 +71,7 @@ export const EditWalletModal: React.FC<EditWalletModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!walletName.trim()) {
       toast.error('Vui lòng nhập tên ví.');
       return;

@@ -598,6 +598,7 @@ export const TasksPage: React.FC = () => {
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!newTaskTitle.trim()) return;
 
     // Capture any pending draft subtask input

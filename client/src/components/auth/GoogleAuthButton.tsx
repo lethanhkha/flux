@@ -15,6 +15,7 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleAuth = async () => {
+    if (isLoading) return;
     setIsLoading(true);
     try {
       const res = await apiClient.get('/auth/google/url');

@@ -37,6 +37,7 @@ export const RingingReminderModal: React.FC<RingingReminderModalProps> = ({
   };
 
   const handleSnooze = async (minutes: number) => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       await onSnooze(reminder.id, minutes);
@@ -46,6 +47,7 @@ export const RingingReminderModal: React.FC<RingingReminderModalProps> = ({
   };
 
   const handleComplete = async () => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       await onComplete(reminder.id);

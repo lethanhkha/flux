@@ -56,6 +56,7 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
 
   const handleCreateNote = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!title.trim()) {
       toast.error('Tiêu đề ghi chú không được để trống.');
       return;
